@@ -33,11 +33,10 @@ function sendMessage(event: Event) {
 
 async function queryLLM() {
   llmResponding.value = true;
-  const lastMessage = messages.value[messages.value.length - 1].content;
 
   const response = await ollama.chat({
     model: 'llama3',
-    messages: [{ role: 'user', content: lastMessage }],
+    messages: messages.value,
     stream: true,
   });
 
