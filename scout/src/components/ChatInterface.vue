@@ -56,6 +56,16 @@ function scrollToBottom() {
     messageArea.value?.setScrollPercentage('vertical', 1.0, 50);
   }, 50);
 }
+
+function saveConversation() {
+  const conversation = JSON.stringify(messages.value);
+  const blob = new Blob([conversation], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'conversation.json';
+  a.click();
+}
 </script>
 
 <template>
@@ -63,7 +73,7 @@ function scrollToBottom() {
   <q-scroll-area
     ref="messageArea"
     class="q-mt-md flex-grow-1"
-    style="height: 1px; width: 600px"
+    style="height: 1px; width: 800px"
   >
     <q-chat-message
       class="q-mr-lg q-ml-lg"
@@ -81,7 +91,7 @@ function scrollToBottom() {
     /></q-chat-message>
   </q-scroll-area>
 
-  <div class="flex w-600 q-mt-md row justify-end">
+  <div class="flex w-800 q-mt-md column justify-end">
     <q-input
       class="full-width q-pb-sm"
       v-model="inputText"
@@ -90,19 +100,30 @@ function scrollToBottom() {
       type="textarea"
       @keydown.enter="sendMessage"
     />
-    <q-btn
-      color="primary"
-      class="q-mr-lg q-mb-lg"
-      @click="sendMessage"
-      :disable="llmResponding"
-      >Send</q-btn
-    >
+    <q-toolbar>
+      <q-btn
+        class="q-mr-lg q-mb-lg"
+        @click="saveConversation"
+        :disable="llmResponding"
+        icon-right="save"
+        label="Save"
+      ></q-btn>
+      <q-space />
+      <q-btn
+        color="primary"
+        class="q-mb-lg"
+        @click="sendMessage"
+        :disable="llmResponding"
+        icon-right="send"
+        label="Send"
+      ></q-btn>
+    </q-toolbar>
   </div>
 </template>
 
 <style scoped lang="scss">
-.w-600 {
-  width: 600px;
+.w-800 {
+  width: 800px;
 }
 
 .flex-grow-1 {
