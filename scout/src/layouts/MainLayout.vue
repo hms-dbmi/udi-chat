@@ -13,7 +13,7 @@
 
         <q-toolbar-title> Scout </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <div>Quasar v{{ q.version }}</div>
       </q-toolbar>
     </q-header>
 
@@ -29,12 +29,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { Quasar } from 'quasar';
 
 defineOptions({
   name: 'MainLayout',
 });
-
 const leftDrawerOpen = ref(false);
+const q = Quasar;
 
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
