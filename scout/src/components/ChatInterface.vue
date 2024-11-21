@@ -84,6 +84,7 @@ function saveConversation() {
       v-for="(message, i) in conversationStore.messages"
       :key="i"
       :sent="message.role === 'user'"
+      :name="message.role"
       text-html
       ><q-markdown :src="message.content"></q-markdown
     ></q-chat-message>
@@ -91,7 +92,7 @@ function saveConversation() {
       v-if="conversationStore.messages.length % 2 == 1"
       class="q-mr-lg q-ml-lg"
       :sent="false"
-      ><q-spinner-dots size="2rem"
+      ><q-spinner-puff size="lg"
     /></q-chat-message>
   </q-scroll-area>
 
