@@ -3,7 +3,10 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useConversationStore } from './conversationStore';
 
 const conversationStore = useConversationStore();
-const conversationFiles = ['what is vega-lite.json'];
+const conversationFiles = [
+  'what is vega-lite.json',
+  'system prompt example.json',
+];
 
 function stripFileExtension(filename: string) {
   return filename.replace(/\.[^/.]+$/, '');

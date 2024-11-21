@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { QScrollArea } from 'quasar';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import ollama from 'ollama/browser';
 import { useConversationStore } from './conversationStore';
 
@@ -92,6 +92,13 @@ function textColor(role: 'user' | 'system' | 'assistant'): string {
       return 'black';
   }
 }
+
+const showSystemPrompts = ref<boolean>(false);
+const displayedMessages = computed(() =>
+  conversationStore.messages.filter(
+    (message) => message.role !== 'system' || showSystemPrompts.value
+  )
+);
 </script>
 
 <template>
@@ -102,7 +109,7 @@ function textColor(role: 'user' | 'system' | 'assistant'): string {
     style="height: 1px; width: 800px"
   >
     <q-chat-message
-      v-for="(message, i) in conversationStore.messages"
+      v-for="(message, i) in displayedMessages"
       class="q-mr-lg q-ml-lg"
       :key="i"
       :sent="message.role === 'user' || message.role === 'system'"
@@ -130,19 +137,22 @@ function textColor(role: 'user' | 'system' | 'assistant'): string {
       type="textarea"
       @keydown.enter="sendMessage"
     />
-    <q-toolbar>
+    <q-toolbar class="q-mb-lg">
       <q-btn
-        class="q-mr-lg q-mb-lg"
+        class="q-mr-md"
         @click="saveConversation"
         :disable="llmResponding"
         icon-right="save"
         label="Save"
       ></q-btn>
-      <!-- <q-toggle>Show System Prompts</q-toggle> -->
+      <q-checkbox
+        v-model="showSystemPrompts"
+        label="Show System Prompts"
+        toggle-color="primary"
+      />
       <q-space />
       <q-btn
         color="primary"
-        class="q-mb-lg"
         @click="sendMessage"
         :disable="llmResponding"
         icon-right="send"
