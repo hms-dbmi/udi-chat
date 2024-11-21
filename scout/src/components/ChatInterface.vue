@@ -2,14 +2,17 @@
 import { QScrollArea } from 'quasar';
 import { ref } from 'vue';
 import ollama from 'ollama/browser';
+import { useConversationStore } from './conversationStore';
+
+const conversationStore = useConversationStore();
 const inputText = ref('');
 
-interface Message {
-  role: 'user' | 'system' | 'assistant';
-  content: string;
-}
+// interface Message {
+//   role: 'user' | 'system' | 'assistant';
+//   content: string;
+// }
 
-const messages = ref<Message[]>([]);
+// const messages = ref<Message[]>([]);
 
 const messageArea = ref<InstanceType<typeof QScrollArea> | null>(null);
 
@@ -25,7 +28,7 @@ function sendMessage(event: Event) {
     return;
   }
 
-  messages.value.push({ content: inputText.value, role: 'user' });
+  conversationStore.messages.push({ content: inputText.value, role: 'user' });
   inputText.value = '';
   queryLLM();
   scrollToBottom();
@@ -36,16 +39,17 @@ async function queryLLM() {
 
   const response = await ollama.chat({
     model: 'llama3',
-    messages: messages.value,
+    messages: conversationStore.messages,
     stream: true,
   });
 
   // add empty message to add the chunks to
-  messages.value.push({ content: '', role: 'assistant' });
+  conversationStore.messages.push({ content: '', role: 'assistant' });
 
   for await (const chunk of response) {
     const newText = chunk.message.content;
-    messages.value[messages.value.length - 1].content += newText;
+    conversationStore.messages[conversationStore.messages.length - 1].content +=
+      newText;
     scrollToBottom();
   }
   llmResponding.value = false;
@@ -58,7 +62,7 @@ function scrollToBottom() {
 }
 
 function saveConversation() {
-  const conversation = JSON.stringify(messages.value);
+  const conversation = JSON.stringify(conversationStore.messages);
   const blob = new Blob([conversation], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -77,14 +81,14 @@ function saveConversation() {
   >
     <q-chat-message
       class="q-mr-lg q-ml-lg"
-      v-for="(message, i) in messages"
+      v-for="(message, i) in conversationStore.messages"
       :key="i"
       :sent="message.role === 'user'"
       text-html
       ><q-markdown :src="message.content"></q-markdown
     ></q-chat-message>
     <q-chat-message
-      v-if="messages.length % 2 == 1"
+      v-if="conversationStore.messages.length % 2 == 1"
       class="q-mr-lg q-ml-lg"
       :sent="false"
       ><q-spinner-dots size="2rem"

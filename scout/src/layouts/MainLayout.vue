@@ -18,7 +18,7 @@
     </q-header>
 
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
-      <div class="q-ma-lg">Placeholder</div>
+      <ConversationList></ConversationList>
     </q-drawer>
 
     <q-page-container>
@@ -30,6 +30,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Quasar } from 'quasar';
+import ConversationList from 'components/ConversationList.vue';
 
 defineOptions({
   name: 'MainLayout',
