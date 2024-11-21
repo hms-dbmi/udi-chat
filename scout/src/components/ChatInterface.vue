@@ -4,6 +4,11 @@ import { ref } from 'vue';
 import ollama from 'ollama/browser';
 const inputText = ref('');
 
+interface Message {
+  role: 'user' | 'system' | 'assistant';
+  content: string;
+}
+
 const messages = ref<Message[]>([]);
 
 const messageArea = ref<InstanceType<typeof QScrollArea> | null>(null);
@@ -20,7 +25,7 @@ function sendMessage(event: Event) {
     return;
   }
 
-  messages.value.push({ text: inputText.value, sent: true });
+  messages.value.push({ content: inputText.value, role: 'user' });
   inputText.value = '';
   queryLLM();
   scrollToBottom();
@@ -28,7 +33,7 @@ function sendMessage(event: Event) {
 
 async function queryLLM() {
   llmResponding.value = true;
-  const lastMessage = messages.value[messages.value.length - 1].text;
+  const lastMessage = messages.value[messages.value.length - 1].content;
 
   const response = await ollama.chat({
     model: 'llama3',
@@ -37,11 +42,11 @@ async function queryLLM() {
   });
 
   // add empty message to add the chunks to
-  messages.value.push({ text: '', sent: false });
+  messages.value.push({ content: '', role: 'assistant' });
 
   for await (const chunk of response) {
     const newText = chunk.message.content;
-    messages.value[messages.value.length - 1].text += newText;
+    messages.value[messages.value.length - 1].content += newText;
     scrollToBottom();
   }
   llmResponding.value = false;
@@ -51,11 +56,6 @@ function scrollToBottom() {
   setTimeout(() => {
     messageArea.value?.setScrollPercentage('vertical', 1.0, 50);
   }, 50);
-}
-
-interface Message {
-  text: string;
-  sent: boolean;
 }
 </script>
 
@@ -70,9 +70,9 @@ interface Message {
       class="q-mr-lg q-ml-lg"
       v-for="(message, i) in messages"
       :key="i"
-      :sent="message.sent"
+      :sent="message.role === 'user'"
       text-html
-      ><q-markdown :src="message.text"></q-markdown
+      ><q-markdown :src="message.content"></q-markdown
     ></q-chat-message>
     <q-chat-message
       v-if="messages.length % 2 == 1"
