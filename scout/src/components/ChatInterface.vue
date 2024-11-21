@@ -8,11 +8,17 @@ const messages = ref<Message[]>([]);
 
 const messageArea = ref<InstanceType<typeof QScrollArea> | null>(null);
 
+const llmResponding = ref(false);
+
 function sendMessage(event: Event) {
   if (event instanceof KeyboardEvent && event.shiftKey) {
     return;
   }
   event.preventDefault();
+  if (llmResponding.value) {
+    // don't allow double sending
+    return;
+  }
 
   messages.value.push({ text: inputText.value, sent: true });
   inputText.value = '';
@@ -21,6 +27,7 @@ function sendMessage(event: Event) {
 }
 
 async function queryLLM() {
+  llmResponding.value = true;
   const lastMessage = messages.value[messages.value.length - 1].text;
 
   const response = await ollama.chat({
@@ -29,31 +36,15 @@ async function queryLLM() {
     stream: true,
   });
 
-  // add empty message to start the loading animation
+  // add empty message to add the chunks to
   messages.value.push({ text: '', sent: false });
 
   for await (const chunk of response) {
     const newText = chunk.message.content;
     messages.value[messages.value.length - 1].text += newText;
-    // messages.value.push({ text: response.message.content, sent: false });
     scrollToBottom();
   }
-  // trigger rerender
-  // messages.value = [...messages.value];
-  console.log(messages.value[messages.value.length - 1].text);
-
-  // messages.value.push({ text: response.message.content, sent: false });
-  // scrollToBottom();
-
-  // const serverUrl = 'http://localhost:8888';
-  // const urlWithQuery = `${serverUrl}?q=${lastMessage}`;
-  // fetch(urlWithQuery, { mode: 'no-cors' })
-  //   .then((response) => response.text())
-  //   .then((data) => {
-  //     messages.value.push({ text: data, sent: false });
-  //     scrollToBottom();
-  //   });
-  // messages.value.push({ text: 'reply to: ' + lastMessage, sent: false });
+  llmResponding.value = false;
 }
 
 function scrollToBottom() {
@@ -100,7 +91,11 @@ interface Message {
       type="textarea"
       @keydown.enter="sendMessage"
     />
-    <q-btn color="primary" class="q-mr-lg q-mb-lg" @click="sendMessage"
+    <q-btn
+      color="primary"
+      class="q-mr-lg q-mb-lg"
+      @click="sendMessage"
+      :disable="llmResponding"
       >Send</q-btn
     >
   </div>
