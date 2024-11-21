@@ -93,7 +93,7 @@ function textColor(role: 'user' | 'system' | 'assistant'): string {
   }
 }
 
-const showSystemPrompts = ref<boolean>(false);
+const showSystemPrompts = ref<boolean>(true);
 const displayedMessages = computed(() =>
   conversationStore.messages.filter(
     (message) => message.role !== 'system' || showSystemPrompts.value
