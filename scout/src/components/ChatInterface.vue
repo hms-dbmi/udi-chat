@@ -70,6 +70,28 @@ function saveConversation() {
   a.download = 'conversation.json';
   a.click();
 }
+
+function bgColor(role: 'user' | 'system' | 'assistant'): string {
+  switch (role) {
+    case 'user':
+      return 'primary';
+    case 'system':
+      return 'orange-4';
+    case 'assistant':
+      return 'grey-2';
+  }
+}
+
+function textColor(role: 'user' | 'system' | 'assistant'): string {
+  switch (role) {
+    case 'user':
+      return 'white';
+    case 'system':
+      return 'black';
+    case 'assistant':
+      return 'black';
+  }
+}
 </script>
 
 <template>
@@ -80,18 +102,21 @@ function saveConversation() {
     style="height: 1px; width: 800px"
   >
     <q-chat-message
-      class="q-mr-lg q-ml-lg"
       v-for="(message, i) in conversationStore.messages"
+      class="q-mr-lg q-ml-lg"
       :key="i"
-      :sent="message.role === 'user'"
+      :sent="message.role === 'user' || message.role === 'system'"
       :name="message.role"
-      text-html
+      :bg-color="bgColor(message.role)"
+      :text-color="textColor(message.role)"
       ><q-markdown :src="message.content"></q-markdown
     ></q-chat-message>
     <q-chat-message
-      v-if="conversationStore.messages.length % 2 == 1"
+      v-if="conversationStore.llmThinking"
       class="q-mr-lg q-ml-lg"
       :sent="false"
+      :bg-color="bgColor('assistant')"
+      text-color="primary"
       ><q-spinner-puff size="lg"
     /></q-chat-message>
   </q-scroll-area>
@@ -113,6 +138,7 @@ function saveConversation() {
         icon-right="save"
         label="Save"
       ></q-btn>
+      <!-- <q-toggle>Show System Prompts</q-toggle> -->
       <q-space />
       <q-btn
         color="primary"

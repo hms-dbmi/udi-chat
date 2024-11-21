@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 export interface Message {
   role: 'user' | 'system' | 'assistant';
@@ -8,7 +8,12 @@ export interface Message {
 
 export const useConversationStore = defineStore('conversationStore', () => {
   // State
-  const messages = ref<Message[]>([]);
+  const messages = ref<Message[]>([
+    {
+      role: 'system',
+      content: 'Always answer in spanish regardless of input text.',
+    },
+  ]);
 
   // // Getters
   // const doubleCount = computed(() => state.count * 2);
@@ -17,6 +22,10 @@ export const useConversationStore = defineStore('conversationStore', () => {
   // function increment() {
   //   state.count++;
   // }
+
+  const llmThinking = computed<boolean>(() => {
+    return messages.value[messages.value.length - 1].role === 'user';
+  });
 
   function loadConversation(filename: string) {
     // loads conversation from json file
@@ -30,5 +39,6 @@ export const useConversationStore = defineStore('conversationStore', () => {
   return {
     messages,
     loadConversation,
+    llmThinking,
   };
 });
