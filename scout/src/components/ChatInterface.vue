@@ -32,7 +32,12 @@ function sendMessage(event: Event) {
   conversationStore.messages.push({
     role: 'system',
     content:
-      'Remember to only ever reply with vega-lite specifications, do not include any text before or after the json',
+      'Remember to only ever reply with vega-lite specifications, do not include any text before or after the json.',
+  });
+  conversationStore.messages.push({
+    role: 'system',
+    content:
+      '... and remember to always use one of these data paths. "./data/hubmap-datasets-metadata-2024-11-15_20-36-10.tsv", "./data/"hubmap-donors-metadata-2024-11-15_20-36-05.tsv", "./data/hubmap-samples-metadata-2024-11-15_20-36-06.tsv"',
   });
   conversationStore.messages.push({ content: inputText.value, role: 'user' });
   inputText.value = '';
@@ -99,7 +104,7 @@ function textColor(role: 'user' | 'system' | 'assistant'): string {
   }
 }
 
-const showSystemPrompts = ref<boolean>(true);
+const showSystemPrompts = ref<boolean>(false);
 const displayedMessages = computed(() =>
   conversationStore.messages.filter(
     (message) => message.role !== 'system' || showSystemPrompts.value
@@ -146,10 +151,7 @@ function shouldRenderVega(message: Message, index: number): boolean {
   if (message.role !== 'assistant') {
     return false;
   }
-  if (
-    index === displayedMessages.value.length - 1 &&
-    (llmResponding.value || conversationStore.llmThinking)
-  ) {
+  if (index === displayedMessages.value.length - 1 && llmResponding.value) {
     return false;
   }
   return true;
@@ -180,7 +182,10 @@ function shouldRenderVega(message: Message, index: number): boolean {
       </VegaLite>
     </q-chat-message>
     <q-chat-message
-      v-if="conversationStore.llmThinking"
+      v-if="
+        llmResponding &&
+        displayedMessages[displayedMessages.length - 1].role !== 'assistant'
+      "
       class="q-mr-lg q-ml-lg"
       :sent="false"
       :bg-color="bgColor('assistant')"
