@@ -7,6 +7,9 @@ const conversationFiles = [
   'what is vega-lite.json',
   'system prompt example.json',
   'render vega.json',
+  'render experiment 1.json',
+  'render experiment 2.json',
+  'render experiment 3.json',
 ];
 
 function stripFileExtension(filename: string) {
