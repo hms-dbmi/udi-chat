@@ -10,6 +10,9 @@ const conversationFiles = [
   'render experiment 1.json',
   'render experiment 2.json',
   'render experiment 3.json',
+  'render experiment 4.json',
+  'render experiment 5.json',
+  'render experiment 6.json',
 ];
 
 function stripFileExtension(filename: string) {

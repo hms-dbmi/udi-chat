@@ -29,6 +29,11 @@ function sendMessage(event: Event) {
     return;
   }
 
+  conversationStore.messages.push({
+    role: 'system',
+    content:
+      'Remember to only ever reply with vega-lite specifications, do not include any text before or after the json',
+  });
   conversationStore.messages.push({ content: inputText.value, role: 'user' });
   inputText.value = '';
   queryLLM();
@@ -142,7 +147,7 @@ function shouldRenderVega(message: Message, index: number): boolean {
     return false;
   }
   if (
-    index === conversationStore.messages.length - 1 &&
+    index === displayedMessages.value.length - 1 &&
     (llmResponding.value || conversationStore.llmThinking)
   ) {
     return false;
