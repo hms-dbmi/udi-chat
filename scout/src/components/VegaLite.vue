@@ -44,6 +44,8 @@ onMounted(() => {
 .vega-chart-container {
   width: 100%;
   height: 100%;
+  max-width: 600px;
+  overflow-x: auto;
 }
 
 .error-message {
