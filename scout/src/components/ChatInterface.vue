@@ -2,7 +2,8 @@
 import { QScrollArea } from 'quasar';
 import { ref, computed } from 'vue';
 import ollama from 'ollama/browser';
-import { useConversationStore } from './conversationStore';
+import VegaLite from './VegaLite.vue';
+import { Message, useConversationStore } from './conversationStore';
 
 const conversationStore = useConversationStore();
 const inputText = ref('');
@@ -99,10 +100,62 @@ const displayedMessages = computed(() =>
     (message) => message.role !== 'system' || showSystemPrompts.value
   )
 );
+
+// const values = [
+//   { a: 'A', b: 28 },
+//   { a: 'B', b: 55 },
+//   { a: 'C', b: 43 },
+//   { a: 'D', b: 91 },
+//   { a: 'E', b: 81 },
+//   { a: 'F', b: 53 },
+//   { a: 'G', b: 19 },
+//   { a: 'H', b: 87 },
+//   { a: 'I', b: 52 },
+// ];
+
+// const encoding = {
+//   x: { field: 'a', type: 'ordinal' },
+//   y: { field: 'b', type: 'quantitative' },
+// };
+
+const spec = {
+  $schema: 'https://vega.github.io/schema/vega-lite/v2.json',
+  data: {
+    url: 'https://raw.githubusercontent.com/vega/vega/refs/heads/main/docs/data/cars.json',
+  },
+  mark: 'bar',
+  encoding: {
+    x: {
+      bin: { maxbins: 15 },
+      field: 'Horsepower',
+      type: 'quantitative',
+    },
+    y: {
+      aggregate: 'count',
+      type: 'quantitative',
+    },
+  },
+};
+
+function shouldRenderVega(message: Message, index: number): boolean {
+  if (message.role !== 'assistant') {
+    return false;
+  }
+  if (
+    index === conversationStore.messages.length - 1 &&
+    (llmResponding.value || conversationStore.llmThinking)
+  ) {
+    return false;
+  }
+  return true;
+}
 </script>
 
 <template>
-  <!-- <q-markdown> Blargen **flargen** bloop *bleep* </q-markdown> -->
+  <!-- <div style="outline: solid red 3px">
+    <VegaLite :spec="spec"> </VegaLite>
+  </div> -->
+  <q-separator />
   <q-scroll-area
     ref="messageArea"
     class="q-mt-md flex-grow-1"
@@ -116,8 +169,11 @@ const displayedMessages = computed(() =>
       :name="message.role"
       :bg-color="bgColor(message.role)"
       :text-color="textColor(message.role)"
-      ><q-markdown :src="message.content"></q-markdown
-    ></q-chat-message>
+    >
+      <q-markdown :src="message.content"></q-markdown>
+      <VegaLite v-if="shouldRenderVega(message, i)" :spec="message.content">
+      </VegaLite>
+    </q-chat-message>
     <q-chat-message
       v-if="conversationStore.llmThinking"
       class="q-mr-lg q-ml-lg"
