@@ -18,6 +18,7 @@ const conversationFiles = [
   'exp 9.json',
   'exp 10.json',
   'exp 11.json',
+  'exp var selection.json',
 ];
 
 function stripFileExtension(filename: string) {

@@ -3,6 +3,7 @@ import { QScrollArea } from 'quasar';
 import { ref, computed } from 'vue';
 import ollama from 'ollama/browser';
 import VegaLite from './VegaLite.vue';
+import DSLVis from './DSLVis.vue';
 import { Message, useConversationStore } from './conversationStore';
 
 const conversationStore = useConversationStore();
@@ -29,16 +30,23 @@ function sendMessage(event: Event) {
     return;
   }
 
+  // conversationStore.messages.push({
+  //   role: 'system',
+  //   content:
+  //     'Remember to only ever reply with vega-lite specifications, do not include any text before or after the json.',
+  // });
+  // conversationStore.messages.push({
+  //   role: 'system',
+  //   content:
+  //     '... and remember to always use one of these data paths. "./data/hubmap-datasets-metadata-2024-11-15_20-36-10.tsv", "./data/"hubmap-donors-metadata-2024-11-15_20-36-05.tsv", "./data/hubmap-samples-metadata-2024-11-15_20-36-06.tsv"',
+  // });
+
   conversationStore.messages.push({
     role: 'system',
     content:
-      'Remember to only ever reply with vega-lite specifications, do not include any text before or after the json.',
+      'For the following user prompt remember to only reply with a list of variable names to visualize.',
   });
-  conversationStore.messages.push({
-    role: 'system',
-    content:
-      '... and remember to always use one of these data paths. "./data/hubmap-datasets-metadata-2024-11-15_20-36-10.tsv", "./data/"hubmap-donors-metadata-2024-11-15_20-36-05.tsv", "./data/hubmap-samples-metadata-2024-11-15_20-36-06.tsv"',
-  });
+
   conversationStore.messages.push({ content: inputText.value, role: 'user' });
   inputText.value = '';
   queryLLM();
@@ -160,8 +168,21 @@ function shouldRenderVega(message: Message, index: number): boolean {
   return true;
 }
 
+function shouldRenderDSL(message: Message, index: number): boolean {
+  if (message.role !== 'assistant') {
+    return false;
+  }
+  if (index === displayedMessages.value.length - 1 && llmResponding.value) {
+    return false;
+  }
+  if (renderChoice.value !== 'dsl') {
+    return false;
+  }
+  return true;
+}
+
 const renderChoice = ref<'vega' | 'none' | 'dsl'>('vega');
-const renderChoices = ['vega', 'none'];
+const renderChoices = ['vega', 'none', 'dsl'];
 </script>
 
 <template>
@@ -186,6 +207,10 @@ const renderChoices = ['vega', 'none'];
       <q-markdown :src="message.content"></q-markdown>
       <VegaLite v-if="shouldRenderVega(message, i)" :spec="message.content">
       </VegaLite>
+      <DSLVis
+        v-if="shouldRenderDSL(message, i)"
+        :spec="message.content"
+      ></DSLVis>
     </q-chat-message>
     <q-chat-message
       v-if="
