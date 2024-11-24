@@ -154,8 +154,14 @@ function shouldRenderVega(message: Message, index: number): boolean {
   if (index === displayedMessages.value.length - 1 && llmResponding.value) {
     return false;
   }
+  if (renderChoice.value !== 'vega') {
+    return false;
+  }
   return true;
 }
+
+const renderChoice = ref<'vega' | 'none' | 'dsl'>('vega');
+const renderChoices = ['vega', 'none'];
 </script>
 
 <template>
@@ -212,9 +218,18 @@ function shouldRenderVega(message: Message, index: number): boolean {
         label="Save"
       ></q-btn>
       <q-checkbox
+        class="q-mr-md"
         v-model="showSystemPrompts"
         label="Show System Prompts"
         toggle-color="primary"
+      />
+      <q-select
+        class="q-ml-sm q-mr-md"
+        style="width: 100px"
+        dense
+        v-model="renderChoice"
+        :options="renderChoices"
+        label="Render"
       />
       <q-space />
       <q-btn
