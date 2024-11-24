@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import vegaEmbed from 'vega-embed';
 import { defineProps } from 'vue';
+import { watch } from 'vue';
 
 const props = defineProps({
   spec: {
@@ -14,25 +15,36 @@ const vegaContainer = ref(null);
 
 const errorMessage = ref(null);
 
-onMounted(() => {
+function updateVegaChart() {
   let specObject;
   try {
     specObject = JSON.parse(props.spec);
   } catch (error) {
     console.error('Error parsing spec', error);
     errorMessage.value = 'Error parsing spec: ' + error;
+    // clear the container so the chart doesn't show up
+    vegaContainer.value.innerHTML = '';
     return;
   }
 
   vegaEmbed(vegaContainer.value, specObject)
     .then((result) => {
       console.log('Chart rendered successfully');
+      errorMessage.value = null;
     })
     .catch((error) => {
       console.error('Error rendering chart', error);
       errorMessage.value = 'Error rendering chart: ' + error;
+      // clear the container so the chart doesn't show up
+      vegaContainer.value.innerHTML = '';
     });
+}
+
+onMounted(() => {
+  updateVegaChart();
 });
+
+watch(() => props.spec, updateVegaChart);
 </script>
 
 <template>
