@@ -27,12 +27,20 @@ function stripFileExtension(filename: string) {
 </script>
 
 <template>
-  <q-list>
+  <q-list class="q-mt-sm">
+    <q-item clickable @click="conversationStore.newConversation()">
+      <q-item-section avatar>
+        <q-icon color="primary" name="add" /> </q-item-section
+      ><q-item-section>New Converstation</q-item-section></q-item
+    >
+    <q-separator spaced inset />
     <q-item-label header>Past Conversations</q-item-label>
     <q-item
       v-for="filename in conversationFiles"
       :key="filename"
       clickable
+      :active="conversationStore.activeConverstation === filename"
+      active-class="bg-primary text-white"
       @click="conversationStore.loadConversation(filename)"
     >
       <q-item-section>
