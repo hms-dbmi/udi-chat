@@ -5,7 +5,7 @@ import ollama from 'ollama/browser';
 import VegaLite from './VegaLite.vue';
 import DSLVis from './DSLVis.vue';
 import { Message, useConversationStore } from './conversationStore';
-import { interstitialPrompt } from './prompts';
+import { interstitialPrompt } from './promptEngineering';
 
 const conversationStore = useConversationStore();
 const inputText = ref('');

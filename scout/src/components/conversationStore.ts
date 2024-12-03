@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { initialPrompt } from './prompts';
+import { initialPrompt } from './promptEngineering';
 
 export interface Message {
   role: 'user' | 'system' | 'assistant';
