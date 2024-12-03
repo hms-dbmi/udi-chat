@@ -4,18 +4,12 @@ import { ref, computed } from 'vue';
 import ollama from 'ollama/browser';
 import VegaLite from './VegaLite.vue';
 import DSLVis from './DSLVis.vue';
+import DSLVisFunc from './DSLVisFunc.vue';
 import { Message, useConversationStore } from './conversationStore';
-import { interstitialPrompt } from './promptEngineering';
+import { interstitialPrompt, tools as agentTools } from './promptEngineering';
 
 const conversationStore = useConversationStore();
 const inputText = ref('');
-
-// interface Message {
-//   role: 'user' | 'system' | 'assistant';
-//   content: string;
-// }
-
-// const messages = ref<Message[]>([]);
 
 const messageArea = ref<InstanceType<typeof QScrollArea> | null>(null);
 
@@ -47,21 +41,34 @@ function sendMessage(event: Event) {
 async function queryLLM() {
   llmResponding.value = true;
 
+  const stream = false; // stream must be false when using tools
   const response = await ollama.chat({
-    model: 'llama3',
+    model: 'llama3.1',
     messages: conversationStore.messages,
-    stream: true,
+    tools: agentTools,
+    stream,
   });
 
   // add empty message to add the chunks to
-  conversationStore.messages.push({ content: '', role: 'assistant' });
-
-  for await (const chunk of response) {
-    const newText = chunk.message.content;
-    conversationStore.messages[conversationStore.messages.length - 1].content +=
-      newText;
+  if (stream) {
+    conversationStore.messages.push({ content: '', role: 'assistant' });
+    // @ts-ignore: typing matches stream boolean
+    for await (const chunk of response) {
+      const newText = chunk.message.content;
+      conversationStore.messages[
+        conversationStore.messages.length - 1
+      ].content += newText;
+      scrollToBottom();
+    }
+  } else {
+    conversationStore.messages.push({
+      content: response.message.content,
+      role: 'assistant',
+      tool_calls: response.message.tool_calls,
+    });
     scrollToBottom();
   }
+
   llmResponding.value = false;
 }
 
@@ -110,42 +117,6 @@ const displayedMessages = computed(() =>
   )
 );
 
-// const values = [
-//   { a: 'A', b: 28 },
-//   { a: 'B', b: 55 },
-//   { a: 'C', b: 43 },
-//   { a: 'D', b: 91 },
-//   { a: 'E', b: 81 },
-//   { a: 'F', b: 53 },
-//   { a: 'G', b: 19 },
-//   { a: 'H', b: 87 },
-//   { a: 'I', b: 52 },
-// ];
-
-// const encoding = {
-//   x: { field: 'a', type: 'ordinal' },
-//   y: { field: 'b', type: 'quantitative' },
-// };
-
-const spec = {
-  $schema: 'https://vega.github.io/schema/vega-lite/v2.json',
-  data: {
-    url: 'https://raw.githubusercontent.com/vega/vega/refs/heads/main/docs/data/cars.json',
-  },
-  mark: 'bar',
-  encoding: {
-    x: {
-      bin: { maxbins: 15 },
-      field: 'Horsepower',
-      type: 'quantitative',
-    },
-    y: {
-      aggregate: 'count',
-      type: 'quantitative',
-    },
-  },
-};
-
 function shouldRenderVega(message: Message, index: number): boolean {
   if (message.role !== 'assistant') {
     return false;
@@ -172,8 +143,25 @@ function shouldRenderDSL(message: Message, index: number): boolean {
   return true;
 }
 
-const renderChoice = ref<'vega' | 'none' | 'dsl'>('vega');
-const renderChoices = ['vega', 'none', 'dsl'];
+function shouldRenderDSLFunction(message: Message, index: number): boolean {
+  if (message.role !== 'assistant') {
+    return false;
+  }
+  if (index === displayedMessages.value.length - 1 && llmResponding.value) {
+    return false;
+  }
+  if (renderChoice.value !== 'dsl_func') {
+    return false;
+  }
+  if (!message.tool_calls || message.tool_calls.length === 0) {
+    return false;
+  }
+
+  return true;
+}
+
+const renderChoice = ref<'vega' | 'none' | 'dsl' | 'dsl_func'>('vega');
+const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
 </script>
 
 <template>
@@ -195,13 +183,17 @@ const renderChoices = ['vega', 'none', 'dsl'];
       :bg-color="bgColor(message.role)"
       :text-color="textColor(message.role)"
     >
-      <q-markdown :src="message.content"></q-markdown>
+      <q-markdown v-if="message.content" :src="message.content"></q-markdown>
       <VegaLite v-if="shouldRenderVega(message, i)" :spec="message.content">
       </VegaLite>
       <DSLVis
         v-if="shouldRenderDSL(message, i)"
         :spec="message.content"
       ></DSLVis>
+      <DSLVisFunc
+        v-if="shouldRenderDSLFunction(message, i)"
+        :spec="message.tool_calls![0]"
+      ></DSLVisFunc>
     </q-chat-message>
     <q-chat-message
       v-if="

@@ -5,6 +5,18 @@ import { initialPrompt } from './promptEngineering';
 export interface Message {
   role: 'user' | 'system' | 'assistant';
   content: string;
+  tool_calls?: ToolCall[];
+}
+
+export interface ToolCall {
+  function: {
+    name: string;
+    arguments: Arguments;
+  };
+}
+
+export interface Arguments {
+  [key: string]: string;
 }
 
 export const useConversationStore = defineStore('conversationStore', () => {
