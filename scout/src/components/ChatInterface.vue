@@ -52,7 +52,7 @@ async function queryLLM() {
   // add empty message to add the chunks to
   if (stream) {
     conversationStore.messages.push({ content: '', role: 'assistant' });
-    // @ts-ignore: typing matches stream boolean
+    // @ts-expect-error: typing matches stream boolean
     for await (const chunk of response) {
       const newText = chunk.message.content;
       conversationStore.messages[
@@ -110,6 +110,8 @@ function textColor(role: 'user' | 'system' | 'assistant'): string {
   }
 }
 
+const showDebugInfo = ref<boolean>(false);
+const showSystemTools = ref<boolean>(false);
 const showSystemPrompts = ref<boolean>(false);
 const displayedMessages = computed(() =>
   conversationStore.messages.filter(
@@ -175,6 +177,17 @@ const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
     style="height: 1px; width: 800px"
   >
     <q-chat-message
+      v-if="showSystemTools"
+      :bg-color="bgColor('system')"
+      :text-color="textColor('system')"
+      :sent="true"
+      name="tools"
+    >
+      <div style="white-space: pre-wrap">
+        {{ JSON.stringify(agentTools, null, 4) }}
+      </div>
+    </q-chat-message>
+    <q-chat-message
       v-for="(message, i) in displayedMessages"
       class="q-mr-lg q-ml-lg"
       :key="i"
@@ -183,6 +196,10 @@ const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
       :bg-color="bgColor(message.role)"
       :text-color="textColor(message.role)"
     >
+      <q-markdown
+        v-if="showDebugInfo && message.role === 'assistant'"
+        :src="JSON.stringify(message)"
+      ></q-markdown>
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
       <VegaLite v-if="shouldRenderVega(message, i)" :spec="message.content">
       </VegaLite>
@@ -219,20 +236,33 @@ const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
     />
     <q-toolbar class="q-mb-lg">
       <q-btn
-        class="q-mr-md"
+        class="q-mr-sm"
         @click="saveConversation"
         :disable="llmResponding"
         icon-right="save"
         label="Save"
       ></q-btn>
       <q-checkbox
-        class="q-mr-md"
-        v-model="showSystemPrompts"
-        label="Show System Prompts"
+        class="q-mr-sm"
+        v-model="showDebugInfo"
+        label="Debug"
         toggle-color="primary"
       />
+      <q-checkbox
+        class="q-mr-sm"
+        v-model="showSystemTools"
+        label="Tools"
+        toggle-color="primary"
+      />
+      <q-checkbox
+        class="q-mr-sm"
+        v-model="showSystemPrompts"
+        label="System Prompts"
+        toggle-color="primary"
+      />
+
       <q-select
-        class="q-ml-sm q-mr-md"
+        class="q-ml-sm q-mr-sm"
         style="width: 100px"
         dense
         v-model="renderChoice"
