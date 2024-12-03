@@ -5,6 +5,7 @@ import ollama from 'ollama/browser';
 import VegaLite from './VegaLite.vue';
 import DSLVis from './DSLVis.vue';
 import { Message, useConversationStore } from './conversationStore';
+import { interstitialPrompt } from './prompts';
 
 const conversationStore = useConversationStore();
 const inputText = ref('');
@@ -30,22 +31,12 @@ function sendMessage(event: Event) {
     return;
   }
 
-  // conversationStore.messages.push({
-  //   role: 'system',
-  //   content:
-  //     'Remember to only ever reply with vega-lite specifications, do not include any text before or after the json.',
-  // });
-  // conversationStore.messages.push({
-  //   role: 'system',
-  //   content:
-  //     '... and remember to always use one of these data paths. "./data/hubmap-datasets-metadata-2024-11-15_20-36-10.tsv", "./data/"hubmap-donors-metadata-2024-11-15_20-36-05.tsv", "./data/hubmap-samples-metadata-2024-11-15_20-36-06.tsv"',
-  // });
-
-  conversationStore.messages.push({
-    role: 'system',
-    content:
-      'For the following user prompt remember to only reply with a list of variable names to visualize.',
-  });
+  if (interstitialPrompt) {
+    conversationStore.messages.push({
+      role: 'system',
+      content: interstitialPrompt,
+    });
+  }
 
   conversationStore.messages.push({ content: inputText.value, role: 'user' });
   inputText.value = '';
