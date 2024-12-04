@@ -84,6 +84,11 @@ export const tools = [
             description:
               '(optional) The second most important variable to visualize.',
           },
+          field3: {
+            type: 'string',
+            description:
+              '(optional) The third most important variable to visualize, this will often not be used',
+          },
         },
         required: ['field1'],
       },

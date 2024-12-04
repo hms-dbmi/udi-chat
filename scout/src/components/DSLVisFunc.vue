@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import VegaLite from './VegaLite.vue';
 import type { ToolCall } from './conversationStore';
 import { columnTypes } from './columnTypes';
+import { field } from 'vega';
 
 const props = defineProps<{
   spec: ToolCall;
@@ -50,6 +51,7 @@ const vegaSpec = computed(() => {
   const dataset = props.spec.function.arguments.dataset;
   const field1 = props.spec.function.arguments.field1;
   const field2 = props.spec.function.arguments.field2;
+  const field3 = props.spec.function.arguments.field3;
 
   if (!field2) {
     if (columnTypes[dataset][field1] === 'quantitative') {
@@ -89,7 +91,7 @@ const vegaSpec = computed(() => {
     };
     return JSON.stringify(vegaLiteSpec);
   }
-  if (field2) {
+  if (field2 && !field3) {
     if (
       columnTypes[dataset][field1] === 'quantitative' &&
       columnTypes[dataset][field2] === 'quantitative'
@@ -157,6 +159,151 @@ const vegaSpec = computed(() => {
       },
     };
     return JSON.stringify(vegaLiteSpec);
+  }
+
+  if (field2 && field3) {
+    if (
+      columnTypes[dataset][field1] === 'quantitative' &&
+      columnTypes[dataset][field2] === 'quantitative' &&
+      columnTypes[dataset][field3] === 'quantitative'
+    ) {
+      // bubble plot
+      const vegaSpec = {
+        $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        data: { url: dataUrl },
+        mark: 'point',
+        encoding: {
+          x: { field: field1, type: 'quantitative' },
+          y: { field: field2, type: 'quantitative' },
+          size: { field: field3, type: 'quantitative' },
+        },
+      };
+
+      return JSON.stringify(vegaSpec);
+    }
+
+    if (
+      (columnTypes[dataset][field1] === 'quantitative' &&
+        columnTypes[dataset][field2] === 'quantitative' &&
+        columnTypes[dataset][field3] === 'string') ||
+      (columnTypes[dataset][field1] === 'string' &&
+        columnTypes[dataset][field2] === 'quantitative' &&
+        columnTypes[dataset][field3] === 'quantitative') ||
+      (columnTypes[dataset][field1] === 'quantitative' &&
+        columnTypes[dataset][field2] === 'string' &&
+        columnTypes[dataset][field3] === 'quantitative')
+    ) {
+      // QQN - scatterplot with color on nominal field
+      let q1Field, q2Field, nominalField;
+      if (columnTypes[dataset][field1] === 'quantitative') {
+        q1Field = field1;
+        if (columnTypes[dataset][field2] === 'quantitative') {
+          q2Field = field2;
+          nominalField = field3;
+        } else {
+          q2Field = field3;
+          nominalField = field2;
+        }
+      } else {
+        nominalField = field1;
+        q1Field = field2;
+        q2Field = field3;
+      }
+
+      const vegaSpec = {
+        $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        data: {
+          url: dataUrl,
+        },
+        mark: 'point',
+        encoding: {
+          x: {
+            field: q1Field,
+            type: 'quantitative',
+            scale: { zero: false },
+          },
+          y: {
+            field: q2Field,
+            type: 'quantitative',
+            scale: { zero: false },
+          },
+          color: { field: nominalField, type: 'nominal' },
+          shape: { field: nominalField, type: 'nominal' },
+        },
+      };
+
+      return JSON.stringify(vegaSpec);
+    }
+
+    if (
+      (columnTypes[dataset][field1] === 'quantitative' &&
+        columnTypes[dataset][field2] === 'string' &&
+        columnTypes[dataset][field3] === 'string') ||
+      (columnTypes[dataset][field1] === 'string' &&
+        columnTypes[dataset][field2] === 'quantitative' &&
+        columnTypes[dataset][field3] === 'string') ||
+      (columnTypes[dataset][field1] === 'string' &&
+        columnTypes[dataset][field2] === 'string' &&
+        columnTypes[dataset][field3] === 'quantitative')
+    ) {
+      // QNN heatmap
+      let qField, n1Field, n2Field;
+      if (columnTypes[dataset][field1] === 'string') {
+        n1Field = field1;
+        if (columnTypes[dataset][field2] === 'string') {
+          n2Field = field2;
+          qField = field3;
+        } else {
+          n2Field = field3;
+          qField = field2;
+        }
+      } else {
+        qField = field1;
+        n1Field = field2;
+        n2Field = field3;
+      }
+
+      const vegaSpec = {
+        $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        data: { url: dataUrl },
+        mark: 'rect',
+        encoding: {
+          y: { field: n1Field, type: 'nominal' },
+          x: { field: n2Field, type: 'ordinal' },
+          color: { aggregate: 'mean', field: qField },
+        },
+        config: {
+          axis: { grid: true, tickBand: 'extent' },
+        },
+      };
+      return JSON.stringify(vegaSpec);
+    }
+
+    if (
+      columnTypes[dataset][field1] === 'string' &&
+      columnTypes[dataset][field2] === 'string' &&
+      columnTypes[dataset][field3] === 'string'
+    ) {
+      // NNN (faceted stacked bar chart)
+      const n1field = field1;
+      const n2field = field2;
+      const n3field = field3;
+      const vegaSpec = {
+        $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        data: { url: dataUrl },
+        mark: 'bar',
+        encoding: {
+          x: { aggregate: 'count' },
+          y: { field: n1field },
+          color: { field: n2field },
+          row: {
+            field: n3field,
+          },
+        },
+      };
+
+      return JSON.stringify(vegaSpec);
+    }
   }
 
   return '';
