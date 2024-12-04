@@ -8,27 +8,28 @@ const props = defineProps<{
 }>();
 
 const vegaSpec = computed(() => {
-  // let specObject;
-  // try {
-  //   specObject = JSON.parse(props.spec);
-  // } catch (error) {
-  //   console.error('Error parsing spec', error);
-  //   return;
-  // }
-  // if (!Array.isArray(specObject)) {
-  //   console.error('Spec is not an array');
-  //   return;
-  // }
+  // TODO: validate the input
 
-  // if (specObject.length === 0) {
-  //   console.error('Spec is empty');
-  //   return;
-  // }
+  let dataUrl: string;
+  switch (props.spec.function.arguments.dataset) {
+    case 'datasets':
+      dataUrl = './data/hubmap-datasets-metadata-2024-11-15_20-36-10.tsv';
+      break;
+    case 'donors':
+      dataUrl = './data/hubmap-donors-metadata-2024-11-15_20-36-05.tsv';
+      break;
+    case 'samples':
+      dataUrl = './data/hubmap-samples-metadata-2024-11-15_20-36-06.tsv';
+      break;
+    default:
+      throw new Error('Unknown dataset');
+  }
+
   if (!props.spec.function.arguments.field2) {
     const vegaLiteSpec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
       data: {
-        url: './data/hubmap-datasets-metadata-2024-11-15_20-36-10.tsv',
+        url: dataUrl,
         format: {
           type: 'tsv',
         },
@@ -49,7 +50,7 @@ const vegaSpec = computed(() => {
     const vegaLiteSpec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
       data: {
-        url: './data/hubmap-datasets-metadata-2024-11-15_20-36-10.tsv',
+        url: dataUrl,
         format: {
           type: 'tsv',
         },
