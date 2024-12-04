@@ -57,6 +57,7 @@ const vegaSpec = computed(() => {
     if (columnTypes[dataset][field1] === 'quantitative') {
       const vegaSpec = {
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        background: '#fafafa',
         data: { url: dataUrl },
         mark: 'bar',
         encoding: {
@@ -73,6 +74,7 @@ const vegaSpec = computed(() => {
 
     const vegaLiteSpec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      background: '#fafafa',
       data: {
         url: dataUrl,
         format: {
@@ -98,6 +100,7 @@ const vegaSpec = computed(() => {
     ) {
       const vegaSpec = {
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        background: '#fafafa',
         data: { url: dataUrl },
         mark: 'point',
         encoding: {
@@ -141,6 +144,7 @@ const vegaSpec = computed(() => {
 
     const vegaLiteSpec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      background: '#fafafa',
       data: {
         url: dataUrl,
         format: {
@@ -170,6 +174,7 @@ const vegaSpec = computed(() => {
       // bubble plot
       const vegaSpec = {
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        background: '#fafafa',
         data: { url: dataUrl },
         mark: 'point',
         encoding: {
@@ -212,6 +217,7 @@ const vegaSpec = computed(() => {
 
       const vegaSpec = {
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        background: '#fafafa',
         data: {
           url: dataUrl,
         },
@@ -265,6 +271,7 @@ const vegaSpec = computed(() => {
 
       const vegaSpec = {
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        background: '#fafafa',
         data: { url: dataUrl },
         mark: 'rect',
         encoding: {
@@ -290,6 +297,7 @@ const vegaSpec = computed(() => {
       const n3field = field3;
       const vegaSpec = {
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        background: '#fafafa',
         data: { url: dataUrl },
         mark: 'bar',
         encoding: {
@@ -300,6 +308,11 @@ const vegaSpec = computed(() => {
             field: n3field,
           },
         },
+        // transform: [
+        //   { filter: { field: n1field, valid: false } },
+        //   { filter: { field: n2field, valid: false } },
+        //   { filter: { field: n3field, valid: false } },
+        // ],
       };
 
       return JSON.stringify(vegaSpec);
