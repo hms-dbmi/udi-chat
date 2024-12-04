@@ -95,7 +95,7 @@ function bgColor(role: 'user' | 'system' | 'assistant'): string {
     case 'system':
       return 'orange-4';
     case 'assistant':
-      return 'grey-2';
+      return 'grey-1';
   }
 }
 
