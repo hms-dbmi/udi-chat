@@ -162,7 +162,7 @@ function shouldRenderDSLFunction(message: Message, index: number): boolean {
   return true;
 }
 
-const renderChoice = ref<'vega' | 'none' | 'dsl' | 'dsl_func'>('vega');
+const renderChoice = ref<'vega' | 'none' | 'dsl' | 'dsl_func'>('dsl_func');
 const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
 </script>
 
