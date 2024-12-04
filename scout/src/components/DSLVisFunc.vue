@@ -47,13 +47,12 @@ const vegaSpec = computed(() => {
       throw new Error('Unknown dataset');
   }
 
+  const dataset = props.spec.function.arguments.dataset;
   const field1 = props.spec.function.arguments.field1;
+  const field2 = props.spec.function.arguments.field2;
 
-  if (!props.spec.function.arguments.field2) {
-    if (
-      columnTypes[props.spec.function.arguments.dataset][field1] ===
-      'quantitative'
-    ) {
+  if (!field2) {
+    if (columnTypes[dataset][field1] === 'quantitative') {
       const vegaSpec = {
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
         data: { url: dataUrl },
@@ -90,7 +89,54 @@ const vegaSpec = computed(() => {
     };
     return JSON.stringify(vegaLiteSpec);
   }
-  if (props.spec.function.arguments.field2) {
+  if (field2) {
+    if (
+      columnTypes[dataset][field1] === 'quantitative' &&
+      columnTypes[dataset][field2] === 'quantitative'
+    ) {
+      const vegaSpec = {
+        $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+        data: { url: dataUrl },
+        mark: 'point',
+        encoding: {
+          x: { field: field1, type: 'quantitative' },
+          y: { field: field2, type: 'quantitative' },
+        },
+      };
+
+      return JSON.stringify(vegaSpec);
+    }
+
+    if (
+      (columnTypes[dataset][field1] === 'quantitative' &&
+        columnTypes[dataset][field2] === 'string') ||
+      (columnTypes[dataset][field1] === 'string' &&
+        columnTypes[dataset][field2] === 'quantitative')
+    ) {
+      const quantField =
+        columnTypes[dataset][field1] === 'quantitative' ? field1 : field2;
+      const nominalField =
+        columnTypes[dataset][field1] === 'string' ? field1 : field2;
+      const vegaSpec = {
+        data: { url: dataUrl },
+        mark: 'bar',
+        encoding: {
+          x: {
+            bin: { maxbins: 15 },
+            field: quantField,
+            type: 'quantitative',
+          },
+          y: {
+            aggregate: 'count',
+            type: 'quantitative',
+          },
+          row: { field: nominalField },
+        },
+      };
+
+      return JSON.stringify(vegaSpec);
+    }
+
     const vegaLiteSpec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
       data: {
