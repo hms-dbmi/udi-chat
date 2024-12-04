@@ -33,3 +33,9 @@ N - bar chart
 QQ - scatterplot (maybe w/ dist on axes)
 QN/NQ - if 1:1 then bar chart, otherwise, violin plots
 NN - stacked bar chart, or maybe heatmap
+
+3 column
+QQQ - bubble plot?
+QQN - scaterplot with color on N
+QNN - heatmap
+NNN - faceted/trellis stacked bar chart
