@@ -22,3 +22,14 @@ QQO
 QNN
 QNO
 Q
+
+Basic chart rec for just Q,N
+
+1 COLUMN
+Q - histogram
+N - bar chart
+
+2 COLUMN
+QQ - scatterplot (maybe w/ dist on axes)
+QN/NQ - if 1:1 then bar chart, otherwise, violin plots
+NN - stacked bar chart, or maybe heatmap
