@@ -83,12 +83,12 @@ const vegaSpec = computed(() => {
       },
       mark: 'bar',
       encoding: {
-        x: {
+        x: { aggregate: 'count', type: 'quantitative' },
+        y: {
           field: field1,
           type: 'nominal',
-          sort: '-y',
+          sort: '-x',
         },
-        y: { aggregate: 'count', type: 'quantitative' },
       },
     };
     return JSON.stringify(vegaLiteSpec);
@@ -153,12 +153,12 @@ const vegaSpec = computed(() => {
       },
       mark: 'bar',
       encoding: {
-        x: {
+        x: { aggregate: 'count', type: 'quantitative' },
+        y: {
           field: props.spec.function.arguments.field1,
           type: 'nominal',
-          sort: '-y',
+          sort: '-x',
         },
-        y: { aggregate: 'count', type: 'quantitative' },
         color: { field: props.spec.function.arguments.field2, type: 'nominal' },
       },
     };
