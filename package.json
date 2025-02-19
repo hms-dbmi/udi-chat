@@ -1,8 +1,8 @@
 {
-  "name": "scout",
+  "name": "yac",
   "version": "0.0.1",
   "description": "udi chat interface",
-  "productName": "scout",
+  "productName": "yac",
   "author": "dev-lan <devinscottlange@gmail.com>",
   "private": true,
   "scripts": {
