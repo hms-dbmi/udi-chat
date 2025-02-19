@@ -1,6 +1,12 @@
-# yac (yac)
+### Universal Discovery Interface Chatbot Prototype
 
-udi chat interface
+This repository contains the prototype for the Universal Discovery Interface (UDI) chatbot.
+
+The chatbot responds to queries with visualization of the available datasets. This interface is useful as we develop and experiment with the [UDI-Grammar](https://github.com/hms-dbmi/udi-grammar).
+
+![A screenshot of the chatbot interface showing user queries and response visualizations.](./docs/chatbot_screenshot.png)
+
+## 🚅 Quick start for developers
 
 ## Install the dependencies
 

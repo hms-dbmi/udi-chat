@@ -11,7 +11,7 @@
           @click="toggleLeftDrawer"
         />
 
-        <q-toolbar-title> YAC </q-toolbar-title>
+        <q-toolbar-title> UDI Chatbot </q-toolbar-title>
 
         <div>Quasar v{{ q.version }}</div>
       </q-toolbar>
