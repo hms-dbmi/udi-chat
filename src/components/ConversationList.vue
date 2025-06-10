@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+// import { ref, computed, watch, onMounted } from 'vue';
 import { useConversationStore } from './conversationStore';
 
 const conversationStore = useConversationStore();
@@ -31,8 +31,7 @@ function stripFileExtension(filename: string) {
 <template>
   <q-list class="q-mt-sm">
     <q-item clickable @click="conversationStore.newConversation()">
-      <q-item-section avatar>
-        <q-icon color="primary" name="add" /> </q-item-section
+      <q-item-section avatar> <q-icon color="primary" name="add" /> </q-item-section
       ><q-item-section>New Converstation</q-item-section></q-item
     >
     <q-separator spaced inset />

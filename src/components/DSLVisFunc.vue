@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import VegaLite from './VegaLite.vue';
 import type { ToolCall } from './conversationStore';
 import { columnTypes } from './columnTypes';
-import { field } from 'vega';
 
 const props = defineProps<{
   spec: ToolCall;
@@ -49,12 +48,12 @@ const vegaSpec = computed(() => {
   }
 
   const dataset = props.spec.function.arguments.dataset;
-  const field1 = props.spec.function.arguments.field1;
-  const field2 = props.spec.function.arguments.field2;
-  const field3 = props.spec.function.arguments.field3;
+  const field1 = props.spec.function.arguments.field1 ?? '';
+  const field2 = props.spec.function.arguments.field2 ?? '';
+  const field3 = props.spec.function.arguments.field3 ?? '';
 
   if (!field2) {
-    if (columnTypes[dataset][field1] === 'quantitative') {
+    if (columnTypes[dataset]?.[field1] === 'quantitative') {
       const vegaSpec = {
         $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
         background: '#fafafa',
@@ -95,7 +94,7 @@ const vegaSpec = computed(() => {
   }
   if (field2 && !field3) {
     if (
-      columnTypes[dataset][field1] === 'quantitative' &&
+      columnTypes[dataset]?.[field1] === 'quantitative' &&
       columnTypes[dataset][field2] === 'quantitative'
     ) {
       const vegaSpec = {
@@ -113,15 +112,13 @@ const vegaSpec = computed(() => {
     }
 
     if (
-      (columnTypes[dataset][field1] === 'quantitative' &&
+      (columnTypes[dataset]?.[field1] === 'quantitative' &&
         columnTypes[dataset][field2] === 'string') ||
-      (columnTypes[dataset][field1] === 'string' &&
+      (columnTypes[dataset]?.[field1] === 'string' &&
         columnTypes[dataset][field2] === 'quantitative')
     ) {
-      const quantField =
-        columnTypes[dataset][field1] === 'quantitative' ? field1 : field2;
-      const nominalField =
-        columnTypes[dataset][field1] === 'string' ? field1 : field2;
+      const quantField = columnTypes[dataset][field1] === 'quantitative' ? field1 : field2;
+      const nominalField = columnTypes[dataset][field1] === 'string' ? field1 : field2;
       const vegaSpec = {
         data: { url: dataUrl },
         mark: 'bar',
@@ -167,7 +164,7 @@ const vegaSpec = computed(() => {
 
   if (field2 && field3) {
     if (
-      columnTypes[dataset][field1] === 'quantitative' &&
+      columnTypes[dataset]?.[field1] === 'quantitative' &&
       columnTypes[dataset][field2] === 'quantitative' &&
       columnTypes[dataset][field3] === 'quantitative'
     ) {
@@ -188,13 +185,13 @@ const vegaSpec = computed(() => {
     }
 
     if (
-      (columnTypes[dataset][field1] === 'quantitative' &&
+      (columnTypes[dataset]?.[field1] === 'quantitative' &&
         columnTypes[dataset][field2] === 'quantitative' &&
         columnTypes[dataset][field3] === 'string') ||
-      (columnTypes[dataset][field1] === 'string' &&
+      (columnTypes[dataset]?.[field1] === 'string' &&
         columnTypes[dataset][field2] === 'quantitative' &&
         columnTypes[dataset][field3] === 'quantitative') ||
-      (columnTypes[dataset][field1] === 'quantitative' &&
+      (columnTypes[dataset]?.[field1] === 'quantitative' &&
         columnTypes[dataset][field2] === 'string' &&
         columnTypes[dataset][field3] === 'quantitative')
     ) {
@@ -242,13 +239,13 @@ const vegaSpec = computed(() => {
     }
 
     if (
-      (columnTypes[dataset][field1] === 'quantitative' &&
+      (columnTypes[dataset]?.[field1] === 'quantitative' &&
         columnTypes[dataset][field2] === 'string' &&
         columnTypes[dataset][field3] === 'string') ||
-      (columnTypes[dataset][field1] === 'string' &&
+      (columnTypes[dataset]?.[field1] === 'string' &&
         columnTypes[dataset][field2] === 'quantitative' &&
         columnTypes[dataset][field3] === 'string') ||
-      (columnTypes[dataset][field1] === 'string' &&
+      (columnTypes[dataset]?.[field1] === 'string' &&
         columnTypes[dataset][field2] === 'string' &&
         columnTypes[dataset][field3] === 'quantitative')
     ) {
@@ -287,7 +284,7 @@ const vegaSpec = computed(() => {
     }
 
     if (
-      columnTypes[dataset][field1] === 'string' &&
+      columnTypes[dataset]?.[field1] === 'string' &&
       columnTypes[dataset][field2] === 'string' &&
       columnTypes[dataset][field3] === 'string'
     ) {

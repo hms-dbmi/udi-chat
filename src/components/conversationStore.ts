@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { initialPrompt } from './promptEngineering';
 
 export interface Message {
@@ -29,7 +29,7 @@ export const useConversationStore = defineStore('conversationStore', () => {
   function loadConversation(filename: string) {
     activeConverstation.value = filename;
     // loads conversation from json file
-    fetch('./sessions/' + filename)
+    void fetch('./sessions/' + filename)
       .then((response) => response.json())
       .then((data) => {
         messages.value = data;

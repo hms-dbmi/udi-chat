@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { computed } from 'vue';
 import VegaLite from './VegaLite.vue';
-import { format } from 'path';
 
 const props = defineProps({
   spec: {
@@ -68,7 +67,7 @@ const vegaSpec = computed(() => {
 </script>
 
 <template>
-  <VegaLite :spec="vegaSpec" />
+  <VegaLite :spec="vegaSpec ?? ''" />
 </template>
 
 <style scoped lang="scss"></style>

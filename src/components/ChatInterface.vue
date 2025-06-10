@@ -5,8 +5,9 @@ import ollama from 'ollama/browser';
 import VegaLite from './VegaLite.vue';
 import DSLVis from './DSLVis.vue';
 import DSLVisFunc from './DSLVisFunc.vue';
-import { Message, useConversationStore } from './conversationStore';
+import { type Message, useConversationStore } from './conversationStore';
 import { interstitialPrompt, tools as agentTools } from './promptEngineering';
+import type { ToolCall } from 'ollama';
 // import { UDIVis } from 'udi-toolkit';
 
 const conversationStore = useConversationStore();
@@ -35,7 +36,7 @@ function sendMessage(event: Event) {
 
   conversationStore.messages.push({ content: inputText.value, role: 'user' });
   inputText.value = '';
-  queryLLM();
+  void queryLLM();
   scrollToBottom();
 }
 
@@ -54,18 +55,20 @@ async function queryLLM() {
   if (stream) {
     conversationStore.messages.push({ content: '', role: 'assistant' });
     // @ts-expect-error: typing matches stream boolean
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     for await (const chunk of response) {
       const newText = chunk.message.content;
-      conversationStore.messages[
-        conversationStore.messages.length - 1
-      ].content += newText;
+      const lastMsg = conversationStore.messages[conversationStore.messages.length - 1];
+      if (lastMsg && typeof lastMsg.content === 'string') {
+        lastMsg.content += newText;
+      }
       scrollToBottom();
     }
   } else {
     conversationStore.messages.push({
       content: response.message.content,
       role: 'assistant',
-      tool_calls: response.message.tool_calls,
+      tool_calls: response.message.tool_calls ?? [],
     });
     scrollToBottom();
   }
@@ -116,8 +119,8 @@ const showSystemTools = ref<boolean>(false);
 const showSystemPrompts = ref<boolean>(false);
 const displayedMessages = computed(() =>
   conversationStore.messages.filter(
-    (message) => message.role !== 'system' || showSystemPrompts.value
-  )
+    (message) => message.role !== 'system' || showSystemPrompts.value,
+  ),
 );
 
 function shouldRenderVega(message: Message, index: number): boolean {
@@ -165,6 +168,19 @@ function shouldRenderDSLFunction(message: Message, index: number): boolean {
 
 const renderChoice = ref<'vega' | 'none' | 'dsl' | 'dsl_func'>('dsl_func');
 const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
+
+function firstToolCall(message: {
+  role: 'user' | 'system' | 'assistant';
+  content: string;
+  tool_calls?: {
+    function: {
+      name: string;
+      arguments: unknown;
+    };
+  }[];
+}): ToolCall {
+  return message.tool_calls![0] as ToolCall;
+}
 </script>
 
 <template>
@@ -199,11 +215,7 @@ const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
     <VegaLite :spec="spec"> </VegaLite>
   </div> -->
   <q-separator />
-  <q-scroll-area
-    ref="messageArea"
-    class="q-mt-md flex-grow-1"
-    style="height: 1px; width: 800px"
-  >
+  <q-scroll-area ref="messageArea" class="q-mt-md flex-grow-1" style="height: 1px; width: 800px">
     <q-chat-message
       v-if="showSystemTools"
       :bg-color="bgColor('system')"
@@ -229,22 +241,15 @@ const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
         :src="JSON.stringify(message)"
       ></q-markdown>
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
-      <VegaLite v-if="shouldRenderVega(message, i)" :spec="message.content">
-      </VegaLite>
-      <DSLVis
-        v-if="shouldRenderDSL(message, i)"
-        :spec="message.content"
-      ></DSLVis>
+      <VegaLite v-if="shouldRenderVega(message, i)" :spec="message.content"> </VegaLite>
+      <DSLVis v-if="shouldRenderDSL(message, i)" :spec="message.content"></DSLVis>
       <DSLVisFunc
         v-if="shouldRenderDSLFunction(message, i)"
-        :spec="message.tool_calls![0]"
+        :spec="firstToolCall(message)"
       ></DSLVisFunc>
     </q-chat-message>
     <q-chat-message
-      v-if="
-        llmResponding &&
-        displayedMessages[displayedMessages.length - 1].role !== 'assistant'
-      "
+      v-if="llmResponding && displayedMessages[displayedMessages.length - 1]?.role !== 'assistant'"
       class="q-mr-lg q-ml-lg"
       :sent="false"
       :bg-color="bgColor('assistant')"
@@ -270,18 +275,8 @@ const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
         icon-right="save"
         label="Save"
       ></q-btn>
-      <q-checkbox
-        class="q-mr-sm"
-        v-model="showDebugInfo"
-        label="Debug"
-        toggle-color="primary"
-      />
-      <q-checkbox
-        class="q-mr-sm"
-        v-model="showSystemTools"
-        label="Tools"
-        toggle-color="primary"
-      />
+      <q-checkbox class="q-mr-sm" v-model="showDebugInfo" label="Debug" toggle-color="primary" />
+      <q-checkbox class="q-mr-sm" v-model="showSystemTools" label="Tools" toggle-color="primary" />
       <q-checkbox
         class="q-mr-sm"
         v-model="showSystemPrompts"
