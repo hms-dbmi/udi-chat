@@ -7,6 +7,7 @@ import DSLVis from './DSLVis.vue';
 import DSLVisFunc from './DSLVisFunc.vue';
 import { Message, useConversationStore } from './conversationStore';
 import { interstitialPrompt, tools as agentTools } from './promptEngineering';
+// import { UDIVis } from 'udi-toolkit';
 
 const conversationStore = useConversationStore();
 const inputText = ref('');
@@ -167,6 +168,33 @@ const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
 </script>
 
 <template>
+  <!-- <div>Really dumb test.</div>
+  <UDIVis
+    :spec="{
+      source: {
+        name: 'donors',
+        source: 'https://vispubs.com/data/papers.csv',
+      },
+      transformation: [
+        {
+          groupby: ['Year', 'Conference'],
+        },
+        {
+          rollup: {
+            paper_count: { op: 'count' },
+          },
+        },
+      ],
+      representation: {
+        mark: 'bar',
+        mapping: [
+          { encoding: 'x', field: 'Year', type: 'ordinal' },
+          { encoding: 'color', field: 'Conference', type: 'nominal' },
+          { encoding: 'y', field: 'paper_count', type: 'quantitative' },
+        ],
+      },
+    }"
+  ></UDIVis> -->
   <!-- <div style="outline: solid red 3px">
     <VegaLite :spec="spec"> </VegaLite>
   </div> -->
