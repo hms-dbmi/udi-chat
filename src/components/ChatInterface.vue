@@ -123,6 +123,19 @@ const displayedMessages = computed(() =>
   ),
 );
 
+function shouldRenderUdiGrammar(message: Message, index: number): boolean {
+  if (message.role !== 'assistant') {
+    return false;
+  }
+  if (index === displayedMessages.value.length - 1 && llmResponding.value) {
+    return false;
+  }
+  if (renderChoice.value !== 'udi') {
+    return false;
+  }
+  return true;
+}
+
 function shouldRenderVega(message: Message, index: number): boolean {
   if (message.role !== 'assistant') {
     return false;
@@ -166,8 +179,8 @@ function shouldRenderDSLFunction(message: Message, index: number): boolean {
   return true;
 }
 
-const renderChoice = ref<'vega' | 'none' | 'dsl' | 'dsl_func'>('dsl_func');
-const renderChoices = ['vega', 'none', 'dsl', 'dsl_func'];
+const renderChoice = ref<'vega' | 'none' | 'dsl' | 'dsl_func' | 'udi'>('udi');
+const renderChoices = ['udi', 'vega', 'none', 'dsl', 'dsl_func'];
 
 function firstToolCall(message: {
   role: 'user' | 'system' | 'assistant';
@@ -181,36 +194,58 @@ function firstToolCall(message: {
 }): ToolCall {
   return message.tool_calls![0] as ToolCall;
 }
+
+function extractUdiSpecFromMessage(message: Message): object | null {
+  if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
+    return null;
+  }
+  const firstToolCall = message.tool_calls[0];
+  if (!firstToolCall) return null;
+  const functionCall = firstToolCall.function;
+  if (!functionCall) return null;
+  if (functionCall.name !== 'createVisualization') return null;
+  const functionArgs = functionCall.arguments;
+  if (!functionArgs) return null;
+  const specString = functionArgs.spec;
+  if (!specString) return null;
+  return specString;
+  try {
+    const spec = JSON.parse(specString);
+    return spec;
+  } catch (error: unknown) {
+    console.warn('LLM generated invalid spec.');
+    if (error instanceof Error) {
+      console.warn('Error parsing UDI spec:', error.message);
+    } else {
+      console.warn('Unknown error parsing UDI spec:', error);
+    }
+    return null;
+  }
+}
 </script>
 
 <template>
   <!-- <div>Really dumb test.</div>
-  <UDIVis
-    :spec="{
-      source: {
-        name: 'donors',
-        source: 'https://vispubs.com/data/papers.csv',
-      },
-      transformation: [
-        {
-          groupby: ['Year', 'Conference'],
+  <div style="width: 100%; outline: solid red 2px">
+    <UDIVis
+      :spec="{
+        source: {
+          name: 'donors',
+          source: 'https://vispubs.com/data/papers.csv',
         },
-        {
-          rollup: {
-            paper_count: { op: 'count' },
+        transformation: [
+          {
+            groupby: ['Year', 'Conference'],
           },
-        },
-      ],
-      representation: {
-        mark: 'bar',
-        mapping: [
-          { encoding: 'x', field: 'Year', type: 'ordinal' },
-          { encoding: 'color', field: 'Conference', type: 'nominal' },
-          { encoding: 'y', field: 'paper_count', type: 'quantitative' },
+          {
+            rollup: {
+              paper_count: { op: 'count' },
+            },
+          },
         ],
-      },
-    }"
-  ></UDIVis> -->
+      }"
+    ></UDIVis>
+  </div> -->
   <!-- <div style="outline: solid red 3px">
     <VegaLite :spec="spec"> </VegaLite>
   </div> -->
@@ -240,7 +275,14 @@ function firstToolCall(message: {
         v-if="showDebugInfo && message.role === 'assistant'"
         :src="JSON.stringify(message)"
       ></q-markdown>
+      <q-markdown
+        v-if="showDebugInfo && message.role === 'assistant' && shouldRenderUdiGrammar(message, i)"
+        :src="JSON.stringify(extractUdiSpecFromMessage(message))"
+      ></q-markdown>
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
+      <div style="width: 400px" v-if="shouldRenderUdiGrammar(message, i)">
+        <UDIVis :spec="extractUdiSpecFromMessage(message)"></UDIVis>
+      </div>
       <VegaLite v-if="shouldRenderVega(message, i)" :spec="message.content"> </VegaLite>
       <DSLVis v-if="shouldRenderDSL(message, i)" :spec="message.content"></DSLVis>
       <DSLVisFunc
