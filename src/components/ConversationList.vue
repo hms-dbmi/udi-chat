@@ -4,23 +4,14 @@ import { useConversationStore } from './conversationStore';
 
 const conversationStore = useConversationStore();
 const conversationFiles = [
-  'what is vega-lite.json',
-  'system prompt example.json',
-  'render vega.json',
-  'render experiment 1.json',
-  'render experiment 2.json',
-  'render experiment 3.json',
-  'render experiment 4.json',
-  'render experiment 5.json',
-  'render experiment 6.json',
-  'exp 7.json',
-  'exp 8.json',
-  'exp 9.json',
-  'exp 10.json',
-  'exp 11.json',
-  'exp var selection.json',
-  'with function calling (2 fields).json',
-  'with function calling (3 fields).json',
+  '1 stacked bar.json',
+  '2 distributions.json',
+  '3 pie chart.json',
+  '4 blood type and sex (fail).json',
+  '5 join works.json',
+  '6 hallucinate data.json',
+  '7 train data error (ask for spec).json',
+  '8 partial specs.json',
 ];
 
 function stripFileExtension(filename: string) {

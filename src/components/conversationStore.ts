@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { initialPrompt } from './promptEngineering';
 
 export interface Message {
@@ -49,8 +49,24 @@ export const useConversationStore = defineStore('conversationStore', () => {
 
   newConversation();
 
+  const messagesFormattedForLLM = computed(() => {
+    return messages.value.map((message) => {
+      if (!message.tool_calls) return message;
+      return {
+        ...message,
+        tool_calls: message.tool_calls.map((toolCall) => ({
+          function: {
+            name: toolCall.function.name,
+            arguments: JSON.stringify(toolCall.function.arguments),
+          },
+        })),
+      };
+    });
+  });
+
   return {
     messages,
+    messagesFormattedForLLM,
     loadConversation,
     activeConverstation,
     newConversation,
