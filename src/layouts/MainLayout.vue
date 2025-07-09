@@ -3,6 +3,7 @@
     <q-header elevated>
       <q-toolbar>
         <q-btn
+          v-if="globalStore.debugMode"
           flat
           dense
           round
@@ -12,8 +13,7 @@
         />
 
         <q-toolbar-title> UDI Chatbot </q-toolbar-title>
-
-        <div>Quasar v{{ q.version }}</div>
+        <q-toggle color="secondary" v-model="globalStore.debugMode" label="Debug" />
       </q-toolbar>
     </q-header>
 
@@ -31,6 +31,8 @@
 import { ref } from 'vue';
 import { Quasar } from 'quasar';
 import ConversationList from 'components/ConversationList.vue';
+import { useGlobalStore } from '../stores/globalStore';
+const globalStore = useGlobalStore();
 
 defineOptions({
   name: 'MainLayout',
