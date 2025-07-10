@@ -6,7 +6,11 @@ const dashboardStore = useDashboardStore();
 
 <template>
   <template v-for="viz of dashboardStore.pinnedVisualizations.values()" :key="viz.index">
-    <div class="w-400">
+    <div
+      :class="`w-400 q-pa-md ${dashboardStore.isHovered(viz.index) ? 'hovered-viz' : ''}`"
+      @mouseover="dashboardStore.setHoveredVisualizationIndex(viz.index)"
+      @mouseleave="dashboardStore.setHoveredVisualizationIndex(null)"
+    >
       <q-toolbar dense>
         <span class="text-caption text-weight-light">Prompt: </span>
         <span class="text-caption short-text-element" :title="viz.userPrompt">{{
@@ -30,5 +34,9 @@ const dashboardStore = useDashboardStore();
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+
+.hovered-viz {
+  outline: solid 2px $secondary;
 }
 </style>

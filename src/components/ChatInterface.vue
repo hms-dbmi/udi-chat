@@ -365,7 +365,13 @@ function pinVisualization(index: number): void {
         :src="JSON.stringify(extractUdiSpecFromMessage(message))"
       ></q-markdown>
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
-      <div style="width: 400px" v-if="shouldRenderUdiGrammar(message, i)">
+      <div
+        style="width: 400px"
+        :class="{ 'hovered-message': dashboardStore.isHovered(i) }"
+        @mouseover="dashboardStore.setHoveredVisualizationIndex(i)"
+        @mouseleave="dashboardStore.setHoveredVisualizationIndex(null)"
+        v-if="shouldRenderUdiGrammar(message, i)"
+      >
         <template v-if="dashboardStore.isPinned(i)">
           <div class="row">
             <q-btn
@@ -479,5 +485,9 @@ function pinVisualization(index: number): void {
   width: 400px;
   transform: scale(0.2);
   transform-origin: top left;
+}
+
+.hovered-message {
+  outline: solid 2px $secondary;
 }
 </style>
