@@ -301,7 +301,11 @@ function extractUdiSpecFromMessage(message: Message): object | null {
 
 <template>
   <q-separator />
-  <q-scroll-area ref="messageArea" class="q-mt-md flex-grow-1" style="height: 1px; width: 800px">
+  <q-scroll-area
+    ref="messageArea"
+    class="q-mt-md flex-grow-1"
+    style="height: 1px; width: 100px; width: 480px"
+  >
     <q-chat-message
       v-if="showSystemTools"
       :bg-color="bgColor('system')"
@@ -351,7 +355,7 @@ function extractUdiSpecFromMessage(message: Message): object | null {
     /></q-chat-message>
   </q-scroll-area>
 
-  <div class="flex w-800 q-mt-md column justify-end">
+  <div class="flex w-480 q-mt-md column justify-end">
     <q-input
       class="full-width q-pb-sm"
       v-model="inputText"
@@ -405,8 +409,8 @@ function extractUdiSpecFromMessage(message: Message): object | null {
 </template>
 
 <style scoped lang="scss">
-.w-800 {
-  width: 800px;
+.w-480 {
+  width: 480px;
 }
 
 .flex-grow-1 {
