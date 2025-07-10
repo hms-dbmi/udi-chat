@@ -4,13 +4,14 @@ import { defineStore } from 'pinia';
 export interface PinnedVisualization {
   index: number;
   spec: object;
+  userPrompt: string;
 }
 
 export const useDashboardStore = defineStore('dashboardStore', () => {
   const pinnedVisualizations = ref<Map<number, PinnedVisualization>>(new Map());
 
-  function pinVisualization(index: number, spec: object) {
-    pinnedVisualizations.value.set(index, { index, spec });
+  function pinVisualization(index: number, spec: object, userPrompt: string) {
+    pinnedVisualizations.value.set(index, { index, spec, userPrompt });
   }
 
   function unpinVisualization(index: number) {

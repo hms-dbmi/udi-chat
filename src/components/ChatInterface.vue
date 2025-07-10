@@ -301,6 +301,7 @@ function extractUdiSpecFromMessage(message: Message): object | null {
 }
 
 function pinVisualization(index: number): void {
+  // if (displayedMessages.value)
   const message = displayedMessages.value[index];
   if (!message) {
     console.warn('No message found at index:', index);
@@ -315,7 +316,16 @@ function pinVisualization(index: number): void {
     console.warn('No UDI spec found in message');
     return;
   }
-  dashboardStore.pinVisualization(index, spec);
+  let userPromptIndex = index - 1;
+  while (userPromptIndex >= 0 && displayedMessages.value?.[userPromptIndex]?.role !== 'user') {
+    userPromptIndex--;
+  }
+  if (userPromptIndex < 0) {
+    console.warn('No user prompt found before the assistant message');
+    return;
+  }
+  const userPrompt = displayedMessages.value?.[userPromptIndex]?.content ?? '';
+  dashboardStore.pinVisualization(index, spec, userPrompt);
 }
 </script>
 
