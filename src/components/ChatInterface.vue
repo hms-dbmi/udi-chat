@@ -367,11 +367,18 @@ function pinVisualization(index: number): void {
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
       <div style="width: 400px" v-if="shouldRenderUdiGrammar(message, i)">
         <template v-if="dashboardStore.isPinned(i)">
-          <q-btn
-            icon="keyboard_return"
-            @click="dashboardStore.unpinVisualization(i)"
-            label="remove from dashboard"
-          ></q-btn>
+          <div class="row">
+            <q-btn
+              icon="keyboard_return"
+              @click="dashboardStore.unpinVisualization(i)"
+              label="remove from dashboard"
+            ></q-btn>
+            <div class="shrinkydink-wrapper q-ml-md">
+              <div class="shrinkydink">
+                <UDIVis :spec="extractUdiSpecFromMessage(message)"></UDIVis>
+              </div>
+            </div>
+          </div>
         </template>
         <template v-else>
           <q-toolbar dense
@@ -462,5 +469,15 @@ function pinVisualization(index: number): void {
 
 .flex-grow-1 {
   flex-grow: 1;
+}
+
+.shrinkydink-wrapper {
+  width: 80px;
+  height: 50px;
+}
+.shrinkydink {
+  width: 400px;
+  transform: scale(0.2);
+  transform-origin: top left;
 }
 </style>
