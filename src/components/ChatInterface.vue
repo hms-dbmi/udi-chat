@@ -12,6 +12,8 @@ import type { ToolCall } from 'ollama';
 import OpenAI from 'openai';
 import { useGlobalStore } from '../stores/globalStore';
 const globalStore = useGlobalStore();
+import { useDashboardStore } from 'src/stores/dashboardStore';
+const dashboardStore = useDashboardStore();
 
 const conversationStore = useConversationStore();
 const inputText = ref('');
@@ -297,6 +299,24 @@ function extractUdiSpecFromMessage(message: Message): object | null {
   //   return null;
   // }
 }
+
+function pinVisualization(index: number): void {
+  const message = displayedMessages.value[index];
+  if (!message) {
+    console.warn('No message found at index:', index);
+    return;
+  }
+  if (message.role !== 'assistant') {
+    console.warn('Cannot pin visualization for non-assistant message');
+    return;
+  }
+  const spec = extractUdiSpecFromMessage(message);
+  if (!spec) {
+    console.warn('No UDI spec found in message');
+    return;
+  }
+  dashboardStore.pinVisualization(index, spec);
+}
 </script>
 
 <template>
@@ -336,7 +356,24 @@ function extractUdiSpecFromMessage(message: Message): object | null {
       ></q-markdown>
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
       <div style="width: 400px" v-if="shouldRenderUdiGrammar(message, i)">
-        <UDIVis :spec="extractUdiSpecFromMessage(message)"></UDIVis>
+        <template v-if="dashboardStore.isPinned(i)">
+          <q-btn
+            icon="keyboard_return"
+            @click="dashboardStore.unpinVisualization(i)"
+            label="remove from dashboard"
+          ></q-btn>
+        </template>
+        <template v-else>
+          <q-toolbar dense
+            ><q-space></q-space
+            ><q-btn
+              icon-right="shortcut"
+              label="add to dashboard"
+              @click="pinVisualization(i)"
+            ></q-btn
+          ></q-toolbar>
+          <UDIVis :spec="extractUdiSpecFromMessage(message)"></UDIVis>
+        </template>
       </div>
       <VegaLite v-if="shouldRenderVega(message, i)" :spec="message.content"> </VegaLite>
       <DSLVis v-if="shouldRenderDSL(message, i)" :spec="message.content"></DSLVis>
