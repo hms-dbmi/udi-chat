@@ -479,7 +479,8 @@ function pinVisualization(index: number): void {
 
 .shrinkydink-wrapper {
   width: 80px;
-  height: 50px;
+  height: 40px;
+  overflow: hidden;
 }
 .shrinkydink {
   width: 400px;
