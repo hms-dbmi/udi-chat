@@ -15,6 +15,8 @@ const globalStore = useGlobalStore();
 import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
 
+import UDIVisMessage from 'components/UDIVisMessage.vue';
+
 const conversationStore = useConversationStore();
 const inputText = ref('');
 
@@ -365,39 +367,14 @@ function pinVisualization(index: number): void {
         :src="JSON.stringify(extractUdiSpecFromMessage(message))"
       ></q-markdown>
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
-      <div
-        style="width: 400px"
-        :class="{ 'hovered-message': dashboardStore.isHovered(i) }"
-        @mouseover="dashboardStore.setHoveredVisualizationIndex(i)"
-        @mouseleave="dashboardStore.setHoveredVisualizationIndex(null)"
+      <UDIVisMessage
         v-if="shouldRenderUdiGrammar(message, i)"
-      >
-        <template v-if="dashboardStore.isPinned(i)">
-          <div class="row">
-            <q-btn
-              icon="keyboard_return"
-              @click="dashboardStore.unpinVisualization(i)"
-              label="remove from dashboard"
-            ></q-btn>
-            <div class="shrinkydink-wrapper q-ml-md">
-              <div class="shrinkydink">
-                <UDIVis :spec="extractUdiSpecFromMessage(message)"></UDIVis>
-              </div>
-            </div>
-          </div>
-        </template>
-        <template v-else>
-          <q-toolbar dense
-            ><q-space></q-space
-            ><q-btn
-              icon-right="shortcut"
-              label="add to dashboard"
-              @click="pinVisualization(i)"
-            ></q-btn
-          ></q-toolbar>
-          <UDIVis :spec="extractUdiSpecFromMessage(message)"></UDIVis>
-        </template>
-      </div>
+        :message="message"
+        :index="i"
+        :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
+        :extractUdiSpecFromMessage="extractUdiSpecFromMessage"
+        :pinVisualization="pinVisualization"
+      ></UDIVisMessage>
       <VegaLite v-if="shouldRenderVega(message, i)" :spec="message.content"> </VegaLite>
       <DSLVis v-if="shouldRenderDSL(message, i)" :spec="message.content"></DSLVis>
       <DSLVisFunc
@@ -475,20 +452,5 @@ function pinVisualization(index: number): void {
 
 .flex-grow-1 {
   flex-grow: 1;
-}
-
-.shrinkydink-wrapper {
-  width: 80px;
-  height: 40px;
-  overflow: hidden;
-}
-.shrinkydink {
-  width: 400px;
-  transform: scale(0.2);
-  transform-origin: top left;
-}
-
-.hovered-message {
-  outline: solid 2px $secondary;
 }
 </style>
