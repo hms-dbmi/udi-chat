@@ -26,6 +26,8 @@ const llmResponding = ref(false);
 
 const client = { value: null };
 
+const port = 55001;
+
 onMounted(() => {
   // apiKey: process.env['OPENAI_API_KEY'], // This is the default and can be omitted
 
@@ -38,7 +40,7 @@ onMounted(() => {
   // )
 
   client.value = new OpenAI({
-    baseURL: 'http://localhost:9090/v1', // vLLM API server
+    baseURL: `http://localhost:${port}/v1`, // vLLM API server
     apiKey: 'EMPTY', // Replace with your OpenAI API key if needed
     dangerouslyAllowBrowser: true,
   });
@@ -70,8 +72,9 @@ function sendMessage(event: Event) {
 async function queryLLM() {
   llmResponding.value = true;
 
-  const server = 'http://localhost:9090/v1';
-  const model = 'agenticx/UDI-VIS-Beta-v0-Llama-3.1-8B';
+  const server = `http://localhost:${port}/v1`;
+  // const model = 'agenticx/UDI-VIS-Beta-v0-Llama-3.1-8B';
+  const model = 'agenticx/UDI-VIS-Beta-v2-Llama-3.1-8B';
   try {
     const response = await fetch(`${server}/udi/completions`, {
       method: 'POST',
@@ -363,6 +366,8 @@ function pinVisualization(index: number): void {
         :src="JSON.stringify(message)"
       ></q-markdown>
       <q-markdown
+        show-copy
+        no-typographer
         v-if="showDebugInfo && message.role === 'assistant' && shouldRenderUdiGrammar(message, i)"
         :src="JSON.stringify(extractUdiSpecFromMessage(message))"
       ></q-markdown>
