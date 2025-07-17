@@ -4232,10 +4232,10 @@ uc.micro@^1.0.1, uc.micro@^1.0.5:
   resolved "https://registry.yarnpkg.com/uc.micro/-/uc.micro-1.0.6.tgz#9c411a802a409a91fc6cf74081baba34b24499ac"
   integrity sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==
 
-udi-toolkit@^0.0.24:
-  version "0.0.24"
-  resolved "https://registry.yarnpkg.com/udi-toolkit/-/udi-toolkit-0.0.24.tgz#6515f92c42d81908efc98cd950824303265c3f52"
-  integrity sha512-gfIt60Ici6hbgINSgStr0qvicBefkEJfIkkZUm5PykC3Qstz9Tb3VruM9qFxEAZq4Vnj5oB0ez1dTpIPyShQMg==
+udi-toolkit@^0.0.25:
+  version "0.0.25"
+  resolved "https://registry.yarnpkg.com/udi-toolkit/-/udi-toolkit-0.0.25.tgz#5262961b4d19c24d20f41a2443a05c6b3be77c03"
+  integrity sha512-q6Be9qVxX1BIqnzMyKOF/8z5GBUaVNvEp5Qht/EsSqNcV0QGuJy76ABKCzpGqBB/uNZ0E5yxJL2O9Rk/psAw3w==
   dependencies:
     "@types/d3-scale" "^4.0.9"
     "@types/d3-scale-chromatic" "^3.1.0"
