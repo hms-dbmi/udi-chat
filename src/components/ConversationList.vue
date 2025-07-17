@@ -12,6 +12,12 @@ const conversationFiles = [
   '6 hallucinate data.json',
   '7 train data error (ask for spec).json',
   '8 partial specs.json',
+  'v2-1 donor sex.json',
+  'v2-2 changing chart.json',
+  'v2-3 distribution.json',
+  'v2-4 partial specs again.json',
+  'v2-5 distributions again.json',
+  'v2-6 best chain.json',
 ];
 
 function stripFileExtension(filename: string) {
