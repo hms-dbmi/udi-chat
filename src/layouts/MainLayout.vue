@@ -12,7 +12,7 @@
           @click="toggleLeftDrawer"
         />
 
-        <q-toolbar-title shrink> YAC </q-toolbar-title>
+        <q-toolbar-title shrink> YAC: Yet Another Chatbot </q-toolbar-title>
         <FilterToolbar></FilterToolbar>
         <q-space />
         <q-toggle color="secondary" v-model="globalStore.debugMode" label="Debug" />
