@@ -7,7 +7,7 @@ const dashboardStore = useDashboardStore();
 <template>
   <template v-for="viz of dashboardStore.pinnedVisualizations.values()" :key="viz.index">
     <div
-      :class="`w-400 q-pa-md ${dashboardStore.isHovered(viz.index) ? 'hovered-viz' : ''}`"
+      :class="`w-600 q-pa-md ${dashboardStore.isHovered(viz.index) ? 'hovered-viz' : ''}`"
       @mouseover="dashboardStore.setHoveredVisualizationIndex(viz.index)"
       @mouseleave="dashboardStore.setHoveredVisualizationIndex(null)"
     >
@@ -19,14 +19,15 @@ const dashboardStore = useDashboardStore();
         <q-space></q-space>
         <q-btn icon="keyboard_return" @click="dashboardStore.unpinVisualization(viz.index)"></q-btn>
       </q-toolbar>
-      <UDIVis :spec="viz.spec"></UDIVis>
+      <UDIVis :spec="viz.interactiveSpec"></UDIVis>
+      <!-- <pre>{{ viz.interactiveSpec }}</pre> -->
     </div>
   </template>
 </template>
 
 <style scoped lang="scss">
-.w-400 {
-  width: 400px;
+.w-600 {
+  width: 600px;
 }
 
 .short-text-element {
