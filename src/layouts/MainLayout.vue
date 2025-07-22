@@ -15,6 +15,11 @@
         <q-toolbar-title shrink> YAC: Yet Another Chatbot </q-toolbar-title>
         <FilterToolbar></FilterToolbar>
         <q-space />
+        <q-toggle
+          color="secondary"
+          v-model="dashboardStore.filterAllNullValues"
+          label="Filter Null Values"
+        />
         <q-toggle color="secondary" v-model="globalStore.debugMode" label="Debug" />
       </q-toolbar>
     </q-header>
@@ -36,6 +41,8 @@ import ConversationList from 'components/ConversationList.vue';
 import FilterToolbar from 'components/FilterToolbar.vue';
 import { useGlobalStore } from '../stores/globalStore';
 const globalStore = useGlobalStore();
+import { useDashboardStore } from '../stores/dashboardStore';
+const dashboardStore = useDashboardStore();
 
 defineOptions({
   name: 'MainLayout',

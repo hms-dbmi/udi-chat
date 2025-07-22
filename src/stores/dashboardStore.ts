@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import { cloneDeep } from 'lodash-es';
@@ -15,6 +15,8 @@ export interface PinnedVisualization {
 
 export const useDashboardStore = defineStore('dashboardStore', () => {
   const pinnedVisualizations = ref<Map<number, PinnedVisualization>>(new Map());
+
+  const filterAllNullValues = ref<boolean>(true);
 
   const hoveredVisualizationIndex = ref<number | null>(null);
   function setHoveredVisualizationIndex(index: number | null) {
@@ -48,9 +50,39 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       const updatedInteractiveSpec = cloneDeep(viz.interactiveSpec);
       let transformation = updatedSpec.transformation ?? [];
       transformation = [...newFilters, ...transformation];
+      if (filterAllNullValues.value) {
+        const nullFilters = getRepresentedFields(updatedSpec).map((field) => {
+          return {
+            filter: `d['${field}'] != null`,
+          };
+        });
+        transformation = [...transformation, ...nullFilters];
+      }
       updatedInteractiveSpec.transformation = transformation;
       viz.interactiveSpec = updatedInteractiveSpec;
     }
+  }
+
+  function getRepresentedFields(spec: UDIGrammar): string[] {
+    // for every representation get all the fields that are mapped
+    if (!spec.representation) {
+      return [];
+    }
+    const fields = new Set<string>();
+    const representations = isArray(spec.representation)
+      ? spec.representation
+      : [spec.representation];
+    for (const representation of representations) {
+      const mappings = isArray(representation.mapping)
+        ? representation.mapping
+        : [representation.mapping];
+      for (const mapping of mappings) {
+        if ('field' in mapping) {
+          fields.add(mapping.field);
+        }
+      }
+    }
+    return Array.from(fields);
   }
 
   const filterIds = computed<string[]>(() => {
@@ -138,6 +170,11 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     return interactiveSpec;
   }
 
+  watch(filterAllNullValues, () => {
+    // Update all pinned visualizations when the filterAllNullValues changes
+    updateSpecFilters();
+  });
+
   return {
     pinnedVisualizations,
     pinVisualization,
@@ -145,5 +182,6 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     isPinned,
     isHovered,
     setHoveredVisualizationIndex,
+    filterAllNullValues,
   };
 });
