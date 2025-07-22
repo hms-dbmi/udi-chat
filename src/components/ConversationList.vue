@@ -18,6 +18,8 @@ const conversationFiles = [
   'v2-4 partial specs again.json',
   'v2-5 distributions again.json',
   'v2-6 best chain.json',
+  'wip_demo.json',
+  'wip_demo2.json',
 ];
 
 function stripFileExtension(filename: string) {

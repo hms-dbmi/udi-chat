@@ -1,6 +1,60 @@
 I’m wondering if some organs are harvested from live patients vs dead patients?
+Can you show samples by organ and vital status?
 
 is there a relationship between number of cells and storage duration for the samples??
 
 do people of different blood types weight the same?
+
+
+
+
+Demo:
+
+What is the distribution of donor weight?
+
+What about compared to height?
+
+split by sex?
+
+What is the total donor count by sex?
+
+
+Make a stacked bar chart of donor sex and the cause of death?
+
+display this as a heatmap
+
+
+(worked but backwards)
+
+
+
+What is the total donor count?
+
+
+
+X
+
+Facet by cause of death as well.
+
+can you display this in a heatmap?
+
+
+
+
+Demo 2:
+
+
+What is the total donor count?
+
+What is the distribution of donor weight?
+
+What about compared to height?
+
+and facetted by sex?
+
+How many donors are there for each sex?
+
+Now, show a stacked bar chart of donor cause of death and sex
+
+make this a heatmap
 
