@@ -5,29 +5,43 @@ const dashboardStore = useDashboardStore();
 </script>
 
 <template>
-  <template v-for="viz of dashboardStore.pinnedVisualizations.values()" :key="viz.index">
-    <div
-      :class="`w-600 q-pa-md ${dashboardStore.isHovered(viz.index) ? 'hovered-viz' : ''}`"
-      @mouseover="dashboardStore.setHoveredVisualizationIndex(viz.index)"
-      @mouseleave="dashboardStore.setHoveredVisualizationIndex(null)"
-    >
-      <q-toolbar dense>
-        <span class="text-caption text-weight-light">Prompt: </span>
-        <span class="text-caption short-text-element" :title="viz.userPrompt">{{
-          viz.userPrompt
-        }}</span>
-        <q-space></q-space>
-        <q-btn icon="keyboard_return" @click="dashboardStore.unpinVisualization(viz.index)"></q-btn>
-      </q-toolbar>
-      <UDIVis :spec="viz.interactiveSpec"></UDIVis>
-      <!-- <pre>{{ viz.interactiveSpec }}</pre> -->
+  <q-scroll-area
+    ref="dashboardArea"
+    class="flex q-m-sm flex-grow-1"
+    style="height: 100%; width: 100%"
+  >
+    <div class="flex row">
+      <template
+        v-for="viz of Array.from(dashboardStore.pinnedVisualizations.values()).reverse()"
+        :key="viz.index"
+      >
+        <div
+          :class="`w-500 q-pa-md ${dashboardStore.isHovered(viz.index) ? 'hovered-viz' : ''}`"
+          @mouseover="dashboardStore.setHoveredVisualizationIndex(viz.index)"
+          @mouseleave="dashboardStore.setHoveredVisualizationIndex(null)"
+        >
+          <q-toolbar dense>
+            <span class="text-caption text-weight-light">Prompt: </span>
+            <span class="text-caption short-text-element" :title="viz.userPrompt">{{
+              viz.userPrompt
+            }}</span>
+            <q-space></q-space>
+            <q-btn
+              icon="keyboard_return"
+              @click="dashboardStore.unpinVisualization(viz.index)"
+            ></q-btn>
+          </q-toolbar>
+          <UDIVis :spec="viz.interactiveSpec"></UDIVis>
+          <!-- <pre>{{ viz.interactiveSpec }}</pre> -->
+        </div>
+      </template>
     </div>
-  </template>
+  </q-scroll-area>
 </template>
 
 <style scoped lang="scss">
-.w-600 {
-  width: 600px;
+.w-500 {
+  width: 500px;
 }
 
 .short-text-element {
@@ -38,6 +52,6 @@ const dashboardStore = useDashboardStore();
 }
 
 .hovered-viz {
-  outline: solid 2px $secondary;
+  outline: solid 1px $secondary;
 }
 </style>

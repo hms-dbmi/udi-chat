@@ -2,15 +2,7 @@
   <q-layout view="lHh Lpr lFf">
     <q-header elevated>
       <q-toolbar>
-        <q-btn
-          v-if="globalStore.debugMode"
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
         <q-toolbar-title shrink> YAC: Yet Another Chatbot </q-toolbar-title>
         <FilterToolbar></FilterToolbar>
@@ -47,7 +39,7 @@ const dashboardStore = useDashboardStore();
 defineOptions({
   name: 'MainLayout',
 });
-const leftDrawerOpen = ref(false);
+const leftDrawerOpen = ref(true);
 const q = Quasar;
 
 function toggleLeftDrawer() {

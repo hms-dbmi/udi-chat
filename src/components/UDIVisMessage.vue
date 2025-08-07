@@ -34,7 +34,7 @@ function unpin() {
 
 <template>
   <div
-    style="width: 400px"
+    style="width: 300px"
     :class="{ 'hovered-message': isHovered }"
     @mouseover="setHovered"
     @mouseleave="unsetHovered"
@@ -42,7 +42,11 @@ function unpin() {
   >
     <template v-if="isPinned">
       <div class="row">
-        <q-btn icon="keyboard_return" @click="unpin" label="remove from dashboard"></q-btn>
+        <!-- <q-toolbar dense> -->
+        <!-- <q-space></q-space> -->
+        <!-- <q-btn icon-right="shortcut" label="add to dashboard" @click="pin"></q-btn> -->
+        <q-btn icon="keyboard_return" @click="unpin" label="remove"></q-btn>
+        <!-- </q-toolbar> -->
         <div class="shrinkydink-wrapper q-ml-md">
           <div class="shrinkydink">
             <UDIVis :spec="udiSpec"></UDIVis>
@@ -67,12 +71,12 @@ function unpin() {
   overflow: hidden;
 }
 .shrinkydink {
-  width: 400px;
+  width: 200px;
   transform: scale(0.2);
   transform-origin: top left;
 }
 
 .hovered-message {
-  outline: solid 2px $secondary;
+  outline: solid 1px $secondary;
 }
 </style>

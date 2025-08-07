@@ -20,7 +20,7 @@ import { ref } from 'vue';
 import ChatInterface from 'components/ChatInterface.vue';
 import VizDashboard from 'components/VizDashboard.vue';
 
-const splitterModel = ref(510);
+const splitterModel = ref(450);
 
 defineOptions({
   name: 'IndexPage',

@@ -336,11 +336,7 @@ function pinVisualization(index: number): void {
 
 <template>
   <q-separator />
-  <q-scroll-area
-    ref="messageArea"
-    class="q-mt-md flex-grow-1"
-    style="height: 1px; width: 100px; width: 480px"
-  >
+  <q-scroll-area ref="messageArea" class="q-mt-md flex-grow-1" style="height: 1px; width: 400px">
     <q-chat-message
       v-if="showSystemTools"
       :bg-color="bgColor('system')"
@@ -397,7 +393,7 @@ function pinVisualization(index: number): void {
     /></q-chat-message>
   </q-scroll-area>
 
-  <div class="flex w-480 q-mt-md column justify-end">
+  <div class="flex w-400 q-mt-md column justify-end">
     <q-input
       class="full-width q-pb-sm"
       v-model="inputText"
@@ -451,8 +447,8 @@ function pinVisualization(index: number): void {
 </template>
 
 <style scoped lang="scss">
-.w-480 {
-  width: 480px;
+.w-400 {
+  width: 400px;
 }
 
 .flex-grow-1 {
