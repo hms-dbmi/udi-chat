@@ -39,12 +39,12 @@ export const useConversationStore = defineStore('conversationStore', () => {
   function newConversation() {
     activeConverstation.value = '';
     messages.value = [];
-    if (initialPrompt) {
-      messages.value.push({
-        role: 'system',
-        content: initialPrompt,
-      });
-    }
+    // if (initialPrompt) {
+    //   messages.value.push({
+    //     role: 'system',
+    //     content: initialPrompt,
+    //   });
+    // }
   }
 
   newConversation();

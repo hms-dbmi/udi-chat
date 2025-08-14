@@ -16,6 +16,7 @@ import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
 
 import UDIVisMessage from 'components/UDIVisMessage.vue';
+import { dataPackageString } from './promptResources';
 
 const conversationStore = useConversationStore();
 const inputText = ref('');
@@ -76,7 +77,7 @@ async function queryLLM() {
   // const model = 'agenticx/UDI-VIS-Beta-v0-Llama-3.1-8B';
   const model = 'agenticx/UDI-VIS-Beta-v2-Llama-3.1-8B';
   try {
-    const response = await fetch(`${server}/udi/completions`, {
+    const response = await fetch(`${server}/yac/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,7 +85,8 @@ async function queryLLM() {
       body: JSON.stringify({
         model,
         messages: conversationStore.messages,
-        // tools,
+        dataSchema: dataPackageString,
+        // tools: agentTools,
       }),
     });
 
@@ -107,7 +109,15 @@ async function queryLLM() {
     conversationStore.messages.push({
       content: '',
       role: 'assistant',
-      tool_calls: [{ name: 'RenderVisualization', arguments: { spec: data } }],
+      // tool_calls: [{ name: 'RenderVisualization', arguments: { spec: data } }],
+      tool_calls: data.map((toolCall) => {
+        return {
+          function: {
+            name: toolCall.name,
+            arguments: toolCall.arguments,
+          },
+        };
+      }),
     });
     scrollToBottom();
 
@@ -271,11 +281,24 @@ function extractUdiSpecFromMessage(message: Message): object | null {
   if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
     return null;
   }
-  const firstToolCall = message.tool_calls[0];
+  const renderToolCalls = message.tool_calls
+    .map((call) => {
+      if (!call.function) {
+        // for backwards compatibility with old saved message chains
+        return call;
+      }
+      return {
+        name: call.function.name,
+        arguments: call.function.arguments,
+      };
+    })
+    .filter((call) => call.name === 'RenderVisualization');
+  if (renderToolCalls.length === 0) {
+    return null;
+  }
+
+  const firstToolCall = renderToolCalls[0];
   if (!firstToolCall) return null;
-  // const functionCall = firstToolCall.function;
-  // if (!functionCall) return null;
-  if (firstToolCall.name !== 'RenderVisualization') return null;
   const functionArgs = firstToolCall.arguments;
   if (!functionArgs) return null;
   const specString = functionArgs.spec;
@@ -358,6 +381,8 @@ function pinVisualization(index: number): void {
       :text-color="textColor(message.role)"
     >
       <q-markdown
+        show-copy
+        no-typographer
         v-if="showDebugInfo && message.role === 'assistant'"
         :src="JSON.stringify(message)"
       ></q-markdown>
