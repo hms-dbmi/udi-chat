@@ -1245,7 +1245,7 @@ argparse@^2.0.1:
   resolved "https://registry.yarnpkg.com/argparse/-/argparse-2.0.1.tgz#246f50f3ca78a3240f6c997e8a9bd1eac49e4b38"
   integrity sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==
 
-arquero@^8.0.1:
+arquero@^8.0.1, arquero@^8.0.3:
   version "8.0.3"
   resolved "https://registry.yarnpkg.com/arquero/-/arquero-8.0.3.tgz#ac72842df9143cbb3b9d215792344d3c6b14cef6"
   integrity sha512-7YQwe/GPVBUiahaPwEwgvu6VHyuhX0Ut61JZlIJYsAobOH5unLBwTmh43BobhX/N4dW1sb8WyKlQ8GjFq2whzQ==

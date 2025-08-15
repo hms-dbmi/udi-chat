@@ -1,5 +1,8 @@
 import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
+// import { parse, type ParseResult } from 'papaparse';
+import { loadCSV, agg, op, from, bin, rolling, escape, desc, type ColumnTable } from 'arquero';
+import { data } from 'autoprefixer';
 
 export const useDataPackageStore = defineStore('dataPackageStore', () => {
   const dataPackagePath = './data/hubmap_2025-05-05/datapackage_udi.json';
@@ -10,10 +13,101 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     .then((response) => response.json())
     .then((json) => {
       dataPackage.value = json;
+      initializeDataFieldDomains();
     })
     .catch((error) => {
       console.error('Error loading data package:', error);
     });
+
+  interface DataFieldDomain {
+    entity: string;
+    field: string;
+    domain: IntervalDomain | CategoricalDomain;
+  }
+
+  interface IntervalDomain {
+    type: 'interval';
+    min: number;
+    max: number;
+  }
+
+  interface CategoricalDomain {
+    values: string[];
+  }
+
+  const dataFieldDomains = ref<DataFieldDomain[]>([]);
+
+  function initializeDataFieldDomains() {
+    console.log('init thingy');
+    if (!dataPackage.value || !dataPackage.value.resources) return;
+    const folderPath = dataPackage.value['udi:path'];
+    for (const resource of dataPackage.value.resources) {
+      const entityName = resource.name;
+      const dataPath = resource.path;
+      const fullPath = `${folderPath}/${dataPath}`;
+      addDataDomains(fullPath, entityName);
+    }
+    return;
+  }
+
+  function getDomainForField(entity: string, field: string): DataFieldDomain | undefined {
+    return dataFieldDomains.value.find(
+      (domain) => domain.entity === entity && domain.field === field,
+    );
+  }
+
+  interface ValidStatus {
+    isValid: 'yes' | 'no' | 'unknown';
+  }
+
+  function isValidIntervalFilter(
+    entity: string,
+    field: string,
+    min: number,
+    max: number,
+  ): ValidStatus {
+    if (!dataPackage.value || !dataPackage.value.resources) {
+      return { isValid: 'unknown' };
+    }
+    const domain = getDomainForField(entity, field);
+    if (!domain) {
+      return { isValid: 'no' };
+    }
+    return { isValid: 'yes' };
+  }
+
+  async function addDataDomains(path: string, entity: string): Promise<void> {
+    const table = await loadCSV(path);
+
+    // Get column names
+    const cols = table.columnNames();
+
+    // Build domain info
+    const domains: DataFieldDomain[] = [];
+
+    for (const col of cols) {
+      const series = table.array(col); // raw column values
+      const isNumeric = series.every((v) => v == null || !isNaN(+v));
+
+      if (isNumeric) {
+        const stats = table
+          .rollup({
+            min: `(d) => op.min(d["${col}"])`,
+            max: `(d) => op.max(d["${col}"])`,
+          })
+          .objects()[0];
+        domains.push({
+          entity,
+          field: col,
+          type: 'interval',
+          domain: { min: stats.min, max: stats.max },
+        });
+      }
+      // TODO: handle categorical data
+    }
+    dataFieldDomains.value.push(...domains);
+    return;
+  }
 
   function removeVestigialInfo(data: object): object {
     // remove udi:overlapping_fields
@@ -65,5 +159,5 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     return fieldsMap;
   });
 
-  return { dataPackage, dataPackageString, sourceFields };
+  return { dataPackage, dataPackageString, sourceFields, isValidIntervalFilter, getDomainForField };
 });
