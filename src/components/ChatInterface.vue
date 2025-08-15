@@ -211,11 +211,11 @@ function shouldRenderUdiGrammar(message: Message, index: number): boolean {
     return false;
   }
 
-  return (
-    message.tool_calls?.some((call: ToolCall) => {
-      return call.function && call.function.name === 'RenderVisualization';
-    }) ?? false
-  );
+  const containsRenderVizToolCall = message.tool_calls?.some((call: ToolCall) => {
+    if (call.function) return call.function.name === 'RenderVisualization';
+    return call.name === 'RenderVisualization';
+  });
+  return containsRenderVizToolCall ?? false;
 }
 
 function shouldRenderFilterComponent(message: Message, index: number): boolean {
@@ -227,7 +227,8 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
   }
   return (
     message.tool_calls?.some((call: ToolCall) => {
-      return call.function && call.function.name === 'FilterData';
+      if (call.function) return call.function.name === 'FilterData';
+      return call.name === 'FilterData';
     }) ?? false
   );
 }
@@ -351,11 +352,14 @@ function pinVisualization(index: number): void {
         :src="JSON.stringify(extractUdiSpecFromMessage(message))"
       ></q-markdown>
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
+      <!-- <div>Should render filter: {{ shouldRenderFilterComponent(message, i) }}</div> -->
+
       <FilterComponent
         v-if="shouldRenderFilterComponent(message, i)"
         :message="message"
         :extractFilterSpecFromMessage="extractFilterSpecFromMessage"
       ></FilterComponent>
+      <!-- <div>Should render udi: {{ shouldRenderUdiGrammar(message, i) }}</div> -->
       <UDIVisMessage
         v-if="shouldRenderUdiGrammar(message, i)"
         :message="message"

@@ -28,7 +28,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Quasar } from 'quasar';
 import ConversationList from 'components/ConversationList.vue';
 import FilterToolbar from 'components/FilterToolbar.vue';
 import { useGlobalStore } from '../stores/globalStore';
@@ -40,7 +39,6 @@ defineOptions({
   name: 'MainLayout',
 });
 const leftDrawerOpen = ref(true);
-const q = Quasar;
 
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;

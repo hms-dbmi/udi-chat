@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { on } from 'events';
 import { range } from 'lodash-es';
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, reactive } from 'vue';
 
 interface IntervalFilterComponentProps {
   entity: string;
@@ -10,50 +10,44 @@ interface IntervalFilterComponentProps {
   maxInitial: number;
 }
 
-const rangeModel = ref();
+// const rangeModel = ref();
 
-onMounted(() => {
-  console.log('IntervalFilterComponent mounted');
-  rangeModel.value = {
-    min: props.minInitial,
-    max: props.maxInitial,
-  };
+// onMounted(() => {
+//   console.log('IntervalFilterComponent mounted');
+//   rangeModel.value = {
+//     min: props.minInitial,
+//     max: props.maxInitial,
+//   };
+// });
+
+// const props = defineProps<IntervalFilterComponentProps>();
+const props = withDefaults(defineProps<IntervalFilterComponentProps>(), {
+  minInitial: 0,
+  maxInitial: 100,
 });
 
-const props = defineProps<IntervalFilterComponentProps>();
+const rangeModel = ref<{ min: number; max: number }>({
+  min: props.minInitial,
+  max: props.maxInitial,
+});
 </script>
 
 <template>
-  <div>
-    Assistant filtered {{ props.entity }} by {{ props.field }} to range {{ rangeModel.min }} to
-    {{ rangeModel.max }}:
+  <div class="q-mx-sm">
+    Filtered <span class="emphasized q-mr-xs">{{ props.entity }}</span>
+    <span class="emphasized">{{ props.field }}</span
+    >, <span class="emphasized">{{ rangeModel.min }}</span> to
+    <span class="emphasized">{{ rangeModel.max }}</span
+    >:
   </div>
-  <div>
-    <q-range v-model="rangeModel" :min="0" :max="50" />
+  <div class="q-mx-sm">
+    <q-range v-model="rangeModel" :min="0" :max="100" />
   </div>
-  <!-- <div>
-    <h3>Interval Filter for {{ props.entity }} - {{ props.field }}</h3>
-    <div>
-      <label for="min">Min:</label>
-      <input type="number" id="min" v-model.number="props.minInitial" />
-    </div>
-    <div>
-      <label for="max">Max:</label>
-      <input type="number" id="max" v-model.number="props.maxInitial" />
-    </div>
-    <button
-      @click="
-        $emit('applyFilter', {
-          entity: props.entity,
-          field: props.field,
-          min: props.minInitial,
-          max: props.maxInitial,
-        })
-      "
-    >
-      Apply Filter
-    </button>
-  </div> -->
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.emphasized {
+  font-weight: bold;
+  color: $primary;
+}
+</style>

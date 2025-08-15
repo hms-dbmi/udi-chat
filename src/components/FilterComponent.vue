@@ -20,7 +20,7 @@ const filterType = computed(() => {
 
 <template>
   <!-- <div>blargen flargen</div> -->
-  <div>{{ props.extractFilterSpecFromMessage(props.message) }}</div>
+  <!-- <div>{{ props.extractFilterSpecFromMessage(props.message) }}</div> -->
   <IntervalFilterComponent
     v-if="filterType === 'interval'"
     :entity="filterArgs.entity"
