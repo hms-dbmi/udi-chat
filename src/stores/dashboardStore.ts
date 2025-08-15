@@ -4,7 +4,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { cloneDeep } from 'lodash-es';
 import type { UDIGrammar } from 'udi-toolkit/dist/GrammarTypes.d.ts';
 import { isArray } from 'vega';
-import { sourceFields } from 'src/stores/sourceFields';
+// import { sourceFields } from 'src/stores/sourceFields';
+import { useDataPackageStore } from './dataPackageStore';
+
 export interface PinnedVisualization {
   index: number;
   spec: UDIGrammar;
@@ -14,6 +16,7 @@ export interface PinnedVisualization {
 }
 
 export const useDashboardStore = defineStore('dashboardStore', () => {
+  const dataPackageStore = useDataPackageStore();
   const pinnedVisualizations = ref<Map<number, PinnedVisualization>>(new Map());
 
   const filterAllNullValues = ref<boolean>(true);
@@ -126,7 +129,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       return (
         mapping.type === 'quantitative' &&
         (mapping.encoding === 'x' || mapping.encoding === 'y') &&
-        sourceFields[sourceName].includes(mapping.field)
+        dataPackageStore.sourceFields[sourceName].includes(mapping.field)
         // TODO and mapping.field is in the source data
       );
     });
@@ -151,7 +154,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
         return (
           mapping.type !== 'quantitative' &&
           (mapping.encoding === 'x' || mapping.encoding === 'y' || mapping.encoding === 'color') &&
-          sourceFields[sourceName].includes(mapping.field)
+          dataPackageStore.sourceFields[sourceName].includes(mapping.field)
           // TODO and mapping.field is in the source data
         );
       });

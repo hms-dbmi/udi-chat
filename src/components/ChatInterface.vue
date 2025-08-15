@@ -6,7 +6,6 @@ import VegaLite from './VegaLite.vue';
 import DSLVis from './DSLVis.vue';
 import DSLVisFunc from './DSLVisFunc.vue';
 import { type Message, useConversationStore } from './conversationStore';
-import { interstitialPrompt, tools as agentTools } from './promptEngineering';
 import type { ToolCall } from 'ollama';
 // import { UDIVis } from 'udi-toolkit';
 import OpenAI from 'openai';
@@ -16,7 +15,9 @@ import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
 
 import UDIVisMessage from 'components/UDIVisMessage.vue';
-import { dataPackageString } from './promptResources';
+// import { dataPackageString } from './promptResources';
+import { useDataPackageStore } from 'src/stores/dataPackageStore';
+const dataPackageStore = useDataPackageStore();
 
 const conversationStore = useConversationStore();
 const inputText = ref('');
@@ -57,12 +58,12 @@ function sendMessage(event: Event) {
     return;
   }
 
-  if (interstitialPrompt) {
-    conversationStore.messages.push({
-      role: 'system',
-      content: interstitialPrompt,
-    });
-  }
+  // if (interstitialPrompt) {
+  //   conversationStore.messages.push({
+  //     role: 'system',
+  //     content: interstitialPrompt,
+  //   });
+  // }
 
   conversationStore.messages.push({ content: inputText.value, role: 'user' });
   inputText.value = '';
@@ -85,7 +86,7 @@ async function queryLLM() {
       body: JSON.stringify({
         model,
         messages: conversationStore.messages,
-        dataSchema: dataPackageString,
+        dataSchema: dataPackageStore.dataPackageString,
         // tools: agentTools,
       }),
     });
@@ -197,7 +198,6 @@ function textColor(role: 'user' | 'system' | 'assistant'): string {
 }
 
 const showDebugInfo = ref<boolean>(false);
-const showSystemTools = ref<boolean>(false);
 const showSystemPrompts = ref<boolean>(false);
 const displayedMessages = computed(() =>
   conversationStore.messages.filter(
@@ -361,17 +361,6 @@ function pinVisualization(index: number): void {
   <q-separator />
   <q-scroll-area ref="messageArea" class="q-mt-md flex-grow-1" style="height: 1px; width: 400px">
     <q-chat-message
-      v-if="showSystemTools"
-      :bg-color="bgColor('system')"
-      :text-color="textColor('system')"
-      :sent="true"
-      name="tools"
-    >
-      <div style="white-space: pre-wrap">
-        {{ JSON.stringify(agentTools, null, 4) }}
-      </div>
-    </q-chat-message>
-    <q-chat-message
       v-for="(message, i) in displayedMessages"
       class="q-mr-lg q-ml-lg"
       :key="i"
@@ -425,6 +414,7 @@ function pinVisualization(index: number): void {
       filled
       autogrow
       type="textarea"
+      :disable="dataPackageStore.dataPackageString === ''"
       @keydown.enter="sendMessage"
     />
     <q-toolbar class="q-mb-lg">
@@ -437,12 +427,6 @@ function pinVisualization(index: number): void {
           label="Save"
         ></q-btn>
         <q-checkbox class="q-mr-sm" v-model="showDebugInfo" label="Debug" toggle-color="primary" />
-        <q-checkbox
-          class="q-mr-sm"
-          v-model="showSystemTools"
-          label="Tools"
-          toggle-color="primary"
-        />
         <q-checkbox
           class="q-mr-sm"
           v-model="showSystemPrompts"
