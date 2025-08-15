@@ -42,11 +42,7 @@ function unpin() {
   >
     <template v-if="isPinned">
       <div class="row">
-        <!-- <q-toolbar dense> -->
-        <!-- <q-space></q-space> -->
-        <!-- <q-btn icon-right="shortcut" label="add to dashboard" @click="pin"></q-btn> -->
         <q-btn icon="keyboard_return" @click="unpin" label="remove"></q-btn>
-        <!-- </q-toolbar> -->
         <div class="shrinkydink-wrapper q-ml-md">
           <div class="shrinkydink">
             <UDIVis :spec="udiSpec"></UDIVis>

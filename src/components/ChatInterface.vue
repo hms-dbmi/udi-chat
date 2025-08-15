@@ -2,9 +2,6 @@
 import { QScrollArea } from 'quasar';
 import { ref, computed, onMounted } from 'vue';
 // import ollama from 'ollama/browser';
-import VegaLite from './VegaLite.vue';
-import DSLVis from './DSLVis.vue';
-import DSLVisFunc from './DSLVisFunc.vue';
 import { type Message, useConversationStore } from './conversationStore';
 import type { ToolCall } from 'ollama';
 // import { UDIVis } from 'udi-toolkit';
@@ -15,6 +12,7 @@ import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
 
 import UDIVisMessage from 'components/UDIVisMessage.vue';
+import FilterComponent from 'components/FilterComponent.vue';
 // import { dataPackageString } from './promptResources';
 import { useDataPackageStore } from 'src/stores/dataPackageStore';
 const dataPackageStore = useDataPackageStore();
@@ -212,69 +210,26 @@ function shouldRenderUdiGrammar(message: Message, index: number): boolean {
   if (index === displayedMessages.value.length - 1 && llmResponding.value) {
     return false;
   }
-  if (renderChoice.value !== 'udi') {
-    return false;
-  }
-  return true;
+
+  return (
+    message.tool_calls?.some((call: ToolCall) => {
+      return call.function && call.function.name === 'RenderVisualization';
+    }) ?? false
+  );
 }
 
-function shouldRenderVega(message: Message, index: number): boolean {
+function shouldRenderFilterComponent(message: Message, index: number): boolean {
   if (message.role !== 'assistant') {
     return false;
   }
   if (index === displayedMessages.value.length - 1 && llmResponding.value) {
     return false;
   }
-  if (renderChoice.value !== 'vega') {
-    return false;
-  }
-  return true;
-}
-
-function shouldRenderDSL(message: Message, index: number): boolean {
-  if (message.role !== 'assistant') {
-    return false;
-  }
-  if (index === displayedMessages.value.length - 1 && llmResponding.value) {
-    return false;
-  }
-  if (renderChoice.value !== 'dsl') {
-    return false;
-  }
-  return true;
-}
-
-function shouldRenderDSLFunction(message: Message, index: number): boolean {
-  if (message.role !== 'assistant') {
-    return false;
-  }
-  if (index === displayedMessages.value.length - 1 && llmResponding.value) {
-    return false;
-  }
-  if (renderChoice.value !== 'dsl_func') {
-    return false;
-  }
-  if (!message.tool_calls || message.tool_calls.length === 0) {
-    return false;
-  }
-
-  return true;
-}
-
-const renderChoice = ref<'vega' | 'none' | 'dsl' | 'dsl_func' | 'udi'>('udi');
-const renderChoices = ['udi', 'vega', 'none', 'dsl', 'dsl_func'];
-
-function firstToolCall(message: {
-  role: 'user' | 'system' | 'assistant';
-  content: string;
-  tool_calls?: {
-    function: {
-      name: string;
-      arguments: unknown;
-    };
-  }[];
-}): ToolCall {
-  return message.tool_calls![0] as ToolCall;
+  return (
+    message.tool_calls?.some((call: ToolCall) => {
+      return call.function && call.function.name === 'FilterData';
+    }) ?? false
+  );
 }
 
 function extractUdiSpecFromMessage(message: Message): object | null {
@@ -312,20 +267,34 @@ function extractUdiSpecFromMessage(message: Message): object | null {
       throw new Error('Invalid response format');
     }
   }
-  // console.log('bkargen flaragnen');
   return spec;
-  // try {
-  //   const spec = JSON.parse(specString);
-  //   return spec;
-  // } catch (error: unknown) {
-  //   console.warn('LLM generated invalid spec.');
-  //   if (error instanceof Error) {
-  //     console.warn('Error parsing UDI spec:', error.message);
-  //   } else {
-  //     console.warn('Unknown error parsing UDI spec:', error);
-  //   }
-  //   return null;
-  // }
+}
+
+function extractFilterSpecFromMessage(message: Message): object | null {
+  if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
+    return null;
+  }
+  const renderToolCalls = message.tool_calls
+    .map((call) => {
+      if (!call.function) {
+        // for backwards compatibility with old saved message chains
+        return call;
+      }
+      return {
+        name: call.function.name,
+        arguments: call.function.arguments,
+      };
+    })
+    .filter((call) => call.name === 'FilterData');
+  if (renderToolCalls.length === 0) {
+    return null;
+  }
+
+  const firstToolCall = renderToolCalls[0];
+  if (!firstToolCall) return null;
+  const functionArgs = firstToolCall.arguments;
+  if (!functionArgs) return null;
+  return functionArgs;
 }
 
 function pinVisualization(index: number): void {
@@ -382,6 +351,11 @@ function pinVisualization(index: number): void {
         :src="JSON.stringify(extractUdiSpecFromMessage(message))"
       ></q-markdown>
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
+      <FilterComponent
+        v-if="shouldRenderFilterComponent(message, i)"
+        :message="message"
+        :extractFilterSpecFromMessage="extractFilterSpecFromMessage"
+      ></FilterComponent>
       <UDIVisMessage
         v-if="shouldRenderUdiGrammar(message, i)"
         :message="message"
@@ -390,12 +364,6 @@ function pinVisualization(index: number): void {
         :extractUdiSpecFromMessage="extractUdiSpecFromMessage"
         :pinVisualization="pinVisualization"
       ></UDIVisMessage>
-      <VegaLite v-if="shouldRenderVega(message, i)" :spec="message.content"> </VegaLite>
-      <DSLVis v-if="shouldRenderDSL(message, i)" :spec="message.content"></DSLVis>
-      <DSLVisFunc
-        v-if="shouldRenderDSLFunction(message, i)"
-        :spec="firstToolCall(message)"
-      ></DSLVisFunc>
     </q-chat-message>
     <q-chat-message
       v-if="llmResponding && displayedMessages[displayedMessages.length - 1]?.role !== 'assistant'"
@@ -432,15 +400,6 @@ function pinVisualization(index: number): void {
           v-model="showSystemPrompts"
           label="System Prompts"
           toggle-color="primary"
-        />
-
-        <q-select
-          class="q-ml-sm q-mr-sm"
-          style="width: 100px"
-          dense
-          v-model="renderChoice"
-          :options="renderChoices"
-          label="Render"
         />
       </template>
       <q-space />
