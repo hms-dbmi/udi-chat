@@ -1,7 +1,15 @@
 <script setup lang="ts">
-// import { ref, computed, watch, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
+import { useDataFilterStore } from 'src/stores/dataFiltersStore';
+const dataFilterStore = useDataFilterStore();
+const { dataSelections } = storeToRefs(dataFilterStore);
+
+function selectionChanged(newSelection: any) {
+  console.log('selection Changed yo');
+  console.log(newSelection);
+}
 </script>
 
 <template>
@@ -12,7 +20,7 @@ const dashboardStore = useDashboardStore();
   >
     <div class="flex row">
       <template
-        v-for="viz of Array.from(dashboardStore.pinnedVisualizations.values()).reverse()"
+        v-for="(viz, index) of Array.from(dashboardStore.pinnedVisualizations.values()).reverse()"
         :key="viz.index"
       >
         <div
@@ -31,7 +39,16 @@ const dashboardStore = useDashboardStore();
               @click="dashboardStore.unpinVisualization(viz.index)"
             ></q-btn>
           </q-toolbar>
-          <UDIVis :spec="viz.interactiveSpec"></UDIVis>
+          <template v-if="index === 0">
+            <UDIVis
+              :spec="viz.interactiveSpec"
+              :selections="dataSelections"
+              @selectionChange="selectionChanged"
+            ></UDIVis>
+          </template>
+          <template v-else>
+            <UDIVis :spec="viz.interactiveSpec"></UDIVis>
+          </template>
           <!-- <pre>{{ viz.interactiveSpec }}</pre> -->
         </div>
       </template>

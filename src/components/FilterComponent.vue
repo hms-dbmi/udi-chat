@@ -4,6 +4,7 @@ import IntervalFilterComponent from './IntervalFilterComponent.vue';
 
 interface FilterComponentProps {
   message: any; // Replace with the actual type of message
+  index: number;
   extractFilterSpecFromMessage: (message: any) => any; // Replace with the actual type
 }
 const props = defineProps<FilterComponentProps>();
@@ -21,14 +22,9 @@ const filterType = computed(() => {
 <template>
   <!-- <div>blargen flargen</div> -->
   <!-- <div>{{ props.extractFilterSpecFromMessage(props.message) }}</div> -->
-  <IntervalFilterComponent
-    v-if="filterType === 'interval'"
-    :entity="filterArgs.entity"
-    :field="filterArgs.field"
-    :minInitial="filterArgs.min"
-    :maxInitial="filterArgs.max"
-    @applyFilter="$emit('applyFilter', $event)"
-  ></IntervalFilterComponent>
+  <IntervalFilterComponent v-if="filterType === 'interval'" :index="props.index">
+    ></IntervalFilterComponent
+  >
 </template>
 
 <style scoped lang="scss"></style>

@@ -1,11 +1,12 @@
 import { ref, computed, watch } from 'vue';
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, filter } from 'lodash-es';
 import type { UDIGrammar } from 'udi-toolkit/dist/GrammarTypes.d.ts';
 import { isArray } from 'vega';
 // import { sourceFields } from 'src/stores/sourceFields';
 import { useDataPackageStore } from './dataPackageStore';
+import { useDataFilterStore } from './dataFiltersStore';
 
 export interface PinnedVisualization {
   index: number;
@@ -17,6 +18,7 @@ export interface PinnedVisualization {
 
 export const useDashboardStore = defineStore('dashboardStore', () => {
   const dataPackageStore = useDataPackageStore();
+  const dataFilterStore = useDataFilterStore();
   const pinnedVisualizations = ref<Map<number, PinnedVisualization>>(new Map());
 
   const filterAllNullValues = ref<boolean>(true);
@@ -40,7 +42,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       userPrompt,
       uuid,
     });
-    updateSpecFilters();
+    // updateSpecFilters();
   }
 
   function updateSpecFilters() {
@@ -89,8 +91,13 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   }
 
   const filterIds = computed<string[]>(() => {
-    return Array.from(pinnedVisualizations.value.values()).map((viz) => viz.uuid);
+    // TODO: add external filter ids
+    const vizFilterIDs = Array.from(pinnedVisualizations.value.values()).map((viz) => viz.uuid);
+    const externalIds = Array.from(Object.keys(dataFilterStore.dataSelections));
+    return [...vizFilterIDs, ...externalIds];
   });
+
+  watch(filterIds, updateSpecFilters);
 
   function unpinVisualization(index: number) {
     pinnedVisualizations.value.delete(index);

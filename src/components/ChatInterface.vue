@@ -2,7 +2,7 @@
 import { QScrollArea } from 'quasar';
 import { ref, computed, onMounted } from 'vue';
 // import ollama from 'ollama/browser';
-import { type Message, useConversationStore } from './conversationStore';
+import { type Message, useConversationStore } from '../stores/conversationStore';
 import type { ToolCall } from 'ollama';
 // import { UDIVis } from 'udi-toolkit';
 import OpenAI from 'openai';
@@ -16,6 +16,9 @@ import FilterComponent from 'components/FilterComponent.vue';
 // import { dataPackageString } from './promptResources';
 import { useDataPackageStore } from 'src/stores/dataPackageStore';
 const dataPackageStore = useDataPackageStore();
+
+import { useDataFilterStore } from 'src/stores/dataFiltersStore';
+const dataFiltersStore = useDataFilterStore();
 
 const conversationStore = useConversationStore();
 const inputText = ref('');
@@ -219,18 +222,10 @@ function shouldRenderUdiGrammar(message: Message, index: number): boolean {
 }
 
 function shouldRenderFilterComponent(message: Message, index: number): boolean {
-  if (message.role !== 'assistant') {
-    return false;
-  }
   if (index === displayedMessages.value.length - 1 && llmResponding.value) {
     return false;
   }
-  return (
-    message.tool_calls?.some((call: ToolCall) => {
-      if (call.function) return call.function.name === 'FilterData';
-      return call.name === 'FilterData';
-    }) ?? false
-  );
+  return dataFiltersStore.containsFilterCall(message);
 }
 
 function extractUdiSpecFromMessage(message: Message): object | null {
@@ -269,33 +264,6 @@ function extractUdiSpecFromMessage(message: Message): object | null {
     }
   }
   return spec;
-}
-
-function extractFilterSpecFromMessage(message: Message): object | null {
-  if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
-    return null;
-  }
-  const renderToolCalls = message.tool_calls
-    .map((call) => {
-      if (!call.function) {
-        // for backwards compatibility with old saved message chains
-        return call;
-      }
-      return {
-        name: call.function.name,
-        arguments: call.function.arguments,
-      };
-    })
-    .filter((call) => call.name === 'FilterData');
-  if (renderToolCalls.length === 0) {
-    return null;
-  }
-
-  const firstToolCall = renderToolCalls[0];
-  if (!firstToolCall) return null;
-  const functionArgs = firstToolCall.arguments;
-  if (!functionArgs) return null;
-  return functionArgs;
 }
 
 function pinVisualization(index: number): void {
@@ -357,7 +325,8 @@ function pinVisualization(index: number): void {
       <FilterComponent
         v-if="shouldRenderFilterComponent(message, i)"
         :message="message"
-        :extractFilterSpecFromMessage="extractFilterSpecFromMessage"
+        :index="i"
+        :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
       ></FilterComponent>
       <!-- <div>Should render udi: {{ shouldRenderUdiGrammar(message, i) }}</div> -->
       <UDIVisMessage

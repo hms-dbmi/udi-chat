@@ -22,7 +22,7 @@
     "openai": "^5.5.1",
     "pinia": "^3.0.1",
     "quasar": "^2.16.0",
-    "udi-toolkit": "^0.0.29",
+    "udi-toolkit": "^0.0.33",
     "uuid": "^11.1.0",
     "vega": "^5.30.0",
     "vega-embed": "^6.29.0",

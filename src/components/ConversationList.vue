@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // import { ref, computed, watch, onMounted } from 'vue';
-import { useConversationStore } from './conversationStore';
+import { useConversationStore } from '../stores/conversationStore';
 
 const conversationStore = useConversationStore();
 const conversationFiles = [
@@ -12,6 +12,7 @@ const conversationFiles = [
   'July PI/Demo 5 user contributions.json',
   'July PI/Demo 6 dataset organ-analyte.json',
   'filter/simple.json',
+  'filter/donor_scatter.json',
   'filter/donor_scatter_bar.json',
   'filter/cross_entity.json',
   // '1 stacked bar.json',
