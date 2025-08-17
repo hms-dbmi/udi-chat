@@ -15,11 +15,10 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
   const { messages } = storeToRefs(conversationStore);
 
   const dataSelections = ref<DataSelections>({});
-  // TODO: should this actually be a get/set computed?
+
   watch(
     messages,
     () => {
-      // for (const message of messages.value) {
       for (let i = 0; i < messages.value.length; i++) {
         const message = messages.value[i];
         if (!message) continue;
@@ -51,8 +50,62 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     { deep: true },
   );
 
+  watch(
+    dataSelections,
+    () => {
+      console.log('data selections changed!');
+      // if there is a change in the filters we want to go back an update the messages so when they are sent to llm they are correct
+      for (const [selectionKey, selection] of Object.entries(dataSelections.value)) {
+        const index = messageIndex(selectionKey);
+        if (index === null) continue;
+
+        const message = messages.value[index];
+        if (message?.tool_calls == null) {
+          throw new Error('Selection linked to message without any tool calls');
+        }
+        for (const toolCall of message.tool_calls) {
+          const name = getToolCallName(toolCall);
+          if (name !== 'FilterData') continue;
+          const args = getToolCallArgs(toolCall);
+          if (!args) continue;
+          if (args.entity !== selection.dataSourceKey) continue;
+          if (selection.type !== 'interval') continue; // TODO: handle point selections
+          for (const [selectionField, intervalSelection] of Object.entries(
+            selection.selection ?? {},
+          )) {
+            if (args.field !== selectionField) continue;
+            args.min = intervalSelection[0];
+            args.max = intervalSelection[1];
+          }
+        }
+      }
+    },
+    { deep: true },
+  );
+
+  function getToolCallName(toolCall: ToolCall): string {
+    // Should really live somewhere else, or just fix the typing and old data.
+    if (toolCall.function) {
+      return toolCall.function.name;
+    }
+    return toolCall.name;
+  }
+
+  function getToolCallArgs(toolCall: ToolCall): Record<string, any> | undefined {
+    // Same as getToolCallName...
+    if (toolCall.function) {
+      return toolCall.function.arguments;
+    }
+    return toolCall.arguments;
+  }
+
   function messageFilterKey(messageIndex: number): string {
     return `message-filter-${messageIndex}`;
+  }
+
+  function messageIndex(messageFilterKey: string): number | null {
+    const match = messageFilterKey.match(/message-filter-(\d+)/);
+    return match ? parseInt(match[1]) : null;
   }
 
   function containsFilterCall(message: Message): boolean {
