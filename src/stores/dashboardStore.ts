@@ -115,6 +115,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 
   function updateSpecFilters() {
     const newFilters = filterIds.value.map((id: string) => {
+      // TODO: determin if cross-entity, and add entityRelationships here.
       return { filter: { name: id } };
     });
     for (const viz of pinnedVisualizations.value.values()) {
