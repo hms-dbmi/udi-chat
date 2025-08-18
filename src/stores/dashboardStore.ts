@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue';
-import { defineStore } from 'pinia';
+import { defineStore, storeToRefs } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import { cloneDeep, filter } from 'lodash-es';
 import type { UDIGrammar } from 'udi-toolkit/dist/GrammarTypes.d.ts';
@@ -7,6 +7,8 @@ import { isArray } from 'vega';
 // import { sourceFields } from 'src/stores/sourceFields';
 import { useDataPackageStore } from './dataPackageStore';
 import { useDataFilterStore } from './dataFiltersStore';
+import type { Message } from './conversationStore';
+import { useConversationStore } from './conversationStore';
 
 export interface PinnedVisualization {
   index: number;
@@ -19,6 +21,8 @@ export interface PinnedVisualization {
 export const useDashboardStore = defineStore('dashboardStore', () => {
   const dataPackageStore = useDataPackageStore();
   const dataFilterStore = useDataFilterStore();
+  const conversationStore = useConversationStore();
+  const { messages } = storeToRefs(conversationStore);
   const pinnedVisualizations = ref<Map<number, PinnedVisualization>>(new Map());
 
   const filterAllNullValues = ref<boolean>(true);
@@ -43,6 +47,70 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       uuid,
     });
     // updateSpecFilters();
+  }
+
+  watch(
+    messages,
+    () => {
+      for (let i = 0; i < messages.value.length; i++) {
+        if (pinnedVisualizations.value.has(i)) continue;
+        const message = messages.value[i];
+        if (!message) continue;
+        if (message.role !== 'assistant') continue;
+        const spec = extractUdiSpecFromMessage(message);
+        if (!spec) continue;
+        let userPromptIndex = i - 1;
+        while (userPromptIndex >= 0 && messages.value?.[userPromptIndex]?.role !== 'user') {
+          userPromptIndex--;
+        }
+        if (userPromptIndex < 0) {
+          console.warn('No user prompt found before the assistant message');
+          return;
+        }
+        const userPrompt = messages.value?.[userPromptIndex]?.content ?? '';
+
+        pinVisualization(i, spec, userPrompt);
+      }
+    },
+    { deep: true },
+  );
+
+  function extractUdiSpecFromMessage(message: Message): object | null {
+    if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
+      return null;
+    }
+    const renderToolCalls = message.tool_calls
+      .map((call) => {
+        if (!call.function) {
+          // for backwards compatibility with old saved message chains
+          return call;
+        }
+        return {
+          name: call.function.name,
+          arguments: call.function.arguments,
+        };
+      })
+      .filter((call) => call.name === 'RenderVisualization');
+    if (renderToolCalls.length === 0) {
+      return null;
+    }
+
+    const firstToolCall = renderToolCalls[0];
+    if (!firstToolCall) return null;
+    const functionArgs = firstToolCall.arguments;
+    if (!functionArgs) return null;
+    const specString = functionArgs.spec;
+    let spec: object | null = null;
+    if (!specString) return null;
+    if (typeof specString === 'string') {
+      try {
+        spec = JSON.parse(specString);
+      } catch (e) {
+        console.error('Failed to parse response as JSON:', e);
+        throw new Error('Invalid response format');
+      }
+    }
+    return spec;
   }
 
   function updateSpecFilters() {
@@ -193,5 +261,6 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     isHovered,
     setHoveredVisualizationIndex,
     filterAllNullValues,
+    extractUdiSpecFromMessage,
   };
 });

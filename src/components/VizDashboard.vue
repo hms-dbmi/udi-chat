@@ -34,10 +34,10 @@ function selectionChanged(newSelection: any) {
               viz.userPrompt
             }}</span>
             <q-space></q-space>
-            <q-btn
+            <!-- <q-btn
               icon="keyboard_return"
               @click="dashboardStore.unpinVisualization(viz.index)"
-            ></q-btn>
+            ></q-btn> -->
           </q-toolbar>
           <template v-if="index === 0">
             <UDIVis
@@ -69,6 +69,6 @@ function selectionChanged(newSelection: any) {
 }
 
 .hovered-viz {
-  outline: solid 1px $secondary;
+  // outline: solid 1px $secondary;
 }
 </style>

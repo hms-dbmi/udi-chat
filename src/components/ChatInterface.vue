@@ -229,71 +229,33 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
   return dataFiltersStore.containsFilterCall(message);
 }
 
-function extractUdiSpecFromMessage(message: Message): object | null {
-  if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
-    return null;
-  }
-  const renderToolCalls = message.tool_calls
-    .map((call) => {
-      if (!call.function) {
-        // for backwards compatibility with old saved message chains
-        return call;
-      }
-      return {
-        name: call.function.name,
-        arguments: call.function.arguments,
-      };
-    })
-    .filter((call) => call.name === 'RenderVisualization');
-  if (renderToolCalls.length === 0) {
-    return null;
-  }
-
-  const firstToolCall = renderToolCalls[0];
-  if (!firstToolCall) return null;
-  const functionArgs = firstToolCall.arguments;
-  if (!functionArgs) return null;
-  const specString = functionArgs.spec;
-  let spec: object | null = null;
-  if (!specString) return null;
-  if (typeof specString === 'string') {
-    try {
-      spec = JSON.parse(specString);
-    } catch (e) {
-      console.error('Failed to parse response as JSON:', e);
-      throw new Error('Invalid response format');
-    }
-  }
-  return spec;
-}
-
-function pinVisualization(index: number): void {
-  // if (displayedMessages.value)
-  const message = displayedMessages.value[index];
-  if (!message) {
-    console.warn('No message found at index:', index);
-    return;
-  }
-  if (message.role !== 'assistant') {
-    console.warn('Cannot pin visualization for non-assistant message');
-    return;
-  }
-  const spec = extractUdiSpecFromMessage(message);
-  if (!spec) {
-    console.warn('No UDI spec found in message');
-    return;
-  }
-  let userPromptIndex = index - 1;
-  while (userPromptIndex >= 0 && displayedMessages.value?.[userPromptIndex]?.role !== 'user') {
-    userPromptIndex--;
-  }
-  if (userPromptIndex < 0) {
-    console.warn('No user prompt found before the assistant message');
-    return;
-  }
-  const userPrompt = displayedMessages.value?.[userPromptIndex]?.content ?? '';
-  dashboardStore.pinVisualization(index, spec, userPrompt);
-}
+// function pinVisualization(index: number): void {
+//   // if (displayedMessages.value)
+//   const message = displayedMessages.value[index];
+//   if (!message) {
+//     console.warn('No message found at index:', index);
+//     return;
+//   }
+//   if (message.role !== 'assistant') {
+//     console.warn('Cannot pin visualization for non-assistant message');
+//     return;
+//   }
+//   const spec = dashboardStore.extractUdiSpecFromMessage(message);
+//   if (!spec) {
+//     console.warn('No UDI spec found in message');
+//     return;
+//   }
+//   let userPromptIndex = index - 1;
+//   while (userPromptIndex >= 0 && displayedMessages.value?.[userPromptIndex]?.role !== 'user') {
+//     userPromptIndex--;
+//   }
+//   if (userPromptIndex < 0) {
+//     console.warn('No user prompt found before the assistant message');
+//     return;
+//   }
+//   const userPrompt = displayedMessages.value?.[userPromptIndex]?.content ?? '';
+//   dashboardStore.pinVisualization(index, spec, userPrompt);
+// }
 </script>
 
 <template>
@@ -318,7 +280,7 @@ function pinVisualization(index: number): void {
         show-copy
         no-typographer
         v-if="showDebugInfo && message.role === 'assistant' && shouldRenderUdiGrammar(message, i)"
-        :src="JSON.stringify(extractUdiSpecFromMessage(message))"
+        :src="JSON.stringify(dashboardStore.extractUdiSpecFromMessage(message))"
       ></q-markdown>
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
       <!-- <div>Should render filter: {{ shouldRenderFilterComponent(message, i) }}</div> -->
@@ -330,14 +292,15 @@ function pinVisualization(index: number): void {
         :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
       ></FilterComponent>
       <!-- <div>Should render udi: {{ shouldRenderUdiGrammar(message, i) }}</div> -->
-      <UDIVisMessage
+      <!-- <UDIVisMessage
         v-if="shouldRenderUdiGrammar(message, i)"
         :message="message"
         :index="i"
         :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
         :extractUdiSpecFromMessage="extractUdiSpecFromMessage"
         :pinVisualization="pinVisualization"
-      ></UDIVisMessage>
+      ></UDIVisMessage> -->
+      <div v-if="shouldRenderUdiGrammar(message, i)">Added visualization to dashboard.</div>
     </q-chat-message>
     <q-chat-message
       v-if="llmResponding && displayedMessages[displayedMessages.length - 1]?.role !== 'assistant'"
