@@ -5,7 +5,6 @@
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
         <q-toolbar-title shrink> YAC: Yet Another Chatbot </q-toolbar-title>
-        <FilterToolbar></FilterToolbar>
         <q-space />
         <q-toggle
           color="secondary"
