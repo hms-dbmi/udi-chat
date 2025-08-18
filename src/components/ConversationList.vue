@@ -18,6 +18,7 @@ const conversationFiles = [
   'filter/interval_and_point.json',
   'filter/age_race.json',
   'filter/age_race_modified.json',
+  'filter/tall_heavy.json',
   // '1 stacked bar.json',
   // '2 distributions.json',
   // '3 pie chart.json',
