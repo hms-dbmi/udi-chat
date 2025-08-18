@@ -40,30 +40,48 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
         if (!containsFilterCall(message)) continue;
         const filterSpec = extractFilterSpecFromMessage(message);
         if (!filterSpec) continue;
-        if (filterSpec.filter.filterType !== 'interval') continue; // TODO: handle point selections
         const key = messageFilterKey(i);
         if (key in dataSelections.value) continue;
-        if (
-          dataPackageStore.isValidIntervalFilter(
-            filterSpec.entity,
-            filterSpec.field,
-            filterSpec.filter.intervalRange.min,
-            filterSpec.filter.intervalRange.max,
-          ).isValid !== 'yes'
-        ) {
-          continue;
-        }
-
-        dataSelections.value[key] = {
-          dataSourceKey: filterSpec.entity,
-          type: 'interval',
-          selection: {
-            [filterSpec.field]: [
+        if (filterSpec.filter.filterType === 'interval') {
+          if (
+            dataPackageStore.isValidIntervalFilter(
+              filterSpec.entity,
+              filterSpec.field,
               filterSpec.filter.intervalRange.min,
               filterSpec.filter.intervalRange.max,
-            ],
-          },
-        };
+            ).isValid !== 'yes'
+          ) {
+            continue;
+          }
+
+          dataSelections.value[key] = {
+            dataSourceKey: filterSpec.entity,
+            type: 'interval',
+            selection: {
+              [filterSpec.field]: [
+                filterSpec.filter.intervalRange.min,
+                filterSpec.filter.intervalRange.max,
+              ],
+            },
+          };
+        } else {
+          if (
+            dataPackageStore.isValidPointFilter(
+              filterSpec.entity,
+              filterSpec.field,
+              filterSpec.filter.pointValues,
+            ).isValid !== 'yes'
+          ) {
+            continue;
+          }
+          dataSelections.value[key] = {
+            dataSourceKey: filterSpec.entity,
+            type: 'point',
+            selection: {
+              [filterSpec.field]: filterSpec.filter.pointValues,
+            },
+          };
+        }
       }
     },
     { deep: true },

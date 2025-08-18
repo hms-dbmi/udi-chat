@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import IntervalFilterComponent from './IntervalFilterComponent.vue';
+import PointFilterComponent from './PointFilterComponent.vue';
 import type { FilterCallArgs } from 'src/stores/dataFiltersStore';
 
 interface FilterComponentProps {
@@ -15,17 +16,18 @@ const filterArgs = computed<FilterCallArgs | null>(() => {
 });
 
 const filterType = computed(() => {
-  // TODO: handle poitn filters
-  return 'interval';
+  if (!filterArgs.value) {
+    return null;
+  }
+  return filterArgs.value.filter.filterType;
 });
 </script>
 
 <template>
-  <!-- <div>blargen flargen</div> -->
-  <!-- <div>{{ props.extractFilterSpecFromMessage(props.message) }}</div> -->
   <IntervalFilterComponent v-if="filterType === 'interval'" :index="props.index">
     ></IntervalFilterComponent
   >
+  <PointFilterComponent v-if="filterType === 'point'" :index="props.index" />
 </template>
 
 <style scoped lang="scss"></style>

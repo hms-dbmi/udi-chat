@@ -76,6 +76,22 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     return { isValid: 'yes' };
   }
 
+  function isValidPointFilter(entity: string, field: string, values: string[]): ValidStatus {
+    if (!dataPackage.value || !dataPackage.value.resources) {
+      return { isValid: 'unknown' };
+    }
+    const domain = getDomainForField(entity, field);
+    if (!domain) {
+      return { isValid: 'no' };
+    }
+    const validValues = (domain.domain as CategoricalDomain).values;
+    if (!validValues) {
+      return { isValid: 'no' };
+    }
+    const isValid = values.every((value) => validValues.includes(value));
+    return { isValid: isValid ? 'yes' : 'no' };
+  }
+
   async function addDataDomains(path: string, entity: string): Promise<void> {
     const table = await loadCSV(path);
 
@@ -102,8 +118,14 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
           type: 'interval',
           domain: { min: stats.min, max: stats.max },
         });
+      } else {
+        domains.push({
+          entity,
+          field: col,
+          type: 'point',
+          domain: { values: Array.from(new Set(series)) },
+        });
       }
-      // TODO: handle categorical data
     }
     dataFieldDomains.value.push(...domains);
     return;
@@ -159,5 +181,12 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     return fieldsMap;
   });
 
-  return { dataPackage, dataPackageString, sourceFields, isValidIntervalFilter, getDomainForField };
+  return {
+    dataPackage,
+    dataPackageString,
+    sourceFields,
+    isValidIntervalFilter,
+    isValidPointFilter,
+    getDomainForField,
+  };
 });
