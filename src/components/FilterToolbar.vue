@@ -64,10 +64,5 @@ function formatSelectionValue(sel: DataSelection): string {
     >
       <span v-html="chip.valueText"></span>
     </q-chip>
-
-    <!-- Empty state -->
-    <div v-if="chips.length === 0" class="text-grey">
-      No filters applied
-    </div>
   </div>
 </template>
