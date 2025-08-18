@@ -9,6 +9,21 @@ export interface DataFilterState {
   dataSelections: DataSelections;
 }
 
+export interface FilterCallArgs {
+  entity: string;
+  field: string;
+  filter: {
+    filterType: 'interval' | 'point';
+    intervalRange: {
+      min: number;
+      max: number;
+    };
+    pointValues: string[];
+  };
+  min: number;
+  max: number;
+}
+
 export const useDataFilterStore = defineStore('dataFilterStore', () => {
   const conversationStore = useConversationStore();
   const dataPackageStore = useDataPackageStore();
@@ -25,14 +40,15 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
         if (!containsFilterCall(message)) continue;
         const filterSpec = extractFilterSpecFromMessage(message);
         if (!filterSpec) continue;
+        if (filterSpec.filter.filterType !== 'interval') continue; // TODO: handle point selections
         const key = messageFilterKey(i);
         if (key in dataSelections.value) continue;
         if (
           dataPackageStore.isValidIntervalFilter(
             filterSpec.entity,
             filterSpec.field,
-            filterSpec.min,
-            filterSpec.max,
+            filterSpec.filter.intervalRange.min,
+            filterSpec.filter.intervalRange.max,
           ).isValid !== 'yes'
         ) {
           continue;
@@ -42,7 +58,10 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
           dataSourceKey: filterSpec.entity,
           type: 'interval',
           selection: {
-            [filterSpec.field]: [filterSpec.min, filterSpec.max],
+            [filterSpec.field]: [
+              filterSpec.filter.intervalRange.min,
+              filterSpec.filter.intervalRange.max,
+            ],
           },
         };
       }
@@ -74,8 +93,8 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
             selection.selection ?? {},
           )) {
             if (args.field !== selectionField) continue;
-            args.min = intervalSelection[0];
-            args.max = intervalSelection[1];
+            args.filter.intervalRange.min = intervalSelection[0];
+            args.filter.intervalRange.max = intervalSelection[1];
           }
         }
       }
@@ -120,14 +139,7 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     );
   }
 
-  interface RangeFilter {
-    entity: string;
-    field: string;
-    min: number;
-    max: number;
-  }
-
-  function extractFilterSpecFromMessage(message: Message): RangeFilter | null {
+  function extractFilterSpecFromMessage(message: Message): FilterCallArgs | null {
     if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
       return null;
     }
