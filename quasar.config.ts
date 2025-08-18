@@ -74,7 +74,6 @@ export default defineConfig((/* ctx */) => {
             overlay: {
               initialIsOpen: false, // set to true to show overlay on startup
             },
-            overlay: false,
           },
           { server: false },
         ],
