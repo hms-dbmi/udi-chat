@@ -89,10 +89,7 @@ const maxDisplayText = computed(() => {
     >:
   </div>
   <div
-    v-if="
-      dataPackageStore.isValidIntervalFilter(entity, field, rangeModel.min, rangeModel.max)
-        .isValid === 'yes'
-    "
+    v-if="dataPackageStore.isValidIntervalFilter(entity, field).isValid === 'yes'"
     class="q-mx-sm"
   >
     <q-range v-model="rangeModel" :min="rangeMinMax.min" :max="rangeMinMax.max" />

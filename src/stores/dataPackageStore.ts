@@ -1,8 +1,7 @@
 import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
 // import { parse, type ParseResult } from 'papaparse';
-import { loadCSV, agg, op, from, bin, rolling, escape, desc, type ColumnTable } from 'arquero';
-import { data } from 'autoprefixer';
+import { loadCSV } from 'arquero';
 
 export const useDataPackageStore = defineStore('dataPackageStore', () => {
   const dataPackagePath = './data/hubmap_2025-05-05/datapackage_udi.json';
@@ -22,11 +21,12 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
   interface DataFieldDomain {
     entity: string;
     field: string;
+    type: 'interval' | 'point';
     domain: IntervalDomain | CategoricalDomain;
+    fieldDescription: string; // included because I send these to llm, and they may benefit from the context
   }
 
   interface IntervalDomain {
-    type: 'interval';
     min: number;
     max: number;
   }
@@ -45,7 +45,14 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
       const entityName = resource.name;
       const dataPath = resource.path;
       const fullPath = `${folderPath}/${dataPath}`;
-      addDataDomains(fullPath, entityName);
+      const fieldDescriptions = resource.schema.fields.reduce(
+        (acc: Record<string, string>, f: { name: string; description: string }) => {
+          acc[f.name] = f.description ?? '';
+          return acc;
+        },
+        {},
+      );
+      void addDataDomains(fullPath, entityName, fieldDescriptions);
     }
     return;
   }
@@ -60,12 +67,7 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     isValid: 'yes' | 'no' | 'unknown';
   }
 
-  function isValidIntervalFilter(
-    entity: string,
-    field: string,
-    min: number,
-    max: number,
-  ): ValidStatus {
+  function isValidIntervalFilter(entity: string, field: string): ValidStatus {
     if (!dataPackage.value || !dataPackage.value.resources) {
       return { isValid: 'unknown' };
     }
@@ -92,7 +94,11 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     return { isValid: isValid ? 'yes' : 'no' };
   }
 
-  async function addDataDomains(path: string, entity: string): Promise<void> {
+  async function addDataDomains(
+    path: string,
+    entity: string,
+    fieldDescriptions: Record<string, string>,
+  ): Promise<void> {
     const table = await loadCSV(path);
 
     // Get column names
@@ -116,6 +122,7 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
           entity,
           field: col,
           type: 'interval',
+          fieldDescription: fieldDescriptions[col] ?? '',
           domain: { min: stats.min, max: stats.max },
         });
       } else {
@@ -123,6 +130,7 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
           entity,
           field: col,
           type: 'point',
+          fieldDescription: fieldDescriptions[col] ?? '',
           domain: { values: Array.from(new Set(series)) },
         });
       }
@@ -151,9 +159,26 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     return data;
   }
 
+  function removeLongDomains(data: DataFieldDomain[], threshold = 30): object {
+    if (!data || typeof data !== 'object') return data;
+    return data.filter((dataFieldDomain: DataFieldDomain) => {
+      return (
+        dataFieldDomain.type === 'interval' ||
+        (dataFieldDomain.domain as CategoricalDomain).values.length < threshold
+      );
+    });
+  }
+
   const dataPackageString = computed(() => {
     if (!dataPackage.value) return '';
     return JSON.stringify(removeVestigialInfo(dataPackage.value));
+  });
+
+  const dataDomainsString = computed(() => {
+    if (!dataPackage.value) return '';
+    const jsonString = JSON.stringify(removeLongDomains(dataFieldDomains.value));
+    console.log('datasomiainssss tring:', jsonString);
+    return jsonString;
   });
 
   const sourceFields = computed(() => {
@@ -184,6 +209,7 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
   return {
     dataPackage,
     dataPackageString,
+    dataDomainsString,
     sourceFields,
     isValidIntervalFilter,
     isValidPointFilter,

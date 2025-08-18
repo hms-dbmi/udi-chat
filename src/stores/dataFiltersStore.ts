@@ -44,12 +44,8 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
         if (key in dataSelections.value) continue;
         if (filterSpec.filter.filterType === 'interval') {
           if (
-            dataPackageStore.isValidIntervalFilter(
-              filterSpec.entity,
-              filterSpec.field,
-              filterSpec.filter.intervalRange.min,
-              filterSpec.filter.intervalRange.max,
-            ).isValid !== 'yes'
+            dataPackageStore.isValidIntervalFilter(filterSpec.entity, filterSpec.field).isValid !==
+            'yes'
           ) {
             continue;
           }
@@ -90,7 +86,7 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
   watch(
     dataSelections,
     () => {
-      console.log('data selections changed!');
+      // console.log('data selections changed!');
       // if there is a change in the filters we want to go back an update the messages so when they are sent to llm they are correct
       for (const [selectionKey, selection] of Object.entries(dataSelections.value)) {
         const index = messageIndex(selectionKey);

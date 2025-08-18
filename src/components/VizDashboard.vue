@@ -7,8 +7,8 @@ const dataFilterStore = useDataFilterStore();
 const { dataSelections } = storeToRefs(dataFilterStore);
 
 function selectionChanged(newSelection: any) {
-  console.log('selection Changed yo');
-  console.log(newSelection);
+  // console.log('selection Changed yo');
+  // console.log(newSelection);
 }
 </script>
 

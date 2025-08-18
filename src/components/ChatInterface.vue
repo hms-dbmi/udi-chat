@@ -88,6 +88,7 @@ async function queryLLM() {
         model,
         messages: conversationStore.messages,
         dataSchema: dataPackageStore.dataPackageString,
+        dataDomains: dataPackageStore.dataDomainsString,
         // tools: agentTools,
       }),
     });
