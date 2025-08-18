@@ -61,7 +61,10 @@ const dataSelection = computed<DataSelection | null>(() => {
 });
 
 const options = computed(() => {
-  return domainValues.value.map((value) => ({ label: value, value }));
+  return domainValues.value.map((value) => {
+    const label = value == null ? '<null>' : value;
+    return { label, value };
+  });
 });
 </script>
 
