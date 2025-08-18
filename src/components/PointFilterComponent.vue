@@ -63,6 +63,7 @@ const dataSelection = computed<DataSelection | null>(() => {
 const options = computed(() => {
   return domainValues.value.map((value) => {
     const label = value == null ? '<null>' : value;
+    // todo: add special color for <null>, to help distinguish with labels with similar name.
     return { label, value };
   });
 });
