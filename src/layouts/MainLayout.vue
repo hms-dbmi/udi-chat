@@ -3,8 +3,9 @@
     <q-header elevated>
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
-
         <q-toolbar-title shrink> YAC: Yet Another Chatbot </q-toolbar-title>
+        <q-space />
+        <download-button />
         <q-space />
         <q-toggle
           color="secondary"
@@ -28,7 +29,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import ConversationList from 'components/ConversationList.vue';
-import FilterToolbar from 'components/FilterToolbar.vue';
+import DownloadButton from 'components/DownloadButton.vue';
 import { useGlobalStore } from '../stores/globalStore';
 const globalStore = useGlobalStore();
 import { useDashboardStore } from '../stores/dashboardStore';
