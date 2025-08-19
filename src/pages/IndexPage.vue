@@ -9,6 +9,7 @@
 
       <template v-slot:after>
         <div class="full-height column q-pa-md">
+          <counts-and-download-button />
           <q-toolbar class="toolbar-sticky">
             <filter-toolbar />
           </q-toolbar>
@@ -26,6 +27,7 @@ import { ref } from 'vue';
 import ChatInterface from 'components/ChatInterface.vue';
 import VizDashboard from 'components/VizDashboard.vue';
 import FilterToolbar from 'components/FilterToolbar.vue';
+import CountsAndDownloadButton from 'components/CountsAndDownloadButton.vue';
 import { useGlobalStore } from 'src/stores/globalStore';
 import { useDashboardStore } from 'src/stores/dashboardStore';
 

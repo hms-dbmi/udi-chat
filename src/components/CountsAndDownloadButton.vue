@@ -1,16 +1,16 @@
 <template>
-  <div class="row justify-center items-center q-gutter-sm">
-  <q-chip
-    v-for="chip in chips"
-    :key="chip.id"
-    outline
-    square
-    color="white"
-    text-color="white"
-    v-html="chip.label"
-    class="self-center"
-    style="margin-top: 10px; display: flex; align-items: center;"
-  />
+  <div class="row justify-center items-center">
+    <q-chip
+      v-for="chip in chips"
+      :key="chip.id"
+      outline
+      square
+      color="black"
+      text-color="black"
+      v-html="chip.label"
+      class="self-center"
+      style="margin-top: 10px; display: flex; align-items: center;"
+    />
     <q-btn
       color="white"
       text-color="black"
