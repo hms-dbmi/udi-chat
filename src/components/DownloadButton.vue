@@ -1,15 +1,16 @@
 <template>
   <div class="row justify-center items-center q-gutter-sm">
-    <q-chip
-      v-for="chip in chips"
-      :key="chip.id"
-      outline
-      square
-      color="white"
-      text-color="white"
-      v-html="chip.label"
-      class="q-mt-md"
-    />
+  <q-chip
+    v-for="chip in chips"
+    :key="chip.id"
+    outline
+    square
+    color="white"
+    text-color="white"
+    v-html="chip.label"
+    class="self-center"
+    style="margin-top: 10px; display: flex; align-items: center;"
+  />
     <q-btn
       color="white"
       text-color="black"
@@ -30,7 +31,7 @@ import { useDataExportStore } from 'src/stores/dataExportStore';
 type Row = Record<string, unknown>;
 
 const exportStore = useDataExportStore();
-const { displayData } = storeToRefs(exportStore);
+const { displayData, sourceName } = storeToRefs(exportStore);
 
 const noData = computed(() => !displayData.value || displayData.value.length === 0);
 
@@ -89,8 +90,8 @@ const chips = computed(() => {
   const count = exportStore.displayData?.length ?? 0;
   return [
     {
-      id: 'visible-datasets',
-      label: `<strong>Datasets</strong>: ${count}`,
+      id: 'visible-entities',
+      label: `<strong>${sourceName.value}</strong>: ${count}`,
     },
   ];
 });

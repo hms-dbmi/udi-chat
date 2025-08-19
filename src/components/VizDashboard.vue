@@ -27,15 +27,18 @@ function onDataUpdate(payload: {
   displayData: object[] | null;
   allData: object[] | null;
   isSubset: boolean;
-}) {
+},
+sourceName: string) {
   console.log('UDIVis displayData:', payload.displayData);
   console.log('UDIVis allData:', payload.allData);
   console.log('UDIVis isSubset:', payload.isSubset);
+  console.log('UDIVis sourceName:', sourceName);
 
   dataExportStore.setData({
     displayData: payload.displayData as Record<string, unknown>[] | null,
     allData: payload.allData as Record<string, unknown>[] | null,
     isSubset: payload.isSubset,
+    sourceName,
   });
 }
 
@@ -74,7 +77,7 @@ function onDataUpdate(payload: {
               :spec="viz.interactiveSpec"
               :selections="dataSelections"
               @selectionChange="selectionChanged"
-              @dataUpdate="onDataUpdate"
+              @dataUpdate="(payload) => onDataUpdate(payload, viz.interactiveSpec.source.name)"
             />
           </template>
           <template v-else>
