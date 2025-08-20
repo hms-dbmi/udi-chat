@@ -1,13 +1,23 @@
 <template>
   <div class="row justify-center items-center">
-    <q-btn
-      unelevated
+    <q-btn-dropdown
+      color="grey-4"
       text-color="black"
+      unelevated
       :disable="noData"
-      label="Download Selection"
+      label="Download"
       icon="download"
-      class="q-btn--with-border"
-    />
+    >
+      <q-list>
+        <q-item clickable v-close-popup @click="downloadCSV">
+          <q-item-section>Download Raw Data</q-item-section>
+        </q-item>
+
+        <q-item clickable v-close-popup @click="downloadManifest">
+          <q-item-section>Download Manifest</q-item-section>
+        </q-item>
+      </q-list>
+    </q-btn-dropdown>
   </div>
 </template>
 
@@ -19,7 +29,7 @@ import { useDataExportStore } from 'src/stores/dataExportStore';
 type Row = Record<string, unknown>;
 
 const exportStore = useDataExportStore();
-const { displayData } = storeToRefs(exportStore);
+const { displayData, sourceName } = storeToRefs(exportStore);
 
 const noData = computed(() => !displayData.value || displayData.value.length === 0);
 
@@ -31,7 +41,22 @@ function downloadCSV() {
   saveBlob(blob, filename('display', 'csv'));
 }
 
-function filename(scope: 'display', ext: 'csv') {
+function downloadManifest() {
+  if (noData.value) return;
+  const rows = displayData.value as Row[];
+
+  // Extract hubmap_ids, keep order, drop empties
+  const ids = rows
+    .map((r) => String((r as any)['hubmap_id'] ?? '').trim())
+    .filter((v) => v.length > 0);
+
+  // Header + newline-separated IDs
+  const manifest = [`${sourceName.value}:`, ...ids].join('\n');
+  const blob = new Blob([manifest], { type: 'text/plain;charset=utf-8' });
+  saveBlob(blob, filename('manifest', 'txt'));
+}
+
+function filename(scope: 'display' | 'manifest', ext: 'csv' | 'txt') {
   const pad = (n: number) => String(n).padStart(2, '0');
   const d = new Date();
   const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
@@ -74,9 +99,3 @@ function toCSV(rows: Row[]): string {
   return lines.join('\r\n');
 }
 </script>
-
-<style scoped lang="scss">
-  .q-btn--with-border {
-    border: 1px solid black;
-  }
-</style>
