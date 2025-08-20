@@ -1,12 +1,12 @@
 <template>
   <div class="row justify-center items-center">
     <q-btn
-      color="white"
+      unelevated
       text-color="black"
       :disable="noData"
       label="Download Selection"
       icon="download"
-      @click="downloadCSV"
+      class="q-btn--with-border"
     />
   </div>
 </template>
@@ -74,3 +74,9 @@ function toCSV(rows: Row[]): string {
   return lines.join('\r\n');
 }
 </script>
+
+<style scoped lang="scss">
+  .q-btn--with-border {
+    border: 1px solid black;
+  }
+</style>

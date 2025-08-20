@@ -9,11 +9,11 @@
 
       <template v-slot:after>
         <div class="full-height column q-pa-md">
-          <q-toolbar class="toolbar-sticky column q-gutter-xs">
+          <q-toolbar class="toolbar-sticky column q-gutter-md">
             <!-- Top row: right-aligned counts + download -->
             <div class="row items-center full-width">
-              <q-space />
               <data-counts class="q-mr-sm" />
+              <q-space />
               <download-button />
             </div>
 
