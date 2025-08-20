@@ -1,16 +1,5 @@
 <template>
   <div class="row justify-center items-center">
-    <q-chip
-      v-for="chip in chips"
-      :key="chip.id"
-      outline
-      square
-      color="black"
-      text-color="black"
-      v-html="chip.label"
-      class="self-center"
-      style="margin-top: 10px; display: flex; align-items: center;"
-    />
     <q-btn
       color="white"
       text-color="black"
@@ -22,7 +11,6 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
@@ -31,7 +19,7 @@ import { useDataExportStore } from 'src/stores/dataExportStore';
 type Row = Record<string, unknown>;
 
 const exportStore = useDataExportStore();
-const { displayData, sourceName } = storeToRefs(exportStore);
+const { displayData } = storeToRefs(exportStore);
 
 const noData = computed(() => !displayData.value || displayData.value.length === 0);
 
@@ -85,14 +73,4 @@ function toCSV(rows: Row[]): string {
   }
   return lines.join('\r\n');
 }
-
-const chips = computed(() => {
-  const count = exportStore.displayData?.length ?? 0;
-  return [
-    {
-      id: 'visible-entities',
-      label: `<strong>${sourceName.value}</strong>: ${count}`,
-    },
-  ];
-});
 </script>
