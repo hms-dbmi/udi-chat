@@ -132,6 +132,8 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
         ? updatedInteractiveSpec.source.at(0)?.name 
         : updatedInteractiveSpec.source?.name;
 
+      console.log('filterIds', filterIds.value);
+
       // Build filters, adding cross entity info when the filter comes from a viz with a different source
       const newFilters = filterIds.value.map((id: string) => {
         const originSourceName = uuidToSource.get(id);
@@ -147,6 +149,18 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
               }
             }
           };
+        }
+        if (id.startsWith('message-filter') && currentSourceName === 'samples') {
+          return {
+            filter: {
+              name: id,
+              source: 'donors',
+              entityRelationship: {
+                originKey: 'hubmap_id',
+                targetKey: 'donor.hubmap_id',
+              }
+            }
+          }
         }
         // same-entity
         return { filter: { name: id } };
