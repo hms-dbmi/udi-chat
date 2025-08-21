@@ -1,4 +1,3 @@
 [{"content":"Show me the count of sample records for each organ?","role":"user"},{"content":"","role":"assistant","tool_calls":[{"function":{"name":"RenderVisualization","arguments":{
-  "spec": "{\"source\":{\"name\":\"samples\",\"source\":\"./data/samples.csv\"},\"transformation\":[{\"groupby\":[\"origin_samples_unique_mapped_organs\"]},{\"rollup\":{\"count\":{\"op\":\"count\"}}},{\"orderby\":{\"field\":\"origin_samples_unique_mapped_organs\",\"order\":\"desc\"}}],\"representation\":{\"mark\":\"bar\",\"mapping\":[{\"encoding\":\"x\",\"field\":\"origin_samples_unique_mapped_organs\",\"type\":\"nominal\"},{\"encoding\":\"y\",\"field\":\"count\",\"type\":\"quantitative\"}],\"select\":{\"name\":\"organ-filter\",\"fields\":\"origin_samples_unique_mapped_organs\",\"how\":{\"type\":\"point\"}}}}"
-}
-}}]}]
+  "spec": "{\"source\":{\"name\":\"samples\",\"source\":\"./data/samples.csv\"},\"transformation\":[{\"groupby\":[\"origin_samples_unique_mapped_organs\"]},{\"rollup\":{\"count\":{\"op\":\"count\"}}},{\"orderby\":{\"field\":\"origin_samples_unique_mapped_organs\",\"order\":\"desc\"}}],\"representation\":{\"mark\":\"bar\",\"mapping\":[{\"encoding\":\"x\",\"field\":\"origin_samples_unique_mapped_organs\",\"type\":\"nominal\"},{\"encoding\":\"y\",\"field\":\"count\",\"type\":\"quantitative\"}]}}"
+}}}]}]

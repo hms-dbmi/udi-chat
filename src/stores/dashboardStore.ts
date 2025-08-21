@@ -25,7 +25,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   const { messages } = storeToRefs(conversationStore);
   const pinnedVisualizations = ref<Map<number, PinnedVisualization>>(new Map());
 
-  const filterAllNullValues = ref<boolean>(true);
+  const filterAllNullValues = ref<boolean>(false);
 
   const hoveredVisualizationIndex = ref<number | null>(null);
   function setHoveredVisualizationIndex(index: number | null) {
