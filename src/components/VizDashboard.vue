@@ -18,6 +18,7 @@ watch(
   () => Array.from(dashboardStore.pinnedVisualizations.values()).at(-1)?.interactiveSpec,
   (newSpec) => {
     if (newSpec) console.log('Latest viz spec:', newSpec);
+    console.log('pinnedVisualizations', dashboardStore.pinnedVisualizations);
     console.log('Data selections:', dataSelections.value);
   },
   { immediate: true }

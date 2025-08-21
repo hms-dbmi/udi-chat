@@ -114,28 +114,58 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   }
 
   function updateSpecFilters() {
-    const newFilters = filterIds.value.map((id: string) => {
-      // TODO: determin if cross-entity, and add entityRelationships here.
-      return { filter: { name: id } };
-    });
+    // Build a quick lookup map from UUID to source name
+    const uuidToSource = new Map<string, string>();
+    for (const v of pinnedVisualizations.value.values()) {
+      const sourceName = Array.isArray(v.interactiveSpec.source)
+        ? v.interactiveSpec.source.at(0)?.name 
+        : v.interactiveSpec.source?.name;
+      if (v?.uuid && sourceName) uuidToSource.set(v.uuid, sourceName);
+    }
+  
+    // Iterate over pinned visualizations and update their interactive specs
     for (const viz of pinnedVisualizations.value.values()) {
-      // const otherFilters = newFilters.filter((f) => f.filter.name !== viz.uuid);
       const updatedSpec = cloneDeep(viz.spec);
       const updatedInteractiveSpec = cloneDeep(viz.interactiveSpec);
+  
+      const currentSourceName = Array.isArray(updatedInteractiveSpec.source)
+        ? updatedInteractiveSpec.source.at(0)?.name 
+        : updatedInteractiveSpec.source?.name;
+
+      // Build filters, adding cross entity info when the filter comes from a viz with a different source
+      const newFilters = filterIds.value.map((id: string) => {
+        const originSourceName = uuidToSource.get(id);
+        if (originSourceName && originSourceName !== currentSourceName) {
+          // Cross-entity: include the origin source name
+          return { 
+            filter: {
+              name: id,
+              source: originSourceName,
+              entityRelationship: {
+                originKey: originSourceName === 'donors' ? 'hubmap_id' : 'donor.hubmap_id',
+                targetKey: currentSourceName === 'donors' ? 'hubmap_id' : 'donor.hubmap_id',
+              }
+            }
+          };
+        }
+        // same-entity
+        return { filter: { name: id } };
+      });
+  
       let transformation = updatedSpec.transformation ?? [];
       transformation = [...newFilters, ...transformation];
+  
       if (filterAllNullValues.value) {
-        const nullFilters = getRepresentedFields(updatedSpec).map((field) => {
-          return {
-            filter: `d['${field}'] != null`,
-          };
-        });
+        const nullFilters = getRepresentedFields(updatedSpec).map((field) => ({
+          filter: `d['${field}'] != null`,
+        }));
         transformation = [...transformation, ...nullFilters];
       }
+  
       updatedInteractiveSpec.transformation = transformation;
       viz.interactiveSpec = updatedInteractiveSpec;
     }
-  }
+  }  
 
   function getRepresentedFields(spec: UDIGrammar): string[] {
     // for every representation get all the fields that are mapped
