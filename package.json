@@ -17,6 +17,7 @@
     "@quasar/extras": "^1.16.4",
     "@types/lodash-es": "^4.17.12",
     "arquero": "^8.0.3",
+    "jszip": "^3.10.1",
     "lodash-es": "^4.17.21",
     "ollama": "^0.5.10",
     "openai": "^5.5.1",

@@ -24,22 +24,20 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useDataExportStore } from 'src/stores/dataExportStore';
+import JSZip from 'jszip';
 
 type Row = Record<string, unknown>;
 
 const exportStore = useDataExportStore();
 
-// Make a reactive array of [sourceName, payload] entries
 const entries = computed(() =>
   Array.from(exportStore.dataBySource.entries())
 );
 
-// Flatten all display rows across sources
 const allDisplayRows = computed<Row[]>(() =>
   entries.value.flatMap(([_, p]) => p.displayData ?? [])
 );
 
-// For manifest: keep rows grouped by source
 const rowsBySource = computed(() =>
   entries.value.map(([source, p]) => ({
     source,
@@ -49,22 +47,40 @@ const rowsBySource = computed(() =>
 
 const noData = computed(() => allDisplayRows.value.length === 0);
 
-function downloadCSV() {
+// download a ZIP w one CSV per table
+async function downloadCSV() {
   if (noData.value) return;
-  const csv = toCSV(allDisplayRows.value);
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  saveBlob(blob, filename('display', 'csv'));
+
+  const zip = new JSZip();
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const d = new Date();
+  const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+
+  const safeName = (s: string) =>
+    s.replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '');
+
+  for (const { source, rows } of rowsBySource.value) {
+    // skip emoty sources
+    if (!rows.length) continue;
+    const csv = toCSV(rows);
+    const fileName = `udi_display_${safeName(source)}_${stamp}.csv`;
+    zip.file(fileName, csv);
+  }
+
+  // If nothing had rows, don't create a zip file
+  const zipFilesCount = Object.keys(zip.files).length;
+  if (zipFilesCount === 0) return;
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  saveBlob(blob, `udi_display_bundle_${stamp}.zip`);
 }
 
 function downloadManifest() {
   if (noData.value) return;
 
-  // Combine all sources into a single .txt.
-  // Each source gets a header and its IDs, separated by a blank line.
   const blocks: string[] = [];
-
   for (const { source, rows } of rowsBySource.value) {
-    // Extract hubmap_ids, keep order, drop empties
     const ids = rows
       .map((r) => String((r as any)['hubmap_id'] ?? '').trim())
       .filter((v) => v.length > 0);
@@ -74,7 +90,7 @@ function downloadManifest() {
     }
   }
 
-  const manifest = blocks.join('\n\n'); // single file, multiple sections
+  const manifest = blocks.join('\n\n');
   const blob = new Blob([manifest], { type: 'text/plain;charset=utf-8' });
   saveBlob(blob, filename('manifest', 'txt'));
 }
@@ -100,7 +116,6 @@ function saveBlob(blob: Blob, name: string) {
 function toCSV(rows: Row[]): string {
   if (!rows || rows.length === 0) return '';
 
-  // Union of all headers across rows
   const headers = Array.from(
     rows.reduce<Set<string>>((s, r) => {
       Object.keys(r ?? {}).forEach((k) => s.add(k));
