@@ -20,13 +20,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { storeToRefs } from 'pinia';
 import { useDataExportStore } from 'src/stores/dataExportStore';
 
 const exportStore = useDataExportStore();
-const { displayData, allData, sourceName } = storeToRefs(exportStore);
 
-// map sourceName to an icon
+/**
+ * Map a source name into a label and icon
+ */
 function classifySourceName(name?: string) {
   const s = (name ?? '').toLowerCase().trim();
 
@@ -45,21 +45,35 @@ function classifySourceName(name?: string) {
   return { typeLabel: name ?? 'entities', icon: 'dataset' };
 }
 
+/**
+ * Build chips for each entry in the store's dataBySource map
+ */
 const chips = computed(() => {
-  const count = displayData.value?.length ?? 0;
-  const total = allData.value?.length ?? 0;
+  const result: {
+    id: string;
+    count: number;
+    total: number;
+    typeLabel: string;
+    icon: string;
+  }[] = [];
 
-  const { typeLabel, icon } = classifySourceName(sourceName.value);
+  console.log('DataCounts chips:', exportStore.dataBySource);
 
-  return [
-    {
-      id: 'visible-entities',
+  for (const [sourceName, payload] of exportStore.dataBySource.entries()) {
+    const count = payload.displayData?.length ?? 0;
+    const total = payload.allData?.length ?? 0;
+    const { typeLabel, icon } = classifySourceName(sourceName);
+
+    result.push({
+      id: sourceName,
       count,
       total,
       typeLabel,
       icon,
-    },
-  ];
+    });
+  }
+
+  return result;
 });
 </script>
 

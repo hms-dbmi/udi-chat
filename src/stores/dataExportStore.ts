@@ -1,39 +1,38 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { reactive } from 'vue';
 
 type Row = Record<string, unknown>;
+type DataPayload = {
+  displayData: Row[] | null;
+  allData: Row[] | null;
+  isSubset: boolean;
+};
 
 export const useDataExportStore = defineStore('dataExport', () => {
-  const displayData = ref<Row[] | null>(null);
-  const allData = ref<Row[] | null>(null);
-  const isSubset = ref<boolean>(false);
-  const sourceName = ref<string | null>(null);
+  const dataBySource = reactive(new Map<string, DataPayload>());
 
-  function setData(payload: {
-    displayData: Row[] | null;
-    allData: Row[] | null;
-    isSubset: boolean;
-    sourceName: string | null;
-  }) {
-    displayData.value = payload.displayData;
-    allData.value = payload.allData;
-    isSubset.value = payload.isSubset;
-    sourceName.value = payload.sourceName;
+  function setData(sourceName: string, payload: DataPayload) {
+    if (!sourceName) return; // ignore bad keys
+    dataBySource.set(sourceName, payload);
   }
 
-  function clear() {
-    displayData.value = null;
-    allData.value = null;
-    isSubset.value = false;
-    sourceName.value = null;
+  function getData(sourceName: string): DataPayload | undefined {
+    return dataBySource.get(sourceName);
+  }
+
+  function clearSource(sourceName: string) {
+    dataBySource.delete(sourceName);
+  }
+
+  function clearAll() {
+    dataBySource.clear();
   }
 
   return {
-    displayData,
-    allData,
-    isSubset,
-    sourceName,
+    dataBySource,
     setData,
-    clear,
+    getData,
+    clearSource,
+    clearAll,
   };
 });

@@ -23,35 +23,58 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { storeToRefs } from 'pinia';
 import { useDataExportStore } from 'src/stores/dataExportStore';
 
 type Row = Record<string, unknown>;
 
 const exportStore = useDataExportStore();
-const { displayData, sourceName } = storeToRefs(exportStore);
 
-const noData = computed(() => !displayData.value || displayData.value.length === 0);
+// Make a reactive array of [sourceName, payload] entries
+const entries = computed(() =>
+  Array.from(exportStore.dataBySource.entries())
+);
+
+// Flatten all display rows across sources
+const allDisplayRows = computed<Row[]>(() =>
+  entries.value.flatMap(([_, p]) => p.displayData ?? [])
+);
+
+// For manifest: keep rows grouped by source
+const rowsBySource = computed(() =>
+  entries.value.map(([source, p]) => ({
+    source,
+    rows: (p.displayData ?? []) as Row[],
+  }))
+);
+
+const noData = computed(() => allDisplayRows.value.length === 0);
 
 function downloadCSV() {
   if (noData.value) return;
-  const rows = displayData.value as Row[];
-  const csv = toCSV(rows);
+  const csv = toCSV(allDisplayRows.value);
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   saveBlob(blob, filename('display', 'csv'));
 }
 
 function downloadManifest() {
   if (noData.value) return;
-  const rows = displayData.value as Row[];
 
-  // Extract hubmap_ids, keep order, drop empties
-  const ids = rows
-    .map((r) => String((r as any)['hubmap_id'] ?? '').trim())
-    .filter((v) => v.length > 0);
+  // Combine all sources into a single .txt.
+  // Each source gets a header and its IDs, separated by a blank line.
+  const blocks: string[] = [];
 
-  // Header + newline-separated IDs
-  const manifest = [`${sourceName.value}:`, ...ids].join('\n');
+  for (const { source, rows } of rowsBySource.value) {
+    // Extract hubmap_ids, keep order, drop empties
+    const ids = rows
+      .map((r) => String((r as any)['hubmap_id'] ?? '').trim())
+      .filter((v) => v.length > 0);
+
+    if (ids.length > 0) {
+      blocks.push([`${source}:`, ...ids].join('\n'));
+    }
+  }
+
+  const manifest = blocks.join('\n\n'); // single file, multiple sections
   const blob = new Blob([manifest], { type: 'text/plain;charset=utf-8' });
   saveBlob(blob, filename('manifest', 'txt'));
 }
@@ -76,6 +99,8 @@ function saveBlob(blob: Blob, name: string) {
 
 function toCSV(rows: Row[]): string {
   if (!rows || rows.length === 0) return '';
+
+  // Union of all headers across rows
   const headers = Array.from(
     rows.reduce<Set<string>>((s, r) => {
       Object.keys(r ?? {}).forEach((k) => s.add(k));
