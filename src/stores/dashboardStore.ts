@@ -150,7 +150,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
             }
           };
         }
-        if (id.startsWith('message-filter') && currentSourceName === 'samples') {
+        if (id.startsWith('message-filter') && (currentSourceName === 'samples' || currentSourceName === 'datasets')) {
           return {
             filter: {
               name: id,
