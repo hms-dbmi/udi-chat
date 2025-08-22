@@ -53,7 +53,6 @@ function classifySourceName(name?: string): {
  * Build chips for each entry in the store's dataBySource map
  */
 const chips = computed(() => {
-  // Seed all three kinds with zero counts
   const buckets: Record<
     'donors' | 'samples' | 'datasets',
     { id: 'donors' | 'samples' | 'datasets'; count: number; total: number; typeLabel: string; icon: string }
@@ -63,16 +62,15 @@ const chips = computed(() => {
     datasets: { id: 'datasets', count: 0, total: 0, typeLabel: 'datasets', icon: 'table_chart' },
   };
 
-  // Aggregate counts from the store into the seeded buckets
+  // Aggregate counts from the store
   for (const [sourceName, payload] of exportStore.dataBySource.entries()) {
     const { kind } = classifySourceName(sourceName);
-    if (kind === 'other') continue; // ignore unrecognized source names
+    if (kind === 'other') continue;
 
     buckets[kind].count += payload.displayData?.length ?? 0;
     buckets[kind].total += payload.allData?.length ?? 0;
   }
 
-  // Return in a stable order
   return [buckets.donors, buckets.samples, buckets.datasets];
 });
 </script>
