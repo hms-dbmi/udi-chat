@@ -4,6 +4,7 @@
       v-for="chip in chips"
       :key="chip.id"
       class="count-chip self-center"
+      :class="{ 'chip-disabled': chip.count === 0 }"
       :title="chip.typeLabel"
     >
       <q-icon :name="chip.icon" size="40px" class="chip-icon" />
@@ -27,53 +28,52 @@ const exportStore = useDataExportStore();
 /**
  * Map a source name into a label and icon
  */
-function classifySourceName(name?: string) {
+function classifySourceName(name?: string): {
+  kind: 'donors' | 'samples' | 'datasets' | 'other';
+  typeLabel: string;
+  icon: string;
+} {
   const s = (name ?? '').toLowerCase().trim();
 
   if (/^donor(s)?$/.test(s) || s.includes('donor')) {
-    return { typeLabel: 'donors', icon: 'person' };
+    return { kind: 'donors', typeLabel: 'donors', icon: 'person' };
   }
   if (/biological sample/.test(s) || /^sample(s)?$/.test(s) || s.includes('sample')) {
-    return { typeLabel: 'samples', icon: 'bubble_chart' };
+    return { kind: 'samples', typeLabel: 'samples', icon: 'bubble_chart' };
   }
   if (/^data$/.test(s) || /^dataset(s)?$/.test(s) || s.includes('dataset') || s === 'data') {
-    return { typeLabel: 'datasets', icon: 'table_chart' };
+    return { kind: 'datasets', typeLabel: 'datasets', icon: 'table_chart' };
   }
-  if (/^file(s)?$/.test(s) || s.includes('file')) {
-    return { typeLabel: 'files', icon: 'insert_drive_file' };
-  }
-  return { typeLabel: name ?? 'entities', icon: 'dataset' };
+
+  // unknown / other
+  return { kind: 'other', typeLabel: name ?? 'entities', icon: 'dataset' };
 }
 
 /**
  * Build chips for each entry in the store's dataBySource map
  */
 const chips = computed(() => {
-  const result: {
-    id: string;
-    count: number;
-    total: number;
-    typeLabel: string;
-    icon: string;
-  }[] = [];
+  // Seed all three kinds with zero counts
+  const buckets: Record<
+    'donors' | 'samples' | 'datasets',
+    { id: 'donors' | 'samples' | 'datasets'; count: number; total: number; typeLabel: string; icon: string }
+  > = {
+    donors:   { id: 'donors',   count: 0, total: 0, typeLabel: 'donors',   icon: 'person' },
+    samples:  { id: 'samples',  count: 0, total: 0, typeLabel: 'samples',  icon: 'bubble_chart' },
+    datasets: { id: 'datasets', count: 0, total: 0, typeLabel: 'datasets', icon: 'table_chart' },
+  };
 
-  console.log('DataCounts chips:', exportStore.dataBySource);
-
+  // Aggregate counts from the store into the seeded buckets
   for (const [sourceName, payload] of exportStore.dataBySource.entries()) {
-    const count = payload.displayData?.length ?? 0;
-    const total = payload.allData?.length ?? 0;
-    const { typeLabel, icon } = classifySourceName(sourceName);
+    const { kind } = classifySourceName(sourceName);
+    if (kind === 'other') continue; // ignore unrecognized source names
 
-    result.push({
-      id: sourceName,
-      count,
-      total,
-      typeLabel,
-      icon,
-    });
+    buckets[kind].count += payload.displayData?.length ?? 0;
+    buckets[kind].total += payload.allData?.length ?? 0;
   }
 
-  return result;
+  // Return in a stable order
+  return [buckets.donors, buckets.samples, buckets.datasets];
 });
 </script>
 
@@ -83,7 +83,6 @@ const chips = computed(() => {
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  border-left: 1px solid #ccc;
   border-right: 1px solid #ccc;
   background: transparent;
   border-radius: 0;
@@ -120,5 +119,13 @@ const chips = computed(() => {
   font-size: 0.8rem;
   color: #666;
   margin-top: 2px;
+}
+
+.chip-disabled .chip-count,
+.chip-disabled .chip-icon,
+.chip-disabled .chip-total {
+  color: #919191 !important;
+  font-weight: 400 !important;
+  font-size: 1rem; 
 }
 </style>
