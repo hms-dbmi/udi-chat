@@ -3,6 +3,7 @@ import { storeToRefs } from 'pinia';
 import { watch, computed } from 'vue';
 import { useDashboardStore } from 'src/stores/dashboardStore';
 import CountsBridge from 'components/CountsBridge.vue';
+import ExportBridge from 'components/ExportBridge.vue';
 const dashboardStore = useDashboardStore();
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 const dataFilterStore = useDataFilterStore();
@@ -93,6 +94,11 @@ function getEntityFromSpec(spec: any) {
                     v-bind="getEntityFromSpec(viz.countsSpec)"
                     :count="Array.isArray(data) ? data.length : 0"
                     :total="Array.isArray(allData) ? allData.length : 0"
+                  />
+                  <ExportBridge
+                    :id="getEntityFromSpec(viz.countsSpec).id"
+                    :displayRows="Array.isArray(data) ? data : []"
+                    :allRows="Array.isArray(allData) ? allData : []"
                   />
                 </template>
               </UDIVis>

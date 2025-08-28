@@ -39,25 +39,21 @@ import VizDashboard from 'components/VizDashboard.vue';
 import FilterToolbar from 'components/FilterToolbar.vue';
 import DownloadButton from 'components/DownloadButton.vue';
 import DataCounts from 'components/DataCounts.vue';
+
 import { COUNTS_CTX, type CountRow } from 'src/context/counts';
+import { EXPORT_CTX, type ExportRowSet } from 'src/context/exports';
 
 const countsRegistry = reactive(new Map<string, CountRow>());
+function registerCount(id: string, row: CountRow) { countsRegistry.set(id, row); }
+function unregisterCount(id: string) { countsRegistry.delete(id); }
+provide(COUNTS_CTX, { registry: countsRegistry, register: registerCount, unregister: unregisterCount });
 
-function registerCount(id: string, row: CountRow) {
-  countsRegistry.set(id, row);
-}
-function unregisterCount(id: string) {
-  countsRegistry.delete(id);
-}
-
-provide(COUNTS_CTX, {
-  registry: countsRegistry,
-  register: registerCount,
-  unregister: unregisterCount,
-});
+const exportRegistry = reactive(new Map<string, ExportRowSet>());
+function registerExport(id: string, rows: ExportRowSet) { exportRegistry.set(id, rows); }
+function unregisterExport(id: string) { exportRegistry.delete(id); }
+provide(EXPORT_CTX, { registry: exportRegistry, register: registerExport, unregister: unregisterExport });
 
 const splitterModel = ref(450);
-
 defineOptions({ name: 'IndexPage' });
 </script>
 
