@@ -81,13 +81,15 @@ const maxDisplayText = computed(() => {
 </script>
 
 <template>
-  <div class="q-mx-sm">
+<div class="q-mx-sm">
+  <i>
     Filtered <span class="emphasized q-mr-xs">{{ entity }}</span>
-    <span class="emphasized">{{ field }}</span
-    >, <span class="emphasized">{{ minDisplayText }}</span> to
-    <span class="emphasized">{{ maxDisplayText }}</span
-    >:
-  </div>
+    <span class="emphasized">{{ field }}</span>,
+    <span class="emphasized">{{ minDisplayText }}</span> to
+    <span class="emphasized">{{ maxDisplayText }}</span>:
+  </i>
+</div>
+
   <div
     v-if="dataPackageStore.isValidIntervalFilter(entity, field).isValid === 'yes'"
     class="q-mx-sm"
