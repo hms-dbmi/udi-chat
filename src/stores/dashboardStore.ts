@@ -14,6 +14,7 @@ export interface PinnedVisualization {
   index: number;
   spec: UDIGrammar;
   interactiveSpec: UDIGrammar;
+  countsSpec: UDIGrammar;
   userPrompt: string;
   uuid: string;
 }
@@ -39,10 +40,12 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   function pinVisualization(index: number, spec: UDIGrammar, userPrompt: string) {
     const uuid = 'udi_' + uuidv4();
     const interactiveSpec = injectInteractivity(spec, uuid);
+    const countsSpec = buildCountsSpec(spec)
     pinnedVisualizations.value.set(index, {
       index,
       spec,
       interactiveSpec,
+      countsSpec,
       userPrompt,
       uuid,
     });
@@ -125,8 +128,9 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   
     // Iterate over pinned visualizations and update their interactive specs
     for (const viz of pinnedVisualizations.value.values()) {
-      const updatedSpec = cloneDeep(viz.spec);
-      const updatedInteractiveSpec = cloneDeep(viz.interactiveSpec);
+      const updatedSpec: UDIGrammar = cloneDeep(viz.spec);
+      const updatedCountsSpec: UDIGrammar = cloneDeep(viz.countsSpec);
+      const updatedInteractiveSpec: UDIGrammar = cloneDeep(viz.interactiveSpec);
   
       const currentSourceName = Array.isArray(updatedInteractiveSpec.source)
         ? updatedInteractiveSpec.source.at(0)?.name 
@@ -166,18 +170,23 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
         return { filter: { name: id } };
       });
   
-      let transformation = updatedSpec.transformation ?? [];
-      transformation = [...newFilters, ...transformation];
-  
-      if (filterAllNullValues.value) {
-        const nullFilters = getRepresentedFields(updatedSpec).map((field) => ({
-          filter: `d['${field}'] != null`,
-        }));
-        transformation = [...transformation, ...nullFilters];
-      }
-  
-      updatedInteractiveSpec.transformation = transformation;
+      const baseTrans = updatedSpec.transformation ?? [];
+      const nullFilters = filterAllNullValues.value
+        ? getRepresentedFields(updatedSpec).map((field) => ({ filter: `d['${field}'] != null` }))
+        : [];
+
+      updatedInteractiveSpec.transformation = [
+        ...newFilters,
+        ...baseTrans,
+        ...nullFilters,
+      ];
       viz.interactiveSpec = updatedInteractiveSpec;
+
+      updatedCountsSpec.transformation = [
+        ...newFilters,
+        ...nullFilters,
+      ];
+      viz.countsSpec = updatedCountsSpec;
     }
   }  
 
@@ -219,6 +228,23 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 
   function isPinned(index: number): boolean {
     return pinnedVisualizations.value.has(index);
+  }
+
+  function buildCountsSpec(spec: UDIGrammar): UDIGrammar {
+    console.log('building counts spec', spec);
+    const countsSpec = cloneDeep(spec);
+  
+    if ("representation" in countsSpec) {
+      delete countsSpec.representation;
+    }
+    if ("transformation" in countsSpec) {
+      delete countsSpec.transformation;
+    }
+
+
+    
+    console.log('final counts spec', countsSpec);
+    return countsSpec;
   }
 
   function injectInteractivity(spec: UDIGrammar, id: string): UDIGrammar {

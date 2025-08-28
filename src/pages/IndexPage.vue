@@ -32,25 +32,33 @@
   </q-page>
 </template>
 
-
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, reactive, provide } from 'vue';
 import ChatInterface from 'components/ChatInterface.vue';
 import VizDashboard from 'components/VizDashboard.vue';
 import FilterToolbar from 'components/FilterToolbar.vue';
 import DownloadButton from 'components/DownloadButton.vue';
 import DataCounts from 'components/DataCounts.vue';
-import { useGlobalStore } from 'src/stores/globalStore';
-import { useDashboardStore } from 'src/stores/dashboardStore';
+import { COUNTS_CTX, type CountRow } from 'src/context/counts';
 
-const globalStore = useGlobalStore();
-const dashboardStore = useDashboardStore();
+const countsRegistry = reactive(new Map<string, CountRow>());
+
+function registerCount(id: string, row: CountRow) {
+  countsRegistry.set(id, row);
+}
+function unregisterCount(id: string) {
+  countsRegistry.delete(id);
+}
+
+provide(COUNTS_CTX, {
+  registry: countsRegistry,
+  register: registerCount,
+  unregister: unregisterCount,
+});
 
 const splitterModel = ref(450);
 
-defineOptions({
-  name: 'IndexPage',
-});
+defineOptions({ name: 'IndexPage' });
 </script>
 
 <style scoped>

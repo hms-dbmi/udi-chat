@@ -20,58 +20,33 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useDataExportStore } from 'src/stores/dataExportStore';
+import { computed, inject } from 'vue';
+import { COUNTS_CTX } from 'src/context/counts';
 
-const exportStore = useDataExportStore();
+const ctx = inject(COUNTS_CTX);
+if (!ctx) throw new Error('DataCounts must be mounted under IndexPage provider.');
 
-/**
- * Map a source name into a label and icon
- */
-function classifySourceName(name?: string): {
-  kind: 'donors' | 'samples' | 'datasets' | 'other';
-  typeLabel: string;
-  icon: string;
-} {
-  const s = (name ?? '').toLowerCase().trim();
-
-  if (/^donor(s)?$/.test(s) || s.includes('donor')) {
-    return { kind: 'donors', typeLabel: 'donors', icon: 'person' };
-  }
-  if (/biological sample/.test(s) || /^sample(s)?$/.test(s) || s.includes('sample')) {
-    return { kind: 'samples', typeLabel: 'samples', icon: 'bubble_chart' };
-  }
-  if (/^data$/.test(s) || /^dataset(s)?$/.test(s) || s.includes('dataset') || s === 'data') {
-    return { kind: 'datasets', typeLabel: 'datasets', icon: 'table_chart' };
-  }
-
-  // unknown / other
-  return { kind: 'other', typeLabel: name ?? 'entities', icon: 'dataset' };
-}
-
-/**
- * Build chips for each entry in the store's dataBySource map
- */
 const chips = computed(() => {
-  const buckets: Record<
-    'donors' | 'samples' | 'datasets',
-    { id: 'donors' | 'samples' | 'datasets'; count: number; total: number; typeLabel: string; icon: string }
-  > = {
-    donors:   { id: 'donors',   count: 0, total: 0, typeLabel: 'donors',   icon: 'person' },
-    samples:  { id: 'samples',  count: 0, total: 0, typeLabel: 'samples',  icon: 'bubble_chart' },
-    datasets: { id: 'datasets', count: 0, total: 0, typeLabel: 'datasets', icon: 'table_chart' },
-  };
+  const order = ['donors', 'samples', 'datasets'];
+  const out: Array<{ id: string; count: number; total: number; typeLabel: string; icon: string }> = [];
 
-  // Aggregate counts from the store
-  for (const [sourceName, payload] of exportStore.dataBySource.entries()) {
-    const { kind } = classifySourceName(sourceName);
-    if (kind === 'other') continue;
-
-    buckets[kind].count += payload.displayData?.length ?? 0;
-    buckets[kind].total += payload.allData?.length ?? 0;
+  for (const id of order) {
+    const row = ctx.registry.get(id);
+    if (row) out.push({ id, ...row });
+    else out.push({
+      id,
+      count: 0,
+      total: 0,
+      typeLabel: id,
+      icon: id === 'donors' ? 'person' : id === 'samples' ? 'bubble_chart' : 'table_chart',
+    });
   }
 
-  return [buckets.donors, buckets.samples, buckets.datasets];
+  for (const [id, row] of ctx.registry.entries()) {
+    if (!order.includes(id)) out.push({ id, ...row });
+  }
+
+  return out;
 });
 </script>
 

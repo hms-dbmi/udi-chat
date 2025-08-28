@@ -54,7 +54,7 @@ function stripFileExtension(filename: string) {
   <q-list class="q-mt-sm">
     <q-item clickable @click="conversationStore.newConversation()">
       <q-item-section avatar> <q-icon color="primary" name="add" /> </q-item-section
-      ><q-item-section>New Converstation</q-item-section></q-item
+      ><q-item-section>New Conversation</q-item-section></q-item
     >
     <q-separator spaced inset />
     <q-item-label header>Past Conversations</q-item-label>

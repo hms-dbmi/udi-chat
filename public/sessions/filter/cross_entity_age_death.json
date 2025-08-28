@@ -2,9 +2,5 @@
 {"content":"Show me the count of sample records for each organ?","role":"user"},
 {"content":"","role":"assistant","tool_calls":[{"function":{"name":"RenderVisualization","arguments":{
   "spec": "{\"source\":{\"name\":\"samples\",\"source\":\"./data/samples.csv\"},\"transformation\":[{\"groupby\":[\"origin_samples_unique_mapped_organs\"]},{\"rollup\":{\"count\":{\"op\":\"count\"}}},{\"orderby\":{\"field\":\"origin_samples_unique_mapped_organs\",\"order\":\"desc\"}}],\"representation\":{\"mark\":\"bar\",\"mapping\":[{\"encoding\":\"x\",\"field\":\"origin_samples_unique_mapped_organs\",\"type\":\"nominal\"},{\"encoding\":\"y\",\"field\":\"count\",\"type\":\"quantitative\"}],\"select\":{\"name\":\"organ-filter\",\"fields\":\"origin_samples_unique_mapped_organs\",\"how\":{\"type\":\"point\"}}}}"
-}}}]},
-{"content":"Show me a heatmap of datasets by assay and origin organ","role":"user"},
-{"content":"","role":"assistant","tool_calls":[{"function":{"name":"RenderVisualization","arguments":{
- "spec": "{\"source\":{\"name\":\"datasets\",\"source\":\"./data/datasets.csv\"},\"transformation\":[{\"groupby\":[\"origin_samples_unique_mapped_organs\",\"assay_category\"]},{\"rollup\":{\"count\":{\"op\":\"count\"}}}],\"representation\":[{\"mark\":\"rect\",\"mapping\":[{\"encoding\":\"color\",\"field\":\"count\",\"type\":\"quantitative\",\"range\":[\"#eafab9\",\"#528aeb\"]},{\"encoding\":\"x\",\"field\":\"origin_samples_unique_mapped_organs\",\"type\":\"nominal\"},{\"encoding\":\"y\",\"field\":\"assay_category\",\"type\":\"nominal\"}],\"select\":{\"name\":\"dataset-filter\",\"how\":{\"type\":\"point\"},\"fields\":[\"origin_samples_unique_mapped_organs\",\"assay_category\"]}},{\"mark\":\"text\",\"mapping\":[{\"encoding\":\"text\",\"field\":\"count\",\"type\":\"quantitative\"},{\"encoding\":\"x\",\"field\":\"origin_samples_unique_mapped_organs\",\"type\":\"nominal\"},{\"encoding\":\"y\",\"field\":\"assay_category\",\"type\":\"nominal\"}]}]}"
 }}}]}
 ]

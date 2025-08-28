@@ -2,14 +2,15 @@
 import { storeToRefs } from 'pinia';
 import { watch, computed } from 'vue';
 import { useDashboardStore } from 'src/stores/dashboardStore';
+import CountsBridge from 'components/CountsBridge.vue';
 const dashboardStore = useDashboardStore();
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 const dataFilterStore = useDataFilterStore();
 const { dataSelections } = storeToRefs(dataFilterStore);
-import { useDataExportStore } from 'src/stores/dataExportStore';
-const dataExportStore = useDataExportStore();
 
-function selectionChanged(newSelection: any) {}
+function selectionChanged(newSelection: any) {
+  console.log('chagning selection');
+}
 
 watch(
   () => Array.from(dashboardStore.pinnedVisualizations.values()).at(-1)?.interactiveSpec,
@@ -20,28 +21,6 @@ watch(
   },
   { immediate: true }
 );
-
-function onDataUpdate(
-  payload: {
-    displayData: object[] | null;
-    allData: object[] | null;
-    isSubset: boolean;
-  },
-  sourceName: string
-) {
-  console.log('UDIVis displayData:', payload.displayData);
-  console.log('UDIVis allData:', payload.allData);
-  console.log('UDIVis isSubset:', payload.isSubset);
-  console.log('UDIVis sourceName:', sourceName);
-
-  if (!sourceName) return;
-
-  dataExportStore.setData(sourceName, {
-    displayData: payload.displayData as Record<string, unknown>[] | null,
-    allData: payload.allData as Record<string, unknown>[] | null,
-    isSubset: payload.isSubset,
-  });
-}
 
 function onChildDataUpdate(
   vizId: string,
@@ -60,6 +39,25 @@ function onChildDataUpdate(
 const reversedPinned = computed(() =>
   Array.from(dashboardStore.pinnedVisualizations.values()).slice().reverse()
 );
+
+function classify(name?: string): { id: string; typeLabel: string; icon: string } {
+  const s = (name ?? '').toLowerCase();
+  if (/(^|[^a-z])donors?($|[^a-z])/.test(s)) return { id: 'donors', typeLabel: 'donors', icon: 'person' };
+  if (/(^|[^a-z])samples?($|[^a-z])/.test(s) || s.includes('biological sample'))
+    return { id: 'samples', typeLabel: 'samples', icon: 'bubble_chart' };
+  if (/(^|[^a-z])datasets?($|[^a-z])/.test(s) || s === 'data')
+    return { id: 'datasets', typeLabel: 'datasets', icon: 'table_chart' };
+  return { id: s || 'entities', typeLabel: s || 'entities', icon: 'dataset' };
+}
+function getEntityFromSpec(spec: any) {
+  const srcs = Array.isArray(spec?.source) ? spec.source : [spec?.source].filter(Boolean);
+  for (const s of srcs) {
+    const c = classify(s?.name);
+    if (['donors', 'samples', 'datasets'].includes(c.id)) return c;
+  }
+  const first = srcs[0]?.name as string | undefined;
+  return classify(first);
+}
 </script>
 
 <template>
@@ -80,12 +78,26 @@ const reversedPinned = computed(() =>
             <span class="text-caption short-text-element" :title="viz.userPrompt">{{ viz.userPrompt }}</span>
             <q-space />
           </q-toolbar>
-          <UDIVis
-            :spec="viz.interactiveSpec"
-            :selections="dataSelections"
-            @selection-change="selectionChanged"
-            @data-update="onChildDataUpdate(viz.id ?? String(viz.index), $event, viz.interactiveSpec)"
-          />
+          <div class="flex-container">
+            <div class="inner-container">
+              <UDIVis
+                :spec="viz.interactiveSpec"
+                :selections="dataSelections"
+                @selection-change="selectionChanged"
+              />
+            </div>
+            <div class="inner-container">
+              <UDIVis :spec="viz.countsSpec" :selections="dataSelections" @selection-change="selectionChanged">
+                <template #default="{ data, allData, isSubset }">
+                  <CountsBridge
+                    v-bind="getEntityFromSpec(viz.countsSpec)"
+                    :count="Array.isArray(data) ? data.length : 0"
+                    :total="Array.isArray(allData) ? allData.length : 0"
+                  />
+                </template>
+              </UDIVis>
+          </div>
+        </div>
         </div>
       </template>
     </div>
