@@ -4,14 +4,15 @@ import { useConversationStore } from '../stores/conversationStore';
 
 const conversationStore = useConversationStore();
 const conversationFiles = [
-  'July PI/Demo 1 donors.json',
+  // 'July PI/Demo 1 donors.json',
   // 'July PI/Demo 2 donors.json',
-  'July PI/Demo 2 donors.json',
-  'July PI/Demo 3 donors multiple scatter.json',
-  'July PI/Demo 4 sample area.json',
-  'July PI/Demo 5 user contributions.json',
-  'July PI/Demo 6 dataset organ-analyte.json',
+  // 'July PI/Demo 2 donors.json',
+  // 'July PI/Demo 3 donors multiple scatter.json',
+  // 'July PI/Demo 4 sample area.json',
+  // 'July PI/Demo 5 user contributions.json',
+  // 'July PI/Demo 6 dataset organ-analyte.json',
   'filter/simple.json',
+  'filter/sample_simple.json',
   'filter/donor_scatter.json',
   'filter/donor_scatter_bar.json',
   'filter/cross_entity.json',
@@ -20,6 +21,7 @@ const conversationFiles = [
   'filter/age_race_modified.json',
   'filter/tall_heavy.json',
   'filter/age_death.json',
+  'filter/cross_entity_age_death.json',
   // '1 stacked bar.json',
   // '2 distributions.json',
   // '3 pie chart.json',
@@ -52,7 +54,7 @@ function stripFileExtension(filename: string) {
   <q-list class="q-mt-sm">
     <q-item clickable @click="conversationStore.newConversation()">
       <q-item-section avatar> <q-icon color="primary" name="add" /> </q-item-section
-      ><q-item-section>New Converstation</q-item-section></q-item
+      ><q-item-section>New Conversation</q-item-section></q-item
     >
     <q-separator spaced inset />
     <q-item-label header>Past Conversations</q-item-label>

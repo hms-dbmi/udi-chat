@@ -71,8 +71,10 @@ const options = computed(() => {
 
 <template>
   <div class="q-mx-sm">
-    Filtered <span class="emphasized q-mr-xs">{{ entity }}</span>
-    <span class="emphasized">{{ field }}</span>
+    <i>
+      Filtered <span class="emphasized q-mr-xs">{{ entity }}</span>
+      <span class="emphasized">{{ field }}:</span>
+    </i>
   </div>
   <div
     v-if="dataPackageStore.isValidPointFilter(entity, field, selectedValues).isValid === 'yes'"

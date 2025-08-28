@@ -14,6 +14,7 @@ export interface PinnedVisualization {
   index: number;
   spec: UDIGrammar;
   interactiveSpec: UDIGrammar;
+  countsSpec: UDIGrammar;
   userPrompt: string;
   uuid: string;
 }
@@ -25,7 +26,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   const { messages } = storeToRefs(conversationStore);
   const pinnedVisualizations = ref<Map<number, PinnedVisualization>>(new Map());
 
-  const filterAllNullValues = ref<boolean>(true);
+  const filterAllNullValues = ref<boolean>(false);
 
   const hoveredVisualizationIndex = ref<number | null>(null);
   function setHoveredVisualizationIndex(index: number | null) {
@@ -39,10 +40,12 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   function pinVisualization(index: number, spec: UDIGrammar, userPrompt: string) {
     const uuid = 'udi_' + uuidv4();
     const interactiveSpec = injectInteractivity(spec, uuid);
+    const countsSpec = buildCountsSpec(spec)
     pinnedVisualizations.value.set(index, {
       index,
       spec,
       interactiveSpec,
+      countsSpec,
       userPrompt,
       uuid,
     });
@@ -114,28 +117,78 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   }
 
   function updateSpecFilters() {
-    const newFilters = filterIds.value.map((id: string) => {
-      // TODO: determin if cross-entity, and add entityRelationships here.
-      return { filter: { name: id } };
-    });
-    for (const viz of pinnedVisualizations.value.values()) {
-      // const otherFilters = newFilters.filter((f) => f.filter.name !== viz.uuid);
-      const updatedSpec = cloneDeep(viz.spec);
-      const updatedInteractiveSpec = cloneDeep(viz.interactiveSpec);
-      let transformation = updatedSpec.transformation ?? [];
-      transformation = [...newFilters, ...transformation];
-      if (filterAllNullValues.value) {
-        const nullFilters = getRepresentedFields(updatedSpec).map((field) => {
-          return {
-            filter: `d['${field}'] != null`,
-          };
-        });
-        transformation = [...transformation, ...nullFilters];
-      }
-      updatedInteractiveSpec.transformation = transformation;
-      viz.interactiveSpec = updatedInteractiveSpec;
+    // Build a quick lookup map from UUID to source name
+    const uuidToSource = new Map<string, string>();
+    for (const v of pinnedVisualizations.value.values()) {
+      const sourceName = Array.isArray(v.interactiveSpec.source)
+        ? v.interactiveSpec.source.at(0)?.name 
+        : v.interactiveSpec.source?.name;
+      if (v?.uuid && sourceName) uuidToSource.set(v.uuid, sourceName);
     }
-  }
+  
+    // Iterate over pinned visualizations and update their interactive specs
+    for (const viz of pinnedVisualizations.value.values()) {
+      const updatedSpec: UDIGrammar = cloneDeep(viz.spec);
+      const updatedCountsSpec: UDIGrammar = cloneDeep(viz.countsSpec);
+      const updatedInteractiveSpec: UDIGrammar = cloneDeep(viz.interactiveSpec);
+  
+      const currentSourceName = Array.isArray(updatedInteractiveSpec.source)
+        ? updatedInteractiveSpec.source.at(0)?.name 
+        : updatedInteractiveSpec.source?.name;
+
+      console.log('filterIds', filterIds.value);
+
+      // Build filters, adding cross entity info when the filter comes from a viz with a different source
+      const newFilters = filterIds.value.map((id: string) => {
+        const originSourceName = uuidToSource.get(id);
+        if (originSourceName && originSourceName !== currentSourceName) {
+          // Cross-entity: include the origin source name
+          return { 
+            filter: {
+              name: id,
+              source: originSourceName,
+              entityRelationship: {
+                originKey: originSourceName === 'donors' ? 'hubmap_id' : 'donor.hubmap_id',
+                targetKey: currentSourceName === 'donors' ? 'hubmap_id' : 'donor.hubmap_id',
+              }
+            }
+          };
+        }
+        if (id.startsWith('message-filter') && (currentSourceName === 'samples' || currentSourceName === 'datasets')) {
+          return {
+            filter: {
+              name: id,
+              source: 'donors',
+              entityRelationship: {
+                originKey: 'hubmap_id',
+                targetKey: 'donor.hubmap_id',
+              }
+            }
+          }
+        }
+        // same-entity
+        return { filter: { name: id } };
+      });
+  
+      const baseTrans = updatedSpec.transformation ?? [];
+      const nullFilters = filterAllNullValues.value
+        ? getRepresentedFields(updatedSpec).map((field) => ({ filter: `d['${field}'] != null` }))
+        : [];
+
+      updatedInteractiveSpec.transformation = [
+        ...newFilters,
+        ...baseTrans,
+        ...nullFilters,
+      ];
+      viz.interactiveSpec = updatedInteractiveSpec;
+
+      updatedCountsSpec.transformation = [
+        ...newFilters,
+        ...nullFilters,
+      ];
+      viz.countsSpec = updatedCountsSpec;
+    }
+  }  
 
   function getRepresentedFields(spec: UDIGrammar): string[] {
     // for every representation get all the fields that are mapped
@@ -175,6 +228,23 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 
   function isPinned(index: number): boolean {
     return pinnedVisualizations.value.has(index);
+  }
+
+  function buildCountsSpec(spec: UDIGrammar): UDIGrammar {
+    console.log('building counts spec', spec);
+    const countsSpec = cloneDeep(spec);
+  
+    if ("representation" in countsSpec) {
+      delete countsSpec.representation;
+    }
+    if ("transformation" in countsSpec) {
+      delete countsSpec.transformation;
+    }
+
+
+    
+    console.log('final counts spec', countsSpec);
+    return countsSpec;
   }
 
   function injectInteractivity(spec: UDIGrammar, id: string): UDIGrammar {

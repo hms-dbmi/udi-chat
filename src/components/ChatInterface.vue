@@ -300,7 +300,9 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
         :extractUdiSpecFromMessage="extractUdiSpecFromMessage"
         :pinVisualization="pinVisualization"
       ></UDIVisMessage> -->
-      <div v-if="shouldRenderUdiGrammar(message, i)">Added visualization to dashboard.</div>
+      <div v-if="shouldRenderUdiGrammar(message, i)">
+        <i>Added visualization to dashboard.</i>
+      </div>
     </q-chat-message>
     <q-chat-message
       v-if="llmResponding && displayedMessages[displayedMessages.length - 1]?.role !== 'assistant'"
