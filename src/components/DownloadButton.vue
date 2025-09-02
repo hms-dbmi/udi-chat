@@ -1,13 +1,7 @@
 <template>
   <div class="row justify-center items-center">
-    <q-btn-dropdown
-      color="grey-4"
-      text-color="black"
-      unelevated
-      :disable="noData"
-      label="Download"
-      icon="download"
-    >
+    <!-- <udivis> -->
+    <q-btn-dropdown color="grey-4" text-color="black" unelevated label="Download" icon="download">
       <q-list>
         <q-item clickable v-close-popup @click="downloadCSV">
           <q-item-section>Download Raw Data</q-item-section>
@@ -18,6 +12,7 @@
         </q-item>
       </q-list>
     </q-btn-dropdown>
+    <!-- </udivis> -->
   </div>
 </template>
 
@@ -32,14 +27,14 @@ if (!exportCtx) throw new Error('DownloadButton must be mounted under IndexPage 
 const entries = computed(() => Array.from(exportCtx.registry.entries()));
 
 const allDisplayRows = computed<Row[]>(() =>
-  entries.value.flatMap(([_, r]) => r.displayRows ?? [])
+  entries.value.flatMap(([_, r]) => r.displayRows ?? []),
 );
 
 const rowsBySource = computed(() =>
   entries.value.map(([source, r]) => ({
     source,
     rows: (r.displayRows ?? []) as Row[],
-  }))
+  })),
 );
 
 const noData = computed(() => allDisplayRows.value.length === 0);
@@ -98,7 +93,8 @@ function filename(scope: 'display' | 'manifest', ext: 'csv' | 'txt') {
 function saveBlob(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = name;
+  a.href = url;
+  a.download = name;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -111,7 +107,7 @@ function toCSV(rows: Row[]): string {
     rows.reduce<Set<string>>((s, r) => {
       Object.keys(r ?? {}).forEach((k) => s.add(k));
       return s;
-    }, new Set())
+    }, new Set()),
   );
   const escapeCell = (val: unknown): string => {
     if (val == null) return '';

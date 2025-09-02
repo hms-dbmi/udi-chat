@@ -1,26 +1,9 @@
-<template>
-  <div class="row justify-center items-center">
-    <div
-      v-for="chip in chips"
-      :key="chip.id"
-      class="count-chip self-center"
-      :class="{ 'chip-disabled': chip.count === 0 }"
-      :title="chip.typeLabel"
-    >
-      <q-icon :name="chip.icon" size="40px" class="chip-icon" />
-      <div class="chip-text">
-        <div class="chip-top">
-          <span class="chip-count">{{ chip.count }}</span>
-          <span class="chip-total"> / {{ chip.total }}</span>
-        </div>
-        <div class="chip-type">{{ chip.typeLabel }}</div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, inject } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useDashboardStore } from 'src/stores/dashboardStore';
+const dashboardStore = useDashboardStore();
+const { filterIds } = storeToRefs(dashboardStore);
 import { COUNTS_CTX } from 'src/context/counts';
 
 const ctx = inject(COUNTS_CTX);
@@ -28,18 +11,20 @@ if (!ctx) throw new Error('DataCounts must be mounted under IndexPage provider.'
 
 const chips = computed(() => {
   const order = ['donors', 'samples', 'datasets'];
-  const out: Array<{ id: string; count: number; total: number; typeLabel: string; icon: string }> = [];
+  const out: Array<{ id: string; count: number; total: number; typeLabel: string; icon: string }> =
+    [];
 
   for (const id of order) {
     const row = ctx.registry.get(id);
     if (row) out.push({ id, ...row });
-    else out.push({
-      id,
-      count: 0,
-      total: 0,
-      typeLabel: id,
-      icon: id === 'donors' ? 'person' : id === 'samples' ? 'bubble_chart' : 'table_chart',
-    });
+    else
+      out.push({
+        id,
+        count: 0,
+        total: 0,
+        typeLabel: id,
+        icon: id === 'donors' ? 'person' : id === 'samples' ? 'bubble_chart' : 'table_chart',
+      });
   }
 
   for (const [id, row] of ctx.registry.entries()) {
@@ -48,7 +33,57 @@ const chips = computed(() => {
 
   return out;
 });
+
+const specMap = computed(() => {
+  const specList = chips.value.map((chip) => {
+    const namedFilters = dashboardStore.getNamedFilters(filterIds.value, chip.id);
+    const spec = {
+      source: {
+        name: `${chip.id}`,
+        source: `./data/hubmap_2025-05-05/${chip.id}.csv`,
+      },
+      transformation: [
+        ...namedFilters,
+        {
+          rollup: {
+            count: {
+              op: 'count',
+            },
+          },
+        },
+      ],
+    };
+    return [chip.id, spec];
+  });
+  return Object.fromEntries(specList);
+});
 </script>
+
+<template>
+  <div class="row justify-center items-center">
+    <div
+      v-for="chip in chips"
+      :key="chip.id"
+      class="count-chip self-center"
+      :title="chip.typeLabel"
+    >
+      <UDIVis :spec="specMap[chip.id]">
+        <template #default="{ data, allData, isSubset }">
+          <q-icon :name="chip.icon" size="40px" class="chip-icon" />
+          <div class="chip-text">
+            <div class="chip-top">
+              <span class="chip-count">{{ data[0].count }}</span>
+              <span v-if="allData[0].count !== data[0].count" class="chip-total">
+                / {{ allData[0].count }}</span
+              >
+            </div>
+            <div class="chip-type">{{ chip.typeLabel }}</div>
+          </div>
+        </template>
+      </UDIVis>
+    </div>
+  </div>
+</template>
 
 <style>
 .count-chip {
@@ -92,13 +127,5 @@ const chips = computed(() => {
   font-size: 0.8rem;
   color: #666;
   margin-top: 2px;
-}
-
-.chip-disabled .chip-count,
-.chip-disabled .chip-icon,
-.chip-disabled .chip-total {
-  color: #919191 !important;
-  font-weight: 400 !important;
-  font-size: 1rem; 
 }
 </style>

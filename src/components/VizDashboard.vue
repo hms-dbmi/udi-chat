@@ -20,13 +20,13 @@ watch(
     console.log('pinnedVisualizations', dashboardStore.pinnedVisualizations);
     console.log('Data selections:', dataSelections.value);
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 function onChildDataUpdate(
   vizId: string,
-  payload: { displayData: object[] | null; allData: object[] | null; isSubset: boolean; },
-  spec: any
+  payload: { displayData: object[] | null; allData: object[] | null; isSubset: boolean },
+  spec: any,
 ) {
   console.log('Data update payload from', vizId, payload);
 
@@ -38,12 +38,13 @@ function onChildDataUpdate(
 
 // compute once so identity is stable
 const reversedPinned = computed(() =>
-  Array.from(dashboardStore.pinnedVisualizations.values()).slice().reverse()
+  Array.from(dashboardStore.pinnedVisualizations.values()).slice().reverse(),
 );
 
 function classify(name?: string): { id: string; typeLabel: string; icon: string } {
   const s = (name ?? '').toLowerCase();
-  if (/(^|[^a-z])donors?($|[^a-z])/.test(s)) return { id: 'donors', typeLabel: 'donors', icon: 'person' };
+  if (/(^|[^a-z])donors?($|[^a-z])/.test(s))
+    return { id: 'donors', typeLabel: 'donors', icon: 'person' };
   if (/(^|[^a-z])samples?($|[^a-z])/.test(s) || s.includes('biological sample'))
     return { id: 'samples', typeLabel: 'samples', icon: 'bubble_chart' };
   if (/(^|[^a-z])datasets?($|[^a-z])/.test(s) || s === 'data')
@@ -76,7 +77,9 @@ function getEntityFromSpec(spec: any) {
         >
           <q-toolbar dense>
             <span class="text-caption text-weight-light">Prompt: </span>
-            <span class="text-caption short-text-element" :title="viz.userPrompt">{{ viz.userPrompt }}</span>
+            <span class="text-caption short-text-element" :title="viz.userPrompt">{{
+              viz.userPrompt
+            }}</span>
             <q-space />
           </q-toolbar>
           <div class="flex-container">
@@ -86,9 +89,14 @@ function getEntityFromSpec(spec: any) {
                 :selections="dataSelections"
                 @selection-change="selectionChanged"
               />
+              <!-- <div>{{ viz.interactiveSpec }}</div> -->
             </div>
-            <div class="inner-container">
-              <UDIVis :spec="viz.countsSpec" :selections="dataSelections" @selection-change="selectionChanged">
+            <!-- <div class="inner-container">
+              <UDIVis
+                :spec="viz.countsSpec"
+                :selections="dataSelections"
+                @selection-change="selectionChanged"
+              >
                 <template #default="{ data, allData, isSubset }">
                   <CountsBridge
                     v-bind="getEntityFromSpec(viz.countsSpec)"
@@ -102,10 +110,23 @@ function getEntityFromSpec(spec: any) {
                   />
                 </template>
               </UDIVis>
+            </div> -->
           </div>
-        </div>
         </div>
       </template>
     </div>
   </q-scroll-area>
 </template>
+
+<style scoped lang="scss">
+.w-500 {
+  width: 500px;
+}
+
+.short-text-element {
+  max-width: 260px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+</style>
