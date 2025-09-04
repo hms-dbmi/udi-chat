@@ -1,6 +1,15 @@
 <template>
   <div class="row justify-center items-center">
-    <q-btn-dropdown color="grey-4" text-color="black" unelevated label="Download" icon="download">
+    <q-btn-dropdown
+      color="black"
+      text-color="white"
+      rounded
+      unelevated
+      no-caps
+      label="Download Data"
+      icon="download"
+      size="small"
+    >
       <q-list>
         <q-item clickable v-close-popup @click="downloadCSV">
           <q-item-section>Download Raw Data</q-item-section>

@@ -13,8 +13,6 @@
             <!-- Top row: right-aligned counts + download -->
             <div class="row items-center full-width">
               <data-counts class="q-mr-sm" />
-              <q-space />
-              <download-button />
             </div>
 
             <!-- Bottom row: filters -->
@@ -37,7 +35,6 @@ import { ref, reactive, provide } from 'vue';
 import ChatInterface from 'components/ChatInterface.vue';
 import VizDashboard from 'components/VizDashboard.vue';
 import FilterToolbar from 'components/FilterToolbar.vue';
-import DownloadButton from 'components/DownloadButton.vue';
 import DataCounts from 'components/DataCounts.vue';
 
 const splitterModel = ref(450);

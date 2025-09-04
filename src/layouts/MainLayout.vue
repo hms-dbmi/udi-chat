@@ -1,16 +1,18 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+    <q-header elevated class="bg-white text-black">
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
-        <q-toolbar-title shrink> YAC: Yet Another Chatbot </q-toolbar-title>
+        <q-toolbar-title shrink>YAC</q-toolbar-title>
         <q-space />
         <q-toggle
+          v-if="globalStore.debugMode"
           color="secondary"
           v-model="dashboardStore.filterAllNullValues"
           label="Filter Null Values"
         />
-        <q-toggle color="secondary" v-model="globalStore.debugMode" label="Debug" />
+
+        <download-button />
       </q-toolbar>
     </q-header>
 
@@ -25,6 +27,7 @@
 </template>
 
 <script setup lang="ts">
+import DownloadButton from 'components/DownloadButton.vue';
 import { ref } from 'vue';
 import ConversationList from 'components/ConversationList.vue';
 import { useGlobalStore } from '../stores/globalStore';
