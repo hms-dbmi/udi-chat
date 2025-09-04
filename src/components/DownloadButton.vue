@@ -38,7 +38,6 @@ const noData = computed(() => allDisplayRows.value.length === 0);
 // --- same helpers as before (filename, saveBlob, toCSV) ---
 
 async function downloadCSV() {
-  console.log('download csv');
   if (noData.value) return;
 
   const zip = new JSZip();
@@ -62,7 +61,6 @@ async function downloadCSV() {
 }
 
 function downloadManifest() {
-  console.log('download manifest');
   if (noData.value) return;
 
   const blocks: string[] = [];
