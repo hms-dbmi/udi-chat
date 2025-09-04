@@ -15,14 +15,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import { computed } from 'vue';
 import JSZip from 'jszip';
-import { type Row } from 'src/context/exports';
-import { useDataPackageStore } from 'src/stores/dataPackageStore';
+import { useDataPackageStore, type Row } from 'src/stores/dataPackageStore';
 const dataPackageStore = useDataPackageStore();
-
-// const exportCtx = inject(EXPORT_CTX);
-// if (!exportCtx) throw new Error('DownloadButton must be mounted under IndexPage provider.');
 
 const entries = computed(() => Array.from(dataPackageStore.filteredData.entries()));
 

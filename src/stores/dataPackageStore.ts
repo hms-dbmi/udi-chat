@@ -213,6 +213,11 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     return fieldsMap;
   });
 
+  const entityNames = computed<string[]>(() => {
+    if (!dataPackage.value || !dataPackage.value.resources) return [];
+    return dataPackage.value.resources.map((r) => r.name);
+  });
+
   const filteredData = ref<Map<string, ExportRowSet>>(new Map());
 
   return {
@@ -224,5 +229,6 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     isValidPointFilter,
     getDomainForField,
     filteredData,
+    entityNames,
   };
 });

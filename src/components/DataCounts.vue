@@ -1,38 +1,21 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
+import { useDataPackageStore } from 'src/stores/dataPackageStore';
+const dataPackageStore = useDataPackageStore();
 const { filterIds } = storeToRefs(dashboardStore);
-import { COUNTS_CTX } from 'src/context/counts';
 import ExportBridge from 'components/ExportBridge.vue';
 
-const ctx = inject(COUNTS_CTX);
-if (!ctx) throw new Error('DataCounts must be mounted under IndexPage provider.');
-
 const chips = computed(() => {
-  const order = ['donors', 'samples', 'datasets'];
-  const out: Array<{ id: string; count: number; total: number; typeLabel: string; icon: string }> =
-    [];
-
-  for (const id of order) {
-    const row = ctx.registry.get(id);
-    if (row) out.push({ id, ...row });
-    else
-      out.push({
-        id,
-        count: 0,
-        total: 0,
-        typeLabel: id,
-        icon: id === 'donors' ? 'person' : id === 'samples' ? 'bubble_chart' : 'table_chart',
-      });
-  }
-
-  for (const [id, row] of ctx.registry.entries()) {
-    if (!order.includes(id)) out.push({ id, ...row });
-  }
-
-  return out;
+  return dataPackageStore.entityNames.map((name) => {
+    return {
+      id: name,
+      icon: name === 'donors' ? 'person' : name === 'samples' ? 'bubble_chart' : 'table_chart',
+      label: name,
+    };
+  });
 });
 
 const specMap = computed(() => {
@@ -69,12 +52,7 @@ const specMap = computed(() => {
 
 <template>
   <div class="row justify-center items-center">
-    <div
-      v-for="chip in chips"
-      :key="chip.id"
-      class="count-chip self-center"
-      :title="chip.typeLabel"
-    >
+    <div v-for="chip in chips" :key="chip.id" class="count-chip self-center" :title="chip.label">
       <UDIVis :spec="specMap[chip.id].spec">
         <template #default="{ data, allData, isSubset }">
           <q-icon :name="chip.icon" size="40px" class="chip-icon" />
@@ -85,7 +63,7 @@ const specMap = computed(() => {
                 / {{ allData[0].count }}</span
               >
             </div>
-            <div class="chip-type">{{ chip.typeLabel }}</div>
+            <div class="chip-type">{{ chip.label }}</div>
           </div>
         </template>
       </UDIVis>

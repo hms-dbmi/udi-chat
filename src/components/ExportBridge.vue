@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, watch } from 'vue';
+import { onMounted, watch } from 'vue';
 import { useDataPackageStore, type ExportRowSet } from 'src/stores/dataPackageStore';
 const dataPackageStore = useDataPackageStore();
 
@@ -16,7 +16,6 @@ const props = withDefaults(
 );
 
 function push() {
-  console.log('we pushin');
   const rows: ExportRowSet = {
     displayRows: Array.isArray(props.displayRows) ? props.displayRows : [],
     allRows: Array.isArray(props.allRows) ? props.allRows : [],
