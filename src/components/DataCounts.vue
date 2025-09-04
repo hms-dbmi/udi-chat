@@ -52,7 +52,12 @@ const specMap = computed(() => {
 
 <template>
   <div class="row justify-center items-center">
-    <div v-for="chip in chips" :key="chip.id" class="count-chip self-center" :title="chip.label">
+    <div
+      v-for="chip in chips"
+      :key="chip.id"
+      class="count-chip self-center q-pa-sm"
+      :title="chip.label"
+    >
       <UDIVis :spec="specMap[chip.id].spec">
         <template #default="{ data, allData, isSubset }">
           <q-icon :name="chip.icon" size="40px" class="chip-icon" />
@@ -84,13 +89,17 @@ const specMap = computed(() => {
 .count-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-right: 1px solid #ccc;
-  background: transparent;
-  border-radius: 0;
+  /* gap: 8px;
+  padding: 6px 12px; */
+  /* border-right: 1px solid #ccc; */
+  /* background: transparent; */
+  /* border-radius: 0; */
   box-shadow: none;
   line-height: 1;
+
+  border-radius: 5px;
+  border: 1px solid var(--Gray-Gray04, #cad5da);
+  background: #fff;
 }
 
 .chip-icon {

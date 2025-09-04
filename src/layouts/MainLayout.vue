@@ -20,7 +20,7 @@
       <ConversationList></ConversationList>
     </q-drawer>
 
-    <q-page-container>
+    <q-page-container class="my-gray-bg">
       <router-view />
     </q-page-container>
   </q-layout>
@@ -44,3 +44,9 @@ function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
 </script>
+
+<style scoped>
+.my-gray-bg {
+  background: var(--Gray-Gray01, #eff3f5);
+}
+</style>

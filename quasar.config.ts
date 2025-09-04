@@ -71,10 +71,10 @@ export default defineConfig((/* ctx */) => {
               lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
               useFlatConfig: true,
             },
-            overlay: {
-              initialIsOpen: false, // set to true to show overlay on startup
-            },
-            // overlay: false,
+            // overlay: {
+            //   initialIsOpen: false, // set to true to show overlay on startup
+            // },
+            overlay: false,
           },
           { server: false },
         ],

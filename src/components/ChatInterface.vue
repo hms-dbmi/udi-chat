@@ -259,7 +259,12 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
 </script>
 
 <template>
-  <q-separator />
+  <div class="full-width">
+    <div class="q-ma-sm q-pl-md">
+      <span class="text-subtitle2">Dataset:</span><span class="text-subtitle1"> HuBMAP</span>
+    </div>
+    <q-separator />
+  </div>
   <q-scroll-area ref="messageArea" class="q-mt-md flex-grow-1" style="height: 1px; width: 400px">
     <q-chat-message
       v-for="(message, i) in displayedMessages"
@@ -317,21 +322,26 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
   <div class="flex w-400 q-mt-md column justify-end">
     <div class="flex row q-mb-lg">
       <q-input
-        class="flex-grow-1 q-mr-sm"
+        class="flex-grow-1 q-mx-sm"
         v-model="inputText"
-        filled
+        outlined
         autogrow
         type="textarea"
         :disable="dataPackageStore.dataPackageString === ''"
         @keydown.enter="sendMessage"
       />
-      <q-btn
-        color="primary"
-        @click="sendMessage"
-        :disable="llmResponding"
-        icon-right="send"
-        label="Send"
-      />
+      <div class="flex column justify-center">
+        <q-btn
+          color="primary"
+          class="q-mr-sm"
+          @click="sendMessage"
+          outline
+          :disable="llmResponding"
+          icon-right="send"
+          label="Send"
+          no-caps
+        />
+      </div>
     </div>
     <q-toolbar v-if="globalStore.debugMode" class="q-mb-lg">
       <q-btn
@@ -359,5 +369,13 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
 
 .flex-grow-1 {
   flex-grow: 1;
+}
+
+.chat-container {
+  border-radius: 16px;
+  border: 1px solid var(--Gray-Gray04, #cad5da);
+  background: var(--color-white-pure, #fff);
+  /* Default Shadow */
+  box-shadow: 0 4px 12px 2px rgba(0, 0, 0, 0.15);
 }
 </style>

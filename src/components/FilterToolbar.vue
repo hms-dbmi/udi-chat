@@ -21,6 +21,7 @@ const chips = computed(() => {
       dataSourceKey: sel.dataSourceKey,
       type: sel.type,
       valueText,
+      sel,
     };
   });
 });
@@ -34,20 +35,28 @@ function formatSelectionValue(sel: DataSelection): string {
     if (sel.type === 'interval') {
       const arr = Array.isArray(raw) ? raw : [];
       const [min, max] = arr as [number | string | undefined, number | string | undefined];
-      parts.push(`<strong>${field}</strong>: ${min ?? '…'}–${max ?? '…'}`);
+      parts.push(
+        `<span class="yac-chip-filter-label">${field}</span><span class="yac-chip-filter-value q-ml-sm">${min ?? '…'}–${max ?? '…'}</span>`,
+      );
     } else if (sel.type === 'point') {
-      const arr = Array.isArray(raw) ? raw : (raw != null ? [raw] : []);
+      const arr = Array.isArray(raw) ? raw : raw != null ? [raw] : [];
 
       if (arr.length >= 3) {
         // Show first two, then ellipsis
         const [first, second, ...rest] = arr;
-        parts.push(`<strong>${field}</strong>: ${first}, ${second}, ...`);
+        parts.push(
+          `<span class="yac-chip-filter-label">${field}</span><span class="yac-chip-filter-value q-ml-sm">${first}, ${second}, ...</span>`,
+        );
       } else {
-        parts.push(`<strong>${field}</strong>: ${arr.join(', ')}`);
+        parts.push(
+          `<span class="yac-chip-filter-label">${field}</span><span class="yac-chip-filter-value q-ml-sm">${arr.join(', ')}</span>`,
+        );
       }
     } else {
       // Fallback for unknown types
-      parts.push(`<strong>${field}</strong>: ${JSON.stringify(raw)}`);
+      parts.push(
+        `<span class="yac-chip-filter-label">${field}</span><span class="yac-chip-filter-value q-ml-sm">${JSON.stringify(raw)}</span>`,
+      );
     }
   }
 
@@ -56,13 +65,37 @@ function formatSelectionValue(sel: DataSelection): string {
 </script>
 
 <template>
-  <div class="q-gutter-sm row items-center wrap">
+  <div class="row items-center wrap">
     <q-chip
-      v-for="chip in chips"
+      v-for="(chip, index) in chips"
       :key="chip.id"
       :title="`${chip.dataSourceKey} - ${chip.type}`"
+      color="black"
+      :class="`bg-white
+      force-border-grey
+      ${index == 0 ? 'q-ml-none' : ''}`"
+      square
+      outline
     >
       <span v-html="chip.valueText"></span>
     </q-chip>
   </div>
 </template>
+
+<style>
+.force-border-grey {
+  border-color: #cad5da !important;
+}
+
+.yac-chip-filter-label {
+  font-family: 'Helvetica Neue';
+  font-size: 1em;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.yac-chip-filter-value {
+  font-family: 'Roboto Mono';
+  font-size: 1em;
+}
+</style>
