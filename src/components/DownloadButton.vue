@@ -1,6 +1,5 @@
 <template>
   <div class="row justify-center items-center">
-    <!-- <udivis> -->
     <q-btn-dropdown color="grey-4" text-color="black" unelevated label="Download" icon="download">
       <q-list>
         <q-item clickable v-close-popup @click="downloadCSV">
@@ -12,19 +11,20 @@
         </q-item>
       </q-list>
     </q-btn-dropdown>
-    <!-- </udivis> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, inject } from 'vue';
 import JSZip from 'jszip';
-import { EXPORT_CTX, type Row } from 'src/context/exports';
+import { type Row } from 'src/context/exports';
+import { useDataPackageStore } from 'src/stores/dataPackageStore';
+const dataPackageStore = useDataPackageStore();
 
-const exportCtx = inject(EXPORT_CTX);
-if (!exportCtx) throw new Error('DownloadButton must be mounted under IndexPage provider.');
+// const exportCtx = inject(EXPORT_CTX);
+// if (!exportCtx) throw new Error('DownloadButton must be mounted under IndexPage provider.');
 
-const entries = computed(() => Array.from(exportCtx.registry.entries()));
+const entries = computed(() => Array.from(dataPackageStore.filteredData.entries()));
 
 const allDisplayRows = computed<Row[]>(() =>
   entries.value.flatMap(([_, r]) => r.displayRows ?? []),
@@ -42,6 +42,7 @@ const noData = computed(() => allDisplayRows.value.length === 0);
 // --- same helpers as before (filename, saveBlob, toCSV) ---
 
 async function downloadCSV() {
+  console.log('download csv');
   if (noData.value) return;
 
   const zip = new JSZip();
@@ -65,6 +66,7 @@ async function downloadCSV() {
 }
 
 function downloadManifest() {
+  console.log('download manifest');
   if (noData.value) return;
 
   const blocks: string[] = [];

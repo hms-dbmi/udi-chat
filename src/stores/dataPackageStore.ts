@@ -3,6 +3,13 @@ import { defineStore } from 'pinia';
 // import { parse, type ParseResult } from 'papaparse';
 import { loadCSV } from 'arquero';
 
+export type Row = Record<string, unknown>;
+
+export type ExportRowSet = {
+  displayRows: Row[];
+  allRows: Row[];
+};
+
 export const useDataPackageStore = defineStore('dataPackageStore', () => {
   const dataPackagePath = './data/hubmap_2025-05-05/datapackage_udi.json';
   // const dataPackagePath = './data/penguins/datapackage.json';
@@ -206,6 +213,8 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     return fieldsMap;
   });
 
+  const filteredData = ref<Map<string, ExportRowSet>>(new Map());
+
   return {
     dataPackage,
     dataPackageString,
@@ -214,5 +223,6 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     isValidIntervalFilter,
     isValidPointFilter,
     getDomainForField,
+    filteredData,
   };
 });

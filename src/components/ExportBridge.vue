@@ -1,30 +1,31 @@
 <script setup lang="ts">
-import { inject, onMounted, onBeforeUnmount, watch } from 'vue';
-import { EXPORT_CTX, type ExportRowSet } from 'src/context/exports';
+import { onMounted, onBeforeUnmount, watch } from 'vue';
+import { useDataPackageStore, type ExportRowSet } from 'src/stores/dataPackageStore';
+const dataPackageStore = useDataPackageStore();
 
-const props = withDefaults(defineProps<{
-  id: string;
-  displayRows?: Record<string, unknown>[] | null;
-  allRows?: Record<string, unknown>[] | null;
-}>(), {
-  displayRows: () => [],
-  allRows: () => [],
-});
-
-const ctx = inject(EXPORT_CTX);
-if (!ctx) throw new Error('ExportBridge must be used under IndexPage provider.');
+const props = withDefaults(
+  defineProps<{
+    id: string;
+    displayRows?: Record<string, unknown>[] | null;
+    allRows?: Record<string, unknown>[] | null;
+  }>(),
+  {
+    displayRows: () => [],
+    allRows: () => [],
+  },
+);
 
 function push() {
+  console.log('we pushin');
   const rows: ExportRowSet = {
     displayRows: Array.isArray(props.displayRows) ? props.displayRows : [],
     allRows: Array.isArray(props.allRows) ? props.allRows : [],
   };
-  ctx.register(props.id, rows);
+  dataPackageStore.filteredData.set(props.id, rows);
 }
 
 onMounted(push);
 watch(() => [props.displayRows, props.allRows], push, { deep: false });
-onBeforeUnmount(() => ctx.unregister(props.id));
 </script>
 
-<template />
+<template></template>

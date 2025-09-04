@@ -5,6 +5,7 @@ import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
 const { filterIds } = storeToRefs(dashboardStore);
 import { COUNTS_CTX } from 'src/context/counts';
+import ExportBridge from 'components/ExportBridge.vue';
 
 const ctx = inject(COUNTS_CTX);
 if (!ctx) throw new Error('DataCounts must be mounted under IndexPage provider.');
@@ -53,7 +54,14 @@ const specMap = computed(() => {
         },
       ],
     };
-    return [chip.id, spec];
+    const filteredDataSpec = {
+      source: {
+        name: `${chip.id}`,
+        source: `./data/hubmap_2025-05-05/${chip.id}.csv`,
+      },
+      transformation: [...namedFilters],
+    };
+    return [chip.id, { spec, filteredDataSpec }];
   });
   return Object.fromEntries(specList);
 });
@@ -67,7 +75,7 @@ const specMap = computed(() => {
       class="count-chip self-center"
       :title="chip.typeLabel"
     >
-      <UDIVis :spec="specMap[chip.id]">
+      <UDIVis :spec="specMap[chip.id].spec">
         <template #default="{ data, allData, isSubset }">
           <q-icon :name="chip.icon" size="40px" class="chip-icon" />
           <div class="chip-text">
@@ -79,6 +87,15 @@ const specMap = computed(() => {
             </div>
             <div class="chip-type">{{ chip.typeLabel }}</div>
           </div>
+        </template>
+      </UDIVis>
+      <UDIVis :spec="specMap[chip.id].filteredDataSpec">
+        <template #default="{ data, allData, isSubset }">
+          <ExportBridge
+            :id="chip.id"
+            :displayRows="Array.isArray(data) ? data : []"
+            :allRows="Array.isArray(allData) ? allData : []"
+          />
         </template>
       </UDIVis>
     </div>
