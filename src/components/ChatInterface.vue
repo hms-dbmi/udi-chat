@@ -315,40 +315,39 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
   </q-scroll-area>
 
   <div class="flex w-400 q-mt-md column justify-end">
-    <q-input
-      class="full-width q-pb-sm"
-      v-model="inputText"
-      filled
-      autogrow
-      type="textarea"
-      :disable="dataPackageStore.dataPackageString === ''"
-      @keydown.enter="sendMessage"
-    />
-    <q-toolbar class="q-mb-lg">
-      <template v-if="globalStore.debugMode">
-        <q-btn
-          class="q-mr-sm"
-          @click="saveConversation"
-          :disable="llmResponding"
-          icon-right="save"
-          label="Save"
-        ></q-btn>
-        <q-checkbox class="q-mr-sm" v-model="showDebugInfo" label="Debug" toggle-color="primary" />
-        <q-checkbox
-          class="q-mr-sm"
-          v-model="showSystemPrompts"
-          label="System Prompts"
-          toggle-color="primary"
-        />
-      </template>
-      <q-space />
+    <div class="flex row q-mb-lg">
+      <q-input
+        class="flex-grow-1 q-mr-sm"
+        v-model="inputText"
+        filled
+        autogrow
+        type="textarea"
+        :disable="dataPackageStore.dataPackageString === ''"
+        @keydown.enter="sendMessage"
+      />
       <q-btn
         color="primary"
         @click="sendMessage"
         :disable="llmResponding"
         icon-right="send"
         label="Send"
+      />
+    </div>
+    <q-toolbar v-if="globalStore.debugMode" class="q-mb-lg">
+      <q-btn
+        class="q-mr-sm"
+        @click="saveConversation"
+        :disable="llmResponding"
+        icon-right="save"
+        label="Save"
       ></q-btn>
+      <q-checkbox class="q-mr-sm" v-model="showDebugInfo" label="Debug" toggle-color="primary" />
+      <q-checkbox
+        class="q-mr-sm"
+        v-model="showSystemPrompts"
+        label="System Prompts"
+        toggle-color="primary"
+      />
     </q-toolbar>
   </div>
 </template>
