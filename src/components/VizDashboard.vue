@@ -38,7 +38,7 @@ const reversedPinned = computed(() =>
         >
           <q-toolbar dense>
             <span class="text-caption text-weight-light">Prompt: </span>
-            <span class="text-caption short-text-element" :title="viz.userPrompt">{{
+            <span class="text-caption short-text-element q-ml-xs" :title="viz.userPrompt">{{
               viz.userPrompt
             }}</span>
             <q-space />
@@ -66,7 +66,6 @@ const reversedPinned = computed(() =>
 }
 
 .short-text-element {
-  max-width: 260px;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
