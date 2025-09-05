@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { on } from 'events';
-import { range } from 'lodash-es';
 import { ref, computed, watch, onMounted, reactive } from 'vue';
 import { useDataPackageStore } from 'src/stores/dataPackageStore';
 const dataPackageStore = useDataPackageStore();
@@ -41,15 +39,48 @@ const rangeModel = computed<{ min: number; max: number }>({
   },
 });
 
-const entity = computed<string>(() => {
-  return dataSelection.value?.dataSourceKey ?? 'UNKNOWN';
+function resetRange() {
+  rangeModel.value = { min: rangeMinMax.value.min, max: rangeMinMax.value.max };
+}
+
+const entity = computed<string>({
+  get() {
+    return dataSelection.value?.dataSourceKey ?? 'UNKNOWN';
+  },
+  set(val: string) {
+    if (dataSelection.value) {
+      dataSelection.value.dataSourceKey = val;
+      resetRange();
+    }
+  },
 });
 
-const field = computed<string>(() => {
-  const allFields = Object.keys(dataSelection.value?.selection ?? {});
-  if (allFields.length > 1) return 'UNKNOWN';
-  if (allFields.length === 0) return 'UNKNOWN';
-  return allFields[0]!;
+const field = computed<string>({
+  get() {
+    const allFields = Object.keys(dataSelection.value?.selection ?? {});
+    if (allFields.length !== 1) return 'UNKNOWN';
+    return allFields[0]!;
+  },
+  set(val: string) {
+    if (!dataSelection.value || !dataSelection.value.selection) {
+      return;
+    }
+
+    // Remove all other fields and set only the selected one
+    for (const key of Object.keys(dataSelection.value.selection)) {
+      if (key !== val) {
+        delete dataSelection.value.selection[key];
+      }
+    }
+    if (!(val in dataSelection.value.selection)) {
+      dataSelection.value.selection[val] = [rangeMinMax.value.min, rangeMinMax.value.max];
+      resetRange();
+    }
+  },
+});
+
+const fieldOptions = computed<string[]>(() => {
+  return dataPackageStore.quantitativeSourceFields?.[entity.value] ?? [];
 });
 
 const rangeMinMax = computed<{ min: number; max: number }>(() => {
@@ -81,14 +112,32 @@ const maxDisplayText = computed(() => {
 </script>
 
 <template>
-<div class="q-mx-sm">
-  <i>
-    Filtered <span class="emphasized q-mr-xs">{{ entity }}</span>
-    <span class="emphasized">{{ field }}</span>,
-    <span class="emphasized">{{ minDisplayText }}</span> to
-    <span class="emphasized">{{ maxDisplayText }}</span>:
-  </i>
-</div>
+  <div class="q-mx-sm row items-center text-italic">
+    <span>Filtered</span>
+    <q-select
+      dense
+      borderless
+      v-model="entity"
+      :options="dataPackageStore.entityNames"
+      hide-dropdown-icon
+    >
+      <template v-slot:selected>
+        <q-chip>
+          {{ entity }}
+        </q-chip>
+      </template>
+    </q-select>
+    <q-select dense borderless v-model="field" :options="fieldOptions" hide-dropdown-icon>
+      <template v-slot:selected>
+        <q-chip>
+          {{ field }}
+        </q-chip>
+      </template>
+    </q-select>
+    <span class="emphasized">{{ minDisplayText }}</span
+    ><span class="q-mx-xs">to</span><span class="emphasized">{{ maxDisplayText }}</span
+    >:
+  </div>
 
   <div
     v-if="dataPackageStore.isValidIntervalFilter(entity, field).isValid === 'yes'"

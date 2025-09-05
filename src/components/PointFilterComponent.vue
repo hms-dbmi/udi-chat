@@ -14,18 +14,37 @@ interface PointFilterComponentProps {
 
 const props = defineProps<PointFilterComponentProps>();
 
-const entity = computed<string>(() => {
-  console.log('why...', dataSelection);
-  return dataSelection.value?.dataSourceKey ?? 'UNKNOWN';
+const entity = computed<string>({
+  get() {
+    return dataSelection.value?.dataSourceKey ?? 'UNKNOWN';
+  },
+  set(val: string) {
+    if (dataSelection.value) {
+      dataSelection.value.dataSourceKey = val;
+    }
+  },
 });
 
-const field = computed<string>(() => {
-  console.log('why f9eld...', dataSelection);
+const field = computed<string>({
+  get() {
+    const allFields = Object.keys(dataSelection.value?.selection ?? {});
+    if (allFields.length > 1) return 'UNKNOWN';
+    if (allFields.length === 0) return 'UNKNOWN';
+    return allFields[0]!;
+  },
+  set(val: string) {
+    if (!dataSelection.value) return;
+    const selection = dataSelection.value.selection;
+    // Remove all existing fields and set only the new one
+    Object.keys(selection).forEach((key) => {
+      delete selection[key];
+    });
+    selection[val] = [];
+  },
+});
 
-  const allFields = Object.keys(dataSelection.value?.selection ?? {});
-  if (allFields.length > 1) return 'UNKNOWN';
-  if (allFields.length === 0) return 'UNKNOWN';
-  return allFields[0]!;
+const fieldOptions = computed<string[]>(() => {
+  return dataPackageStore.categoricalSourceFields?.[entity.value] ?? [];
 });
 
 const selectedValues = computed<string[]>({
@@ -52,7 +71,7 @@ const domainValues = computed<string[]>(() => {
 });
 
 const dataSelection = computed<DataSelection | null>(() => {
-  console.log('data selection always null whyyyy', dataSelection);
+  // console.log('data selection always null whyyyy', dataSelection);
   const key = dataFiltersStore.messageFilterKey(props.index);
   if (!(key in dataSelections.value)) {
     return null;
@@ -70,11 +89,29 @@ const options = computed(() => {
 </script>
 
 <template>
-  <div class="q-mx-sm">
-    <i>
-      Filtered <span class="emphasized q-mr-xs">{{ entity }}</span>
-      <span class="emphasized">{{ field }}:</span>
-    </i>
+  <div class="q-mx-sm row items-center text-italic">
+    <span>Filtered</span>
+    <q-select
+      dense
+      borderless
+      v-model="entity"
+      :options="dataPackageStore.entityNames"
+      hide-dropdown-icon
+    >
+      <template v-slot:selected>
+        <q-chip>
+          {{ entity }}
+        </q-chip>
+      </template>
+    </q-select>
+    <q-select dense borderless v-model="field" :options="fieldOptions" hide-dropdown-icon>
+      <template v-slot:selected>
+        <q-chip>
+          {{ field }}
+        </q-chip>
+      </template>
+    </q-select>
+    <span>to:</span>
   </div>
   <div
     v-if="dataPackageStore.isValidPointFilter(entity, field, selectedValues).isValid === 'yes'"

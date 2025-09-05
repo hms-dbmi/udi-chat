@@ -5,21 +5,11 @@ import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 const dataFilterStore = useDataFilterStore();
-const { dataSelections } = storeToRefs(dataFilterStore);
+const { validDataSelections } = storeToRefs(dataFilterStore);
 
 function selectionChanged(newSelection: any) {
   console.log('chagning selection');
 }
-
-watch(
-  () => Array.from(dashboardStore.pinnedVisualizations.values()).at(-1)?.interactiveSpec,
-  (newSpec) => {
-    if (newSpec) console.log('Latest viz spec:', newSpec);
-    console.log('pinnedVisualizations', dashboardStore.pinnedVisualizations);
-    console.log('Data selections:', dataSelections.value);
-  },
-  { immediate: true },
-);
 
 // compute once so identity is stable
 const reversedPinned = computed(() =>
@@ -48,7 +38,7 @@ const reversedPinned = computed(() =>
               <UDIVis
                 v-if="index === 0"
                 :spec="viz.interactiveSpec"
-                :selections="dataSelections"
+                :selections="validDataSelections"
                 @selection-change="selectionChanged"
               />
               <UDIVis v-else :spec="viz.interactiveSpec" />

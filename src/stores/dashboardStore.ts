@@ -154,7 +154,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     }
 
     const getSourceName = (id: string) => {
-      return uuidToSource.get(id) ?? dataFilterStore.dataSelections[id]?.dataSourceKey ?? null;
+      return uuidToSource.get(id) ?? dataFilterStore.validDataSelections[id]?.dataSourceKey ?? null;
     };
 
     // Build filters, adding cross entity info when the filter comes from a viz with a different source
@@ -204,7 +204,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   const filterIds = computed<string[]>(() => {
     // TODO: add external filter ids
     const vizFilterIDs = Array.from(pinnedVisualizations.value.values()).map((viz) => viz.uuid);
-    const externalIds = Array.from(Object.keys(dataFilterStore.dataSelections));
+    const externalIds = Array.from(Object.keys(dataFilterStore.validDataSelections));
     return [...vizFilterIDs, ...externalIds];
   });
 

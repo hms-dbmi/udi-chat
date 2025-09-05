@@ -213,6 +213,60 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     return fieldsMap;
   });
 
+  const quantitativeSourceFields = computed(() => {
+    if (
+      !dataPackage.value ||
+      !dataPackage.value.resources ||
+      !Array.isArray(dataPackage.value.resources)
+    ) {
+      return null;
+    }
+    const fieldsMap: Record<string, string[]> = {};
+    for (const resource of dataPackage.value.resources) {
+      if (
+        !resource.name ||
+        !resource.schema ||
+        !resource.schema.fields ||
+        !Array.isArray(resource.schema.fields)
+      ) {
+        continue;
+      }
+      fieldsMap[resource.name] = resource.schema.fields
+        .filter((field: Record<string, string | number>) => {
+          return field['udi:data_type'] === 'quantitative';
+        })
+        .map((field: Record<string, string | number>) => field.name);
+    }
+    return fieldsMap;
+  });
+
+  const categoricalSourceFields = computed(() => {
+    if (
+      !dataPackage.value ||
+      !dataPackage.value.resources ||
+      !Array.isArray(dataPackage.value.resources)
+    ) {
+      return null;
+    }
+    const fieldsMap: Record<string, string[]> = {};
+    for (const resource of dataPackage.value.resources) {
+      if (
+        !resource.name ||
+        !resource.schema ||
+        !resource.schema.fields ||
+        !Array.isArray(resource.schema.fields)
+      ) {
+        continue;
+      }
+      fieldsMap[resource.name] = resource.schema.fields
+        .filter((field: Record<string, string | number>) => {
+          return field['udi:data_type'] === 'ordinal' || field['udi:data_type'] === 'nominal';
+        })
+        .map((field: Record<string, string | number>) => field.name);
+    }
+    return fieldsMap;
+  });
+
   const entityNames = computed<string[]>(() => {
     if (!dataPackage.value || !dataPackage.value.resources) return [];
     return dataPackage.value.resources.map((r) => r.name);
@@ -225,6 +279,8 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     dataPackageString,
     dataDomainsString,
     sourceFields,
+    quantitativeSourceFields,
+    categoricalSourceFields,
     isValidIntervalFilter,
     isValidPointFilter,
     getDomainForField,

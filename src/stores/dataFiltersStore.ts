@@ -4,6 +4,7 @@ import type { DataSelections } from 'udi-toolkit/dist/DataSourcesStore.d.ts';
 import type { ToolCall } from './conversationStore';
 import { useConversationStore, type Message } from './conversationStore';
 import { useDataPackageStore } from './dataPackageStore';
+import { isEqual } from 'lodash-es';
 
 export interface DataFilterState {
   dataSelections: DataSelections;
@@ -30,6 +31,38 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
   const { messages } = storeToRefs(conversationStore);
 
   const dataSelections = ref<DataSelections>({});
+
+  let prev: DataSelections = {};
+  const validDataSelections = computed<DataSelections>(() => {
+    const validSelections: DataSelections = {};
+    for (const [key, selection] of Object.entries(dataSelections.value)) {
+      if (selection.type === 'interval') {
+        if (
+          dataPackageStore.isValidIntervalFilter(
+            selection.dataSourceKey,
+            Object.keys(selection.selection)[0],
+          ).isValid === 'yes'
+        ) {
+          validSelections[key] = selection;
+        }
+      } else if (selection.type === 'point') {
+        if (
+          dataPackageStore.isValidPointFilter(
+            selection.dataSourceKey,
+            Object.keys(selection.selection)[0],
+            Object.values(selection.selection)[0],
+          ).isValid === 'yes'
+        ) {
+          validSelections[key] = selection;
+        }
+      }
+    }
+    if (isEqual(prev, validSelections)) {
+      return prev;
+    }
+    prev = validSelections;
+    return validSelections;
+  });
 
   watch(
     messages,
@@ -180,5 +213,11 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     return functionArgs;
   }
 
-  return { dataSelections, containsFilterCall, extractFilterSpecFromMessage, messageFilterKey };
+  return {
+    dataSelections,
+    validDataSelections,
+    containsFilterCall,
+    extractFilterSpecFromMessage,
+    messageFilterKey,
+  };
 });

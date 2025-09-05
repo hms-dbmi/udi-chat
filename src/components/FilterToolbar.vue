@@ -13,7 +13,9 @@ type DataSelection = {
 const dataFiltersStore = useDataFilterStore();
 
 const chips = computed(() => {
-  const entries = Object.entries(dataFiltersStore.dataSelections as Record<string, DataSelection>);
+  const entries = Object.entries(
+    dataFiltersStore.validDataSelections as Record<string, DataSelection>,
+  );
   return entries.map(([id, sel]) => {
     const valueText = formatSelectionValue(sel);
     return {
