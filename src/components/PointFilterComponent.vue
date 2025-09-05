@@ -89,35 +89,42 @@ const options = computed(() => {
 </script>
 
 <template>
-  <div class="q-mx-sm row items-center text-italic">
-    <span>Filtered</span>
+  <div class="q-mx-sm row items-center">
+    <span>Filtering</span>
     <q-select
       dense
+      color="accent"
       borderless
       v-model="entity"
       :options="dataPackageStore.entityNames"
       hide-dropdown-icon
     >
       <template v-slot:selected>
-        <q-chip>
+        <q-chip outline square class="bg-white force-border-grey" color="black">
           {{ entity }}
         </q-chip>
       </template>
     </q-select>
-    <q-select dense borderless v-model="field" :options="fieldOptions" hide-dropdown-icon>
+    <q-select
+      dense
+      color="accent"
+      borderless
+      v-model="field"
+      :options="fieldOptions"
+      hide-dropdown-icon
+    >
       <template v-slot:selected>
-        <q-chip>
+        <q-chip outline square class="bg-white force-border-grey" color="black">
           {{ field }}
         </q-chip>
       </template>
     </q-select>
-    <span>to:</span>
   </div>
   <div
     v-if="dataPackageStore.isValidPointFilter(entity, field, selectedValues).isValid === 'yes'"
     class="q-mx-sm"
   >
-    <q-option-group :options="options" type="checkbox" v-model="selectedValues" />
+    <q-option-group color="accent" :options="options" type="checkbox" v-model="selectedValues" />
   </div>
   <div v-else class="q-mx-sm">
     <span class="text-negative">Error: Invalid filter. </span>
@@ -128,5 +135,9 @@ const options = computed(() => {
 .emphasized {
   font-weight: bold;
   color: $primary;
+}
+
+.force-border-grey {
+  border-color: #cad5da !important;
 }
 </style>

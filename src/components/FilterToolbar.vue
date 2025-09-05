@@ -73,7 +73,7 @@ function formatSelectionValue(sel: DataSelection): string {
       :key="chip.id"
       :title="`${chip.dataSourceKey} - ${chip.type}`"
       color="black"
-      :class="`bg-white
+      :class="`bg-white q-mt-none
       force-border-grey
       ${index == 0 ? 'q-ml-none' : ''}`"
       square
