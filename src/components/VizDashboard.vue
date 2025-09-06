@@ -8,7 +8,7 @@ const dataFilterStore = useDataFilterStore();
 const { validDataSelections } = storeToRefs(dataFilterStore);
 
 function selectionChanged(newSelection: any) {
-  console.log('chagning selection');
+  dataFilterStore.updateInternalDataSelections(newSelection);
 }
 
 // compute once so identity is stable

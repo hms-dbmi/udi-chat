@@ -273,6 +273,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     if (intervalSeletionOn.length > 0) {
       firstRepresentation['select'] = {
         name: id,
+        source: sourceName,
         how: {
           type: 'interval',
           on: intervalSeletionOn,
@@ -288,6 +289,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       });
       firstRepresentation['select'] = {
         name: id,
+        source: sourceName,
         how: {
           type: 'point',
         },

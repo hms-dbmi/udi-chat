@@ -30,12 +30,16 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
   const dataPackageStore = useDataPackageStore();
   const { messages } = storeToRefs(conversationStore);
 
+  // specified from ui components
   const dataSelections = ref<DataSelections>({});
 
   let prev: DataSelections = {};
   const validDataSelections = computed<DataSelections>(() => {
     const validSelections: DataSelections = {};
     for (const [key, selection] of Object.entries(dataSelections.value)) {
+      if (selection.selection == null || Object.keys(selection.selection).length === 0) {
+        continue;
+      }
       if (selection.type === 'interval') {
         if (
           dataPackageStore.isValidIntervalFilter(
@@ -63,6 +67,9 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     prev = validSelections;
     return validSelections;
   });
+
+  // come from the udi vis selections
+  const internalDataSelections = ref<DataSelections>({});
 
   watch(
     messages,
@@ -149,6 +156,17 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     { deep: true },
   );
 
+  function updateInternalDataSelections(newFilters: DataSelections) {
+    for (const [key, newFilter] of Object.entries(newFilters)) {
+      if (key.startsWith('message-filter-')) continue;
+      if (newFilter.selection == null || Object.keys(newFilter.selection).length === 0) {
+        delete internalDataSelections.value[key];
+        continue;
+      }
+      internalDataSelections.value[key] = newFilter;
+    }
+  }
+
   function getToolCallName(toolCall: ToolCall): string {
     // Should really live somewhere else, or just fix the typing and old data.
     if (toolCall.function) {
@@ -216,6 +234,8 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
   return {
     dataSelections,
     validDataSelections,
+    internalDataSelections,
+    updateInternalDataSelections,
     containsFilterCall,
     extractFilterSpecFromMessage,
     messageFilterKey,
