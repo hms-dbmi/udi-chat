@@ -23,8 +23,11 @@ const chips = computed(() => {
   return allEntries
     .filter(([, sel], index) => {
       // remove points if they don't actually filter anything
-      return !Object.values(sel.selection).every(
-        (v) => v == null || (Array.isArray(v) && v.length === 0),
+      return (
+        sel.selection != null &&
+        !Object.values(sel.selection).every(
+          (v) => v == null || (Array.isArray(v) && v.length === 0),
+        )
       );
     })
     .map(([id, sel]) => {
