@@ -22,7 +22,7 @@ const specMap = computed(() => {
   const specList = chips.value.map((chip) => {
     const namedFilters = dashboardStore.getNamedFilters(filterIds.value, chip.id);
     const spec = {
-      config: { debounce: 50 },
+      config: { debounce: 500 },
       source: {
         name: `${chip.id}`,
         source: `./data/hubmap_2025-05-05/${chip.id}.csv`,
