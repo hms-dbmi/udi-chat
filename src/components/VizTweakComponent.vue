@@ -75,10 +75,12 @@ const tweakableParams = computed<TweakableParam[]>(() => {
 </script>
 
 <template>
-  <div class="q-ma-sm text-italic">Visualization added to dashboard.</div>
+  <div class="q-pa-sm text-italic">Visualization added to dashboard.</div>
   <div class="row">
     <q-select
-      class="q-ma-xs bg-white force-border-grey"
+      class="q-ma-xs"
+      color="accent"
+      bg-color="white"
       v-for="(param, index) in tweakableParams"
       :key="index"
       outlined
@@ -90,4 +92,14 @@ const tweakableParams = computed<TweakableParam[]>(() => {
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.force-border-grey {
+  border-width: 1px !important;
+  border-color: #cad5da !important;
+  transition: border-color 0.4s ease-in-out;
+}
+
+.force-border-grey:hover {
+  border-color: black !important;
+}
+</style>
