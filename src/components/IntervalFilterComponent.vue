@@ -166,5 +166,10 @@ const maxDisplayText = computed(() => {
 
 .force-border-grey {
   border-color: #cad5da !important;
+  transition: border-color 0.4s ease-in-out;
+}
+
+.force-border-grey:hover {
+  border-color: black !important;
 }
 </style>
