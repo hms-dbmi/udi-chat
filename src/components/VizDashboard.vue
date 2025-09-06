@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia';
-import { watch, computed } from 'vue';
+import { watch, computed, onUpdated } from 'vue';
 import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 const dataFilterStore = useDataFilterStore();
-const { validDataSelections } = storeToRefs(dataFilterStore);
+const { validDataSelections, dataSelections } = storeToRefs(dataFilterStore);
 
 function selectionChanged(newSelection: any) {
   dataFilterStore.updateInternalDataSelections(newSelection);
@@ -38,10 +38,10 @@ const reversedPinned = computed(() =>
               <UDIVis
                 v-if="index === 0"
                 :spec="viz.interactiveSpec"
-                :selections="validDataSelections"
+                :selections="dataSelections"
                 @selection-change="selectionChanged"
               />
-              <UDIVis v-else :spec="viz.interactiveSpec" />
+              <UDIVis v-else :selections="dataSelections" :spec="viz.interactiveSpec" />
             </div>
           </div>
         </div>

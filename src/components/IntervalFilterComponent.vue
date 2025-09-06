@@ -7,24 +7,18 @@ const dataFiltersStore = useDataFilterStore();
 import type { DataSelection } from 'udi-toolkit/dist/DataSourcesStore.d.ts';
 
 interface IntervalFilterComponentProps {
-  index: number;
+  fieldIndex: number;
+  dataSelection: DataSelection;
+  tweakable: boolean;
 }
-
-const dataSelection = computed<DataSelection | null>(() => {
-  const key = dataFiltersStore.messageFilterKey(props.index);
-  if (!(key in dataFiltersStore.dataSelections)) {
-    return null;
-  }
-  return dataFiltersStore.dataSelections[key]!;
-});
 
 const props = defineProps<IntervalFilterComponentProps>();
 
 const rangeModel = computed<{ min: number; max: number }>({
   get() {
     const defaultVal = { min: rangeMinMax.value.min, max: rangeMinMax.value.max };
-    if (!dataSelection.value) return defaultVal;
-    const selection = dataSelection.value.selection;
+    if (!props.dataSelection) return defaultVal;
+    const selection = props.dataSelection.selection;
     if (!selection) return defaultVal;
     if (field.value in selection) {
       const [min, max] = selection[field.value] as [number, number];
@@ -33,7 +27,7 @@ const rangeModel = computed<{ min: number; max: number }>({
     return defaultVal;
   },
   set(val: { min: number; max: number }) {
-    const selection = dataSelection.value?.selection;
+    const selection = props.dataSelection?.selection;
     if (!selection) return;
     selection[field.value] = [val.min, val.max];
   },
@@ -45,11 +39,11 @@ function resetRange() {
 
 const entity = computed<string>({
   get() {
-    return dataSelection.value?.dataSourceKey ?? 'UNKNOWN';
+    return props.dataSelection?.dataSourceKey ?? 'UNKNOWN';
   },
   set(val: string) {
-    if (dataSelection.value) {
-      dataSelection.value.dataSourceKey = val;
+    if (props.dataSelection) {
+      props.dataSelection.dataSourceKey = val;
       resetRange();
     }
   },
@@ -57,23 +51,22 @@ const entity = computed<string>({
 
 const field = computed<string>({
   get() {
-    const allFields = Object.keys(dataSelection.value?.selection ?? {});
-    if (allFields.length !== 1) return 'UNKNOWN';
-    return allFields[0]!;
+    const allFields = Object.keys(props.dataSelection?.selection ?? {});
+    return allFields[props.fieldIndex]!;
   },
   set(val: string) {
-    if (!dataSelection.value || !dataSelection.value.selection) {
+    if (!props.dataSelection || !props.dataSelection.selection) {
       return;
     }
 
     // Remove all other fields and set only the selected one
-    for (const key of Object.keys(dataSelection.value.selection)) {
+    for (const key of Object.keys(props.dataSelection.selection)) {
       if (key !== val) {
-        delete dataSelection.value.selection[key];
+        delete props.dataSelection.selection[key];
       }
     }
-    if (!(val in dataSelection.value.selection)) {
-      dataSelection.value.selection[val] = [rangeMinMax.value.min, rangeMinMax.value.max];
+    if (!(val in props.dataSelection.selection)) {
+      props.dataSelection.selection[val] = [rangeMinMax.value.min, rangeMinMax.value.max];
       resetRange();
     }
   },
@@ -113,40 +106,46 @@ const maxDisplayText = computed(() => {
 
 <template>
   <div class="q-mx-sm row items-center">
-    <span>Filtering</span>
-    <q-select
-      color="accent"
-      dense
-      borderless
-      v-model="entity"
-      :options="dataPackageStore.entityNames"
-      hide-dropdown-icon
-    >
-      <template v-slot:selected>
-        <q-chip outline square class="bg-white force-border-grey" color="black">
-          {{ entity }}
-        </q-chip>
-      </template>
-    </q-select>
-    <q-select
-      color="accent"
-      dense
-      borderless
-      v-model="field"
-      :options="fieldOptions"
-      hide-dropdown-icon
-    >
-      <template v-slot:selected>
-        <q-chip outline square class="bg-white force-border-grey" color="black">
-          {{ field }}
-        </q-chip>
-      </template>
-    </q-select>
-    <span class="q-mr-xs">:</span>
-    <span class="emphasized">{{ minDisplayText }}</span
-    ><span class="q-mx-xs">to</span><span class="emphasized">{{ maxDisplayText }}</span>
+    <template v-if="props.tweakable">
+      <span>Filtering</span>
+      <q-select
+        color="accent"
+        dense
+        borderless
+        v-model="entity"
+        :options="dataPackageStore.entityNames"
+        hide-dropdown-icon
+      >
+        <template v-slot:selected>
+          <q-chip outline square class="bg-white force-border-grey" color="black">
+            {{ entity }}
+          </q-chip>
+        </template>
+      </q-select>
+      <q-select
+        color="accent"
+        dense
+        borderless
+        v-model="field"
+        :options="fieldOptions"
+        hide-dropdown-icon
+      >
+        <template v-slot:selected>
+          <q-chip outline square class="bg-white force-border-grey" color="black">
+            {{ field }}
+          </q-chip>
+        </template>
+      </q-select>
+      <span class="q-mr-xs">:</span>
+      <span class="emphasized">{{ minDisplayText }}</span
+      ><span class="q-mx-xs">to</span><span class="emphasized">{{ maxDisplayText }}</span>
+    </template>
+    <template v-else>
+      <span>Filtering {{ entity }} {{ field }}:</span>
+      <span class="emphasized q-ml-xs">{{ minDisplayText }}</span
+      ><span class="q-mx-xs">to</span><span class="emphasized">{{ maxDisplayText }}</span>
+    </template>
   </div>
-
   <div
     v-if="dataPackageStore.isValidIntervalFilter(entity, field).isValid === 'yes'"
     class="q-mx-sm"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { QScrollArea } from 'quasar';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch, toRaw } from 'vue';
+import { isEmpty } from 'lodash-es';
 // import ollama from 'ollama/browser';
 import { type Message, useConversationStore } from '../stores/conversationStore';
 import type { ToolCall } from 'ollama';
@@ -11,7 +12,6 @@ const globalStore = useGlobalStore();
 import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
 
-import UDIVisMessage from 'components/UDIVisMessage.vue';
 import FilterComponent from 'components/FilterComponent.vue';
 // import { dataPackageString } from './promptResources';
 import { useDataPackageStore } from 'src/stores/dataPackageStore';
@@ -19,7 +19,9 @@ const dataPackageStore = useDataPackageStore();
 
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 import VizTweakComponent from './VizTweakComponent.vue';
+import { storeToRefs } from 'pinia';
 const dataFiltersStore = useDataFilterStore();
+const { internalDataSelections } = storeToRefs(dataFiltersStore);
 
 const conversationStore = useConversationStore();
 const inputText = ref('');
@@ -108,7 +110,7 @@ async function queryLLM() {
     //     throw new Error('Invalid response format');
     //   }
     // }
-    console.log('OpenAI API response:', data);
+    // console.log('OpenAI API response:', data);
 
     conversationStore.messages.push({
       content: '',
@@ -230,40 +232,39 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
   return dataFiltersStore.containsFilterCall(message);
 }
 
-// function pinVisualization(index: number): void {
-//   // if (displayedMessages.value)
-//   const message = displayedMessages.value[index];
-//   if (!message) {
-//     console.warn('No message found at index:', index);
-//     return;
-//   }
-//   if (message.role !== 'assistant') {
-//     console.warn('Cannot pin visualization for non-assistant message');
-//     return;
-//   }
-//   const spec = dashboardStore.extractUdiSpecFromMessage(message);
-//   if (!spec) {
-//     console.warn('No UDI spec found in message');
-//     return;
-//   }
-//   let userPromptIndex = index - 1;
-//   while (userPromptIndex >= 0 && displayedMessages.value?.[userPromptIndex]?.role !== 'user') {
-//     userPromptIndex--;
-//   }
-//   if (userPromptIndex < 0) {
-//     console.warn('No user prompt found before the assistant message');
-//     return;
-//   }
-//   const userPrompt = displayedMessages.value?.[userPromptIndex]?.content ?? '';
-//   dashboardStore.pinVisualization(index, spec, userPrompt);
-// }
-
 function setHovered(index: number) {
   dashboardStore.setHoveredVisualizationIndex(index);
 }
 function unsetHovered() {
   dashboardStore.setHoveredVisualizationIndex(null);
 }
+
+watch(
+  () => internalDataSelections.value,
+  (newFilters) => {
+    let addedMessage = false;
+    for (const [key, value] of Object.entries(newFilters || {})) {
+      const existingIndex = conversationStore.messages.findIndex(
+        (msg) => msg.linkedVisFilterId === key,
+      );
+      if (existingIndex !== -1) {
+        if (value.selection == null || isEmpty(value.selection)) {
+          conversationStore.messages.splice(existingIndex, 1);
+        }
+        continue;
+      }
+      const filterMessage = dataFiltersStore.generateFilterMessage(key, value);
+      if (filterMessage) {
+        addedMessage = true;
+        conversationStore.messages.push(filterMessage);
+      }
+    }
+    if (addedMessage) {
+      scrollToBottom();
+    }
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -288,7 +289,7 @@ function unsetHovered() {
       <q-markdown
         show-copy
         no-typographer
-        v-if="showDebugInfo && message.role === 'assistant'"
+        v-if="showDebugInfo"
         :src="JSON.stringify(message)"
       ></q-markdown>
       <q-markdown
@@ -302,6 +303,7 @@ function unsetHovered() {
         v-if="shouldRenderFilterComponent(message, i)"
         :message="message"
         :index="i"
+        :tweakable="message.role === 'assistant'"
         :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
       ></FilterComponent>
 

@@ -45,7 +45,6 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
   const dataFieldDomains = ref<DataFieldDomain[]>([]);
 
   function initializeDataFieldDomains() {
-    console.log('init thingy');
     if (!dataPackage.value || !dataPackage.value.resources) return;
     const folderPath = dataPackage.value['udi:path'];
     for (const resource of dataPackage.value.resources) {
@@ -184,7 +183,6 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
   const dataDomainsString = computed(() => {
     if (!dataPackage.value) return '';
     const jsonString = JSON.stringify(removeLongDomains(dataFieldDomains.value));
-    console.log('datasomiainssss tring:', jsonString);
     return jsonString;
   });
 

@@ -3,11 +3,15 @@ import { ref, computed, watch, onMounted } from 'vue';
 import IntervalFilterComponent from './IntervalFilterComponent.vue';
 import PointFilterComponent from './PointFilterComponent.vue';
 import type { FilterCallArgs } from 'src/stores/dataFiltersStore';
+import { DataSelection } from 'udi-toolkit/dist/GrammarTypes';
+import { useDataFilterStore } from 'src/stores/dataFiltersStore';
+const dataFiltersStore = useDataFilterStore();
 
 interface FilterComponentProps {
   message: any; // Replace with the actual type of message
   index: number;
   extractFilterSpecFromMessage: (message: any) => any; // Replace with the actual type
+  tweakable: boolean;
 }
 const props = defineProps<FilterComponentProps>();
 
@@ -21,13 +25,36 @@ const filterType = computed(() => {
   }
   return filterArgs.value.filter.filterType;
 });
+
+const dataSelection = computed<DataSelection | null>(() => {
+  const key = dataFiltersStore.messageFilterKey(props.index);
+  if (!(key in dataFiltersStore.dataSelections)) {
+    return null;
+  }
+  return dataFiltersStore.dataSelections[key]!;
+});
+
+const allFields = computed<string[]>(() => {
+  return Object.keys(dataSelection.value?.selection ?? {});
+});
 </script>
 
 <template>
-  <IntervalFilterComponent v-if="filterType === 'interval'" :index="props.index">
-    ></IntervalFilterComponent
-  >
-  <PointFilterComponent v-if="filterType === 'point'" :index="props.index" />
+  <template v-if="filterType === 'interval'">
+    <IntervalFilterComponent
+      v-for="(field, index) in allFields"
+      :tweakable="props.tweakable"
+      :data-selection="dataSelection"
+      :field-index="index"
+    >
+      ></IntervalFilterComponent
+    >
+  </template>
+  <PointFilterComponent
+    v-if="filterType === 'point' && dataSelection"
+    :tweakable="props.tweakable"
+    :data-selection="dataSelection"
+  />
 </template>
 
 <style scoped lang="scss"></style>

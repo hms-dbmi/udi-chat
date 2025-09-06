@@ -6,35 +6,37 @@ const dataPackageStore = useDataPackageStore();
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 const dataFiltersStore = useDataFilterStore();
 import type { DataSelection } from 'udi-toolkit/dist/DataSourcesStore.d.ts';
+import { template } from 'lodash-es';
 const { dataSelections } = storeToRefs(dataFiltersStore);
 
 interface PointFilterComponentProps {
-  index: number;
+  dataSelection: DataSelection;
+  tweakable: boolean;
 }
 
 const props = defineProps<PointFilterComponentProps>();
 
 const entity = computed<string>({
   get() {
-    return dataSelection.value?.dataSourceKey ?? 'UNKNOWN';
+    return props.dataSelection?.dataSourceKey ?? 'UNKNOWN';
   },
   set(val: string) {
-    if (dataSelection.value) {
-      dataSelection.value.dataSourceKey = val;
+    if (props.dataSelection) {
+      props.dataSelection.dataSourceKey = val;
     }
   },
 });
 
 const field = computed<string>({
   get() {
-    const allFields = Object.keys(dataSelection.value?.selection ?? {});
+    const allFields = Object.keys(props.dataSelection?.selection ?? {});
     if (allFields.length > 1) return 'UNKNOWN';
     if (allFields.length === 0) return 'UNKNOWN';
     return allFields[0]!;
   },
   set(val: string) {
-    if (!dataSelection.value) return;
-    const selection = dataSelection.value.selection;
+    if (!props.dataSelection) return;
+    const selection = props.dataSelection.selection;
     // Remove all existing fields and set only the new one
     Object.keys(selection).forEach((key) => {
       delete selection[key];
@@ -50,8 +52,8 @@ const fieldOptions = computed<string[]>(() => {
 const selectedValues = computed<string[]>({
   get() {
     const defaultVal: string[] = [];
-    if (!dataSelection.value) return defaultVal;
-    const selection = dataSelection.value.selection;
+    if (!props.dataSelection) return defaultVal;
+    const selection = props.dataSelection.selection;
     if (!selection) return defaultVal;
     if (field.value in selection) {
       return selection[field.value] as string[];
@@ -59,7 +61,7 @@ const selectedValues = computed<string[]>({
     return defaultVal;
   },
   set(val: string[]) {
-    const selection = dataSelection.value?.selection;
+    const selection = props.dataSelection?.selection;
     if (!selection) return;
     selection[field.value] = val;
   },
@@ -68,15 +70,6 @@ const selectedValues = computed<string[]>({
 const domainValues = computed<string[]>(() => {
   const domain = dataPackageStore.getDomainForField(entity.value, field.value);
   return domain?.domain?.values ?? [];
-});
-
-const dataSelection = computed<DataSelection | null>(() => {
-  // console.log('data selection always null whyyyy', dataSelection);
-  const key = dataFiltersStore.messageFilterKey(props.index);
-  if (!(key in dataSelections.value)) {
-    return null;
-  }
-  return dataSelections.value[key]!;
 });
 
 const options = computed(() => {
@@ -90,35 +83,40 @@ const options = computed(() => {
 
 <template>
   <div class="q-mx-sm row items-center">
-    <span>Filtering</span>
-    <q-select
-      dense
-      color="accent"
-      borderless
-      v-model="entity"
-      :options="dataPackageStore.entityNames"
-      hide-dropdown-icon
+    <template v-if="props.tweakable">
+      <span>Filtering</span>
+      <q-select
+        dense
+        color="accent"
+        borderless
+        v-model="entity"
+        :options="dataPackageStore.entityNames"
+        hide-dropdown-icon
+      >
+        <template v-slot:selected>
+          <q-chip outline square class="bg-white force-border-grey" color="black">
+            {{ entity }}
+          </q-chip>
+        </template>
+      </q-select>
+      <q-select
+        dense
+        color="accent"
+        borderless
+        v-model="field"
+        :options="fieldOptions"
+        hide-dropdown-icon
+      >
+        <template v-slot:selected>
+          <q-chip outline square class="bg-white force-border-grey" color="black">
+            {{ field }}
+          </q-chip>
+        </template>
+      </q-select>
+    </template>
+    <template v-else
+      ><span>Filtering {{ entity }} {{ field }}</span></template
     >
-      <template v-slot:selected>
-        <q-chip outline square class="bg-white force-border-grey" color="black">
-          {{ entity }}
-        </q-chip>
-      </template>
-    </q-select>
-    <q-select
-      dense
-      color="accent"
-      borderless
-      v-model="field"
-      :options="fieldOptions"
-      hide-dropdown-icon
-    >
-      <template v-slot:selected>
-        <q-chip outline square class="bg-white force-border-grey" color="black">
-          {{ field }}
-        </q-chip>
-      </template>
-    </q-select>
   </div>
   <div
     v-if="dataPackageStore.isValidPointFilter(entity, field, selectedValues).isValid === 'yes'"

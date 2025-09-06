@@ -1,6 +1,6 @@
 import { ref, computed, watch } from 'vue';
 import { defineStore, storeToRefs } from 'pinia';
-import type { DataSelections } from 'udi-toolkit/dist/DataSourcesStore.d.ts';
+import type { DataSelection, DataSelections } from 'udi-toolkit/dist/DataSourcesStore.d.ts';
 import type { ToolCall } from './conversationStore';
 import { useConversationStore, type Message } from './conversationStore';
 import { useDataPackageStore } from './dataPackageStore';
@@ -40,6 +40,10 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
       if (selection.selection == null || Object.keys(selection.selection).length === 0) {
         continue;
       }
+      if (!key.startsWith('message-filter-')) {
+        // exclude internal filters here.
+        continue;
+      }
       if (selection.type === 'interval') {
         if (
           dataPackageStore.isValidIntervalFilter(
@@ -61,6 +65,7 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
         }
       }
     }
+
     if (isEqual(prev, validSelections)) {
       return prev;
     }
@@ -159,10 +164,6 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
   function updateInternalDataSelections(newFilters: DataSelections) {
     for (const [key, newFilter] of Object.entries(newFilters)) {
       if (key.startsWith('message-filter-')) continue;
-      if (newFilter.selection == null || Object.keys(newFilter.selection).length === 0) {
-        delete internalDataSelections.value[key];
-        continue;
-      }
       internalDataSelections.value[key] = newFilter;
     }
   }
@@ -184,7 +185,8 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
   }
 
   function messageFilterKey(messageIndex: number): string {
-    return `message-filter-${messageIndex}`;
+    const message = messages.value[messageIndex];
+    return message?.linkedVisFilterId ?? `message-filter-${messageIndex}`;
   }
 
   function messageIndex(messageFilterKey: string): number | null {
@@ -193,9 +195,6 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
   }
 
   function containsFilterCall(message: Message): boolean {
-    if (message.role !== 'assistant') {
-      return false;
-    }
     return (
       message.tool_calls?.some((call: ToolCall) => {
         if (call.function) return call.function.name === 'FilterData';
@@ -204,8 +203,40 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     );
   }
 
+  function generateFilterMessage(key: string, selection: DataSelection): Message {
+    if (!selection.selection || Object.keys(selection.selection ?? {}).length === 0) {
+      return null;
+    }
+    const field = Object.keys(selection.selection)[0];
+    const range = selection.selection[field];
+    return {
+      role: 'user',
+      content: '',
+      linkedVisFilterId: key,
+      tool_calls: [
+        {
+          function: {
+            name: 'FilterData',
+            arguments: {
+              entity: selection.dataSourceKey,
+              field: field,
+              filter: {
+                filterType: selection.type,
+                intervalRange: {
+                  min: range[0],
+                  max: range[1],
+                },
+                pointValues: range,
+              },
+            },
+          },
+        },
+      ],
+    };
+  }
+
   function extractFilterSpecFromMessage(message: Message): FilterCallArgs | null {
-    if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
+    if (!message.tool_calls || message.tool_calls.length === 0) {
       return null;
     }
     const renderToolCalls = message.tool_calls
@@ -237,6 +268,7 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     internalDataSelections,
     updateInternalDataSelections,
     containsFilterCall,
+    generateFilterMessage,
     extractFilterSpecFromMessage,
     messageFilterKey,
   };

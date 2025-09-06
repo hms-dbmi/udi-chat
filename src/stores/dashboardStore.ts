@@ -68,7 +68,6 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
           return;
         }
         const userPrompt = messages.value?.[userPromptIndex]?.content ?? '';
-
         pinVisualization(i, spec, userPrompt);
       }
     },
@@ -114,7 +113,6 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   }
 
   function updateMessageWithNewSpec(index: number, newSpec: UDIGrammar): void {
-    console.log('what uppp hades toiwn');
     const message = messages.value[index];
     if (!message || message.role !== 'assistant' || !message.tool_calls) return;
     const renderToolCallIndex = message.tool_calls.findIndex(
@@ -213,13 +211,14 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   }
 
   const filterIds = computed<string[]>(() => {
-    // TODO: add external filter ids
     const vizFilterIDs = Array.from(pinnedVisualizations.value.values()).map((viz) => viz.uuid);
     const externalIds = Array.from(Object.keys(dataFilterStore.validDataSelections));
-    return [...vizFilterIDs, ...externalIds];
+    const ids = Array.from(new Set([...vizFilterIDs, ...externalIds]));
+    ids.sort();
+    return ids;
   });
 
-  watch(filterIds, updateSpecFilters);
+  watch(() => filterIds.value.join('|'), updateSpecFilters);
 
   function unpinVisualization(index: number) {
     pinnedVisualizations.value.delete(index);
@@ -297,7 +296,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       };
     }
 
-    console.log('injected', interactiveSpec);
+    // console.log('injected', interactiveSpec);
     // Placeholder for interactivity injection logic
     // This should return a modified spec with interactivity features
     return interactiveSpec;

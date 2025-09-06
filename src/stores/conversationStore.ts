@@ -5,6 +5,7 @@ export interface Message {
   role: 'user' | 'system' | 'assistant';
   content: string;
   tool_calls?: ToolCall[];
+  linkedVisFilterId?: string;
 }
 
 export interface ToolCall {
