@@ -22,7 +22,7 @@ const reversedPinned = computed(() =>
     <div class="flex row q-gutter-lg q-pa-md" style="flex-wrap: wrap">
       <template v-for="(viz, index) in reversedPinned" :key="viz.id ?? viz.index">
         <div
-          :class="'w-500 q-pa-md viz-container'"
+          :class="`w-500 q-pa-md viz-container ${dashboardStore.isHovered(viz.index) ? 'hovered-viz' : ''}`"
           @mouseover="dashboardStore.setHoveredVisualizationIndex(viz.index)"
           @mouseleave="dashboardStore.setHoveredVisualizationIndex(null)"
         >
@@ -67,5 +67,12 @@ const reversedPinned = computed(() =>
 
   /* Default Shadow */
   box-shadow: 0 4px 12px 2px rgba(0, 0, 0, 0.15);
+}
+
+.hovered-viz {
+  // outline: solid 4px $accent;
+  border-color: $accent;
+  // box-shadow: 0 4px 12px 2px #2a9d8f70;
+  box-shadow: 0 4px 16px 3px #2a9d8f70;
 }
 </style>

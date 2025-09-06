@@ -257,6 +257,13 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
 //   const userPrompt = displayedMessages.value?.[userPromptIndex]?.content ?? '';
 //   dashboardStore.pinVisualization(index, spec, userPrompt);
 // }
+
+function setHovered(index: number) {
+  dashboardStore.setHoveredVisualizationIndex(index);
+}
+function unsetHovered() {
+  dashboardStore.setHoveredVisualizationIndex(null);
+}
 </script>
 
 <template>
@@ -275,6 +282,8 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
       :name="message.role"
       :bg-color="bgColor(message.role)"
       :text-color="textColor(message.role)"
+      @mouseover="setHovered(i)"
+      @mouseleave="unsetHovered"
     >
       <q-markdown
         show-copy
@@ -295,7 +304,11 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
         :index="i"
         :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
       ></FilterComponent>
-      <div v-if="shouldRenderUdiGrammar(message, i)">
+
+      <div
+        v-if="shouldRenderUdiGrammar(message, i)"
+        :class="{ 'hovered-message': dashboardStore.isHovered(i) }"
+      >
         <VizTweakComponent
           :message="message"
           :index="i"
@@ -373,5 +386,10 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
   background: var(--color-white-pure, #fff);
   /* Default Shadow */
   box-shadow: 0 4px 12px 2px rgba(0, 0, 0, 0.15);
+}
+
+.hovered-message {
+  box-shadow: 0 0px 12px 2px #2a9d8f70;
+  border-radius: 4px;
 }
 </style>

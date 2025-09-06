@@ -73,6 +73,6 @@ function unpin() {
 }
 
 .hovered-message {
-  outline: solid 1px $secondary;
+  outline: solid 4px $secondary;
 }
 </style>
