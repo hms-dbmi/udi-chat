@@ -18,6 +18,7 @@ import { useDataPackageStore } from 'src/stores/dataPackageStore';
 const dataPackageStore = useDataPackageStore();
 
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
+import VizTweakComponent from './VizTweakComponent.vue';
 const dataFiltersStore = useDataFilterStore();
 
 const conversationStore = useConversationStore();
@@ -184,7 +185,7 @@ function bgColor(role: 'user' | 'system' | 'assistant'): string {
     case 'system':
       return 'orange-4';
     case 'assistant':
-      return 'grey-1';
+      return 'info';
   }
 }
 
@@ -288,25 +289,20 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
         :src="JSON.stringify(dashboardStore.extractUdiSpecFromMessage(message))"
       ></q-markdown>
       <q-markdown v-if="message.content" :src="message.content"></q-markdown>
-      <!-- <div>Should render filter: {{ shouldRenderFilterComponent(message, i) }}</div> -->
-
       <FilterComponent
         v-if="shouldRenderFilterComponent(message, i)"
         :message="message"
         :index="i"
         :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
       ></FilterComponent>
-      <!-- <div>Should render udi: {{ shouldRenderUdiGrammar(message, i) }}</div> -->
-      <!-- <UDIVisMessage
-        v-if="shouldRenderUdiGrammar(message, i)"
-        :message="message"
-        :index="i"
-        :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
-        :extractUdiSpecFromMessage="extractUdiSpecFromMessage"
-        :pinVisualization="pinVisualization"
-      ></UDIVisMessage> -->
       <div v-if="shouldRenderUdiGrammar(message, i)">
-        <i>Added visualization to dashboard.</i>
+        <VizTweakComponent
+          :message="message"
+          :index="i"
+          :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
+          :extractUdiSpecFromMessage="dashboardStore.extractUdiSpecFromMessage"
+          :updateMessageWithNewSpec="dashboardStore.updateMessageWithNewSpec"
+        ></VizTweakComponent>
       </div>
     </q-chat-message>
     <q-chat-message
