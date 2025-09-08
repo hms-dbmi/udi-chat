@@ -280,7 +280,7 @@ watch(
   <q-scroll-area ref="messageArea" class="q-mt-md flex-grow-1" style="height: 1px; width: 400px">
     <q-chat-message
       v-for="(message, i) in displayedMessages"
-      class="q-mr-lg q-ml-lg"
+      class="q-mr-lg q-ml-lg fix-quasar-message-spacing"
       :key="i"
       :sent="message.role === 'user' || message.role === 'system'"
       :name="message.role"
@@ -301,7 +301,7 @@ watch(
         v-if="showDebugInfo && message.role === 'assistant' && shouldRenderUdiGrammar(message, i)"
         :src="JSON.stringify(dashboardStore.extractUdiSpecFromMessage(message))"
       ></q-markdown>
-      <q-markdown v-if="message.content" :src="message.content"></q-markdown>
+      <q-markdown class="q-mb-none" v-if="message.content" :src="message.content"></q-markdown>
       <FilterComponent
         v-if="shouldRenderFilterComponent(message, i)"
         :message="message"
@@ -376,7 +376,15 @@ watch(
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
+.fix-quasar-message-spacing .q-message-text {
+  min-height: 0px;
+
+  p {
+    margin: 0;
+  }
+}
+
 .w-400 {
   width: 400px;
 }

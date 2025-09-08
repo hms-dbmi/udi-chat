@@ -82,7 +82,7 @@ const options = computed(() => {
 </script>
 
 <template>
-  <div class="q-mx-sm row items-center">
+  <div class="q-mx-sm q-mt-sm row items-center">
     <template v-if="props.tweakable">
       <span>Filtering</span>
       <q-select
