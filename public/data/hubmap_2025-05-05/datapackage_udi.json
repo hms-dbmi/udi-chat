@@ -19583,6 +19583,17 @@
               "from": "many",
               "to": "one"
             }
+          },
+          {
+            "fields": ["donor.hubmap_id"],
+            "reference": {
+              "resource": "samples",
+              "fields": ["donor.hubmap_id"]
+            },
+            "udi:cardinality": {
+              "from": "many",
+              "to": "many"
+            }
           }
         ]
       },
