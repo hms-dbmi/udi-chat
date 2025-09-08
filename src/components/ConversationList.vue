@@ -26,6 +26,7 @@ const conversationFiles = [
   'paper/filter_to_adults.json',
   'paper/filter_to_death.json',
   'paper/filter_to_death_correct.json',
+  'chi/penguins.json',
   // '1 stacked bar.json',
   // '2 distributions.json',
   // '3 pie chart.json',
