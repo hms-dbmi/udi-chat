@@ -167,24 +167,25 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     };
 
     // Build filters, adding cross entity info when the filter comes from a viz with a different source
-    const newFilters = filterIdList.map((id: string) => {
-      const originSourceName = getSourceName(id);
-      if (!originSourceName) return [];
-      if (originSourceName !== currentSourceName) {
-        // Cross-entity: include the origin source name
-        return {
-          filter: {
-            name: id,
-            source: originSourceName,
-            entityRelationship: {
-              originKey: originSourceName === 'donors' ? 'hubmap_id' : 'donor.hubmap_id',
-              targetKey: currentSourceName === 'donors' ? 'hubmap_id' : 'donor.hubmap_id',
+    const newFilters = filterIdList
+      .map((id: string) => {
+        const originSourceName = getSourceName(id);
+        if (!originSourceName) return [];
+        if (originSourceName !== currentSourceName) {
+          // Cross-entity: include the origin source name
+          const er = dataPackageStore.getEntityRelationship(originSourceName, currentSourceName);
+          if (!er) return null; // no known relationship, skip this filter
+          return {
+            filter: {
+              name: id,
+              source: originSourceName,
+              entityRelationship: er,
             },
-          },
-        };
-      }
-      return { filter: { name: id } };
-    });
+          };
+        }
+        return { filter: { name: id } };
+      })
+      .filter((f) => f !== null);
     return newFilters;
   }
 

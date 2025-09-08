@@ -11,13 +11,25 @@ export type ExportRowSet = {
 };
 
 export const useDataPackageStore = defineStore('dataPackageStore', () => {
-  const dataPackagePath = './data/hubmap_2025-05-05/datapackage_udi.json';
-  // const dataPackagePath = './data/penguins/datapackage.json';
+  // const dataPackagePath = './data/hubmap_2025-05-05/datapackage_udi.json';
+  // const dataPackagePath = './data/MetabolomicsWorkbench/C2M2_datapackage_udi.json';
+  // const dataPackagePath = './data/MoTrPAC/C2M2_datapackage_udi.json';
+  // const dataPackagePath = './data/SenNet/C2M2_datapackage_udi.json';
+  // const dataPackagePath = './data/4DN/datapackage_udi.json';
+  const dataPackagePath = './data/penguins/datapackage.json';
+  // TODO: make swappable on the fly
+
   // load json into ref
   const dataPackage = ref();
   fetch(dataPackagePath)
     .then((response) => response.json())
     .then((json) => {
+      // filter out resources that have a udi:row_count of 0
+      if (json.resources && Array.isArray(json.resources)) {
+        json.resources = json.resources.filter((resource: any) => {
+          return resource['udi:row_count'] && resource['udi:row_count'] > 0;
+        });
+      }
       dataPackage.value = json;
       initializeDataFieldDomains();
     })
@@ -45,6 +57,7 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
   const dataFieldDomains = ref<DataFieldDomain[]>([]);
 
   function initializeDataFieldDomains() {
+    console.log('initializing data field domains');
     if (!dataPackage.value || !dataPackage.value.resources) return;
     const folderPath = dataPackage.value['udi:path'];
     for (const resource of dataPackage.value.resources) {
@@ -64,6 +77,7 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
   }
 
   function getDomainForField(entity: string, field: string): DataFieldDomain | undefined {
+    // console.log('getting a domain yo', entity, field);
     return dataFieldDomains.value.find(
       (domain) => domain.entity === entity && domain.field === field,
     );
@@ -105,7 +119,12 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     entity: string,
     fieldDescriptions: Record<string, string>,
   ): Promise<void> {
-    const table = await loadCSV(path);
+    const loadOptions = {};
+    // change delimiter based on file extension
+    if (path.endsWith('.tsv')) {
+      Object.assign(loadOptions, { delimiter: '\t' });
+    }
+    const table = await loadCSV(path, loadOptions);
 
     // Get column names
     const cols = table.columnNames();
@@ -142,6 +161,7 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
       }
     }
     dataFieldDomains.value.push(...domains);
+    console.log(domains);
     return;
   }
 
@@ -272,6 +292,94 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
 
   const filteredData = ref<Map<string, ExportRowSet>>(new Map());
 
+  function getEntityRelationship(originSource: string, targetSource: string) {
+    if (!dataPackage.value || !dataPackage.value.resources) {
+      return null;
+    }
+
+    const searchOneDirection = (source: string, target: string, reverse = false) => {
+      for (const resource of dataPackage.value.resources) {
+        if (resource.name !== source) continue;
+
+        const fks = resource.schema?.foreignKeys ?? [];
+        for (const fk of fks) {
+          if (fk.reference.resource === target) {
+            if (reverse) {
+              return {
+                originKey: fk.reference.fields[0],
+                targetKey: fk.fields[0],
+              };
+            }
+            return {
+              originKey: fk.fields[0],
+              targetKey: fk.reference.fields[0],
+            };
+          }
+        }
+      }
+      return null;
+    };
+    return (
+      searchOneDirection(originSource, targetSource) ??
+      searchOneDirection(targetSource, originSource, true)
+    );
+  }
+
+  // function getEntityRelationship(originSource: string, targetSource: string) {
+  //   // old hard-coded version
+  //   const hubmapRelationships = [
+  //     {
+  //       originEntity: 'donors',
+  //       targetEntity: 'samples',
+  //       originKey: 'hubmap_id',
+  //       targetKey: 'donor.hubmap_id',
+  //     },
+  //     {
+  //       originEntity: 'samples',
+  //       targetEntity: 'donors',
+  //       originKey: 'donor.hubmap_id',
+  //       targetKey: 'hubmap_id',
+  //     },
+
+  //     {
+  //       originEntity: 'donors',
+  //       targetEntity: 'datasets',
+  //       originKey: 'hubmap_id',
+  //       targetKey: 'donor.hubmap_id',
+  //     },
+  //     {
+  //       originEntity: 'datasets',
+  //       targetEntity: 'donors',
+  //       originKey: 'donor.hubmap_id',
+  //       targetKey: 'hubmap_id',
+  //     },
+
+  //     {
+  //       originEntity: 'datasets',
+  //       targetEntity: 'samples',
+  //       originKey: 'donor.hubmap_id',
+  //       targetKey: 'donor.hubmap_id',
+  //     },
+  //     {
+  //       originEntity: 'samples',
+  //       targetEntity: 'datasets',
+  //       originKey: 'donor.hubmap_id',
+  //       targetKey: 'donor.hubmap_id',
+  //     },
+  //   ];
+
+  //   const relationship = hubmapRelationships.find((rel) => {
+  //     return rel.originEntity === originSource && rel.targetEntity === targetSource;
+  //   });
+  //   if (relationship) {
+  //     return {
+  //       originKey: relationship.originKey,
+  //       targetKey: relationship.targetKey,
+  //     };
+  //   }
+  //   return null;
+  // }
+
   return {
     dataPackage,
     dataPackageString,
@@ -284,5 +392,6 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     getDomainForField,
     filteredData,
     entityNames,
+    getEntityRelationship,
   };
 });

@@ -270,7 +270,10 @@ watch(
 <template>
   <div class="full-width">
     <div class="q-ma-sm q-pl-md">
-      <span class="text-subtitle2">Dataset:</span><span class="text-subtitle1"> HuBMAP</span>
+      <span class="text-subtitle2">Dataset:</span>
+      <span class="text-subtitle1 q-ml-xs">
+        {{ dataPackageStore?.dataPackage?.['name'] ?? 'loading...' }}</span
+      >
     </div>
     <q-separator />
   </div>

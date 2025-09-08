@@ -12,11 +12,66 @@ const chips = computed(() => {
   return dataPackageStore.entityNames.map((name) => {
     return {
       id: name,
-      icon: name === 'donors' ? 'person' : name === 'samples' ? 'bubble_chart' : 'table_chart',
+      icon: iconForEntity(name),
       label: name,
     };
   });
 });
+
+function iconForEntity(entity: string) {
+  const entityIconMap: Record<string, string> = {
+    donors: 'person',
+    donor: 'person',
+    subject: 'person',
+    subjects: 'person',
+    samples: 'bubble_chart',
+    sample: 'bubble_chart',
+    biosample: 'bubble_chart',
+    biosamples: 'bubble_chart',
+    dataset: 'table_chart',
+    datasets: 'table_chart',
+    project: 'construction',
+    collection: 'folder',
+    // autocomplete ideas
+    // organ_analyses: 'science',
+    // organ_analysis: 'science',
+    // analyses: 'science',
+    // analysis: 'science',
+    // files: 'insert_drive_file',
+    // file: 'insert_drive_file',
+    // measurements: 'straighten',
+    // measurement: 'straighten',
+    // cells: 'grid_on',
+    // cell: 'grid_on',
+    // tissues: 'view_module',
+    // tissue: 'view_module',
+    // participants: 'group',
+    // participant: 'group',
+    // aliquots: 'all_inbox',
+    // aliquot: 'all_inbox',
+    // patients: 'local_hospital',
+    // patient: 'local_hospital',
+    // experiments: 'science',
+    // experiment: 'science',
+    // observations: 'visibility',
+    // observation: 'visibility',
+    // records: 'folder_shared',
+    // record: 'folder_shared',
+    // items: 'inventory_2',
+    // item: 'inventory_2',
+    // entries: 'list_alt',
+    // entry: 'list_alt',
+    // events: 'event',
+    // event: 'event',
+    // locations: 'place',
+    // location: 'place',
+    // species: 'pets',
+    // specimen: 'eco',
+    // specimens: 'eco',
+  };
+
+  return entityIconMap[entity] || '';
+}
 
 const specMap = computed(() => {
   const specList = chips.value.map((chip) => {
@@ -25,7 +80,7 @@ const specMap = computed(() => {
       config: { debounce: 500 },
       source: {
         name: `${chip.id}`,
-        source: `./data/hubmap_2025-05-05/${chip.id}.csv`,
+        source: `${dataPackageStore.dataPackage['udi:path']}${getPathForResource(chip.id)}`,
       },
       transformation: [
         ...namedFilters,
@@ -42,7 +97,7 @@ const specMap = computed(() => {
       config: { debounce: 2000 },
       source: {
         name: `${chip.id}`,
-        source: `./data/hubmap_2025-05-05/${chip.id}.csv`,
+        source: `${dataPackageStore.dataPackage['udi:path']}${getPathForResource(chip.id)}`,
       },
       transformation: [...namedFilters],
     };
@@ -50,6 +105,14 @@ const specMap = computed(() => {
   });
   return Object.fromEntries(specList);
 });
+
+function getPathForResource(resourceId: string) {
+  const resource = dataPackageStore.dataPackage.resources.find((r) => r.name === resourceId);
+  if (resource) {
+    return resource.path;
+  }
+  return 'UNKNOWN';
+}
 </script>
 
 <template>
@@ -62,7 +125,7 @@ const specMap = computed(() => {
     >
       <UDIVis :spec="specMap[chip.id].spec">
         <template #default="{ data, allData, isSubset }">
-          <q-icon :name="chip.icon" size="40px" class="chip-icon" />
+          <q-icon v-if="chip.icon" :name="chip.icon" size="32px" class="chip-icon q-mr-xs" />
           <div class="chip-text">
             <div class="chip-top">
               <span class="chip-count">{{ data[0].count }}</span>
@@ -102,11 +165,6 @@ const specMap = computed(() => {
   border-radius: 5px;
   border: 1px solid var(--Gray-Gray04, #cad5da);
   background: #fff;
-}
-
-.chip-icon {
-  flex: 0 0 auto;
-  height: 18px;
 }
 
 .chip-text {

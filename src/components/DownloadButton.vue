@@ -74,6 +74,7 @@ function downloadManifest() {
 
   const blocks: string[] = [];
   for (const { source, rows } of rowsBySource.value) {
+    // TODO: replace hardcoded hubmap
     const ids = rows
       .map((r) => String((r as any)['hubmap_id'] ?? '').trim())
       .filter((v) => v.length > 0);
