@@ -297,6 +297,9 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       };
     }
 
+    // add general config things
+    interactiveSpec.config = { hideActions: true };
+
     // console.log('injected', interactiveSpec);
     // Placeholder for interactivity injection logic
     // This should return a modified spec with interactivity features
