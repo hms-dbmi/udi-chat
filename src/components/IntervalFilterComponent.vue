@@ -142,13 +142,13 @@ const maxDisplayText = computed(() => {
         </template>
       </q-select>
       <span class="q-mr-xs">:</span>
-      <span class="emphasized">{{ minDisplayText }}</span
-      ><span class="q-mx-xs">to</span><span class="emphasized">{{ maxDisplayText }}</span>
+      <span class="text-bold">{{ minDisplayText }}</span
+      ><span class="q-mx-xs">to</span><span class="text-bold">{{ maxDisplayText }}</span>
     </template>
     <template v-else>
       <span>Filtering {{ entity }} {{ field }}:</span>
-      <span class="emphasized q-ml-xs">{{ minDisplayText }}</span
-      ><span class="q-mx-xs">to</span><span class="emphasized">{{ maxDisplayText }}</span>
+      <span class="text-bold q-ml-xs">{{ minDisplayText }}</span
+      ><span class="q-mx-xs">to</span><span class="text-bold">{{ maxDisplayText }}</span>
     </template>
   </div>
   <div
@@ -163,11 +163,6 @@ const maxDisplayText = computed(() => {
 </template>
 
 <style scoped lang="scss">
-.emphasized {
-  font-weight: bold;
-  color: $secondary;
-}
-
 .force-border-grey {
   border-color: #cad5da !important;
   transition: border-color 0.4s ease-in-out;
