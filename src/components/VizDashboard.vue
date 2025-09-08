@@ -15,6 +15,20 @@ function selectionChanged(newSelection: any) {
 const reversedPinned = computed(() =>
   Array.from(dashboardStore.pinnedVisualizations.values()).slice().reverse(),
 );
+
+function getVizWidth(spec: any) {
+  // todo derive value from w-500 and margin/padding
+  if (!spec.representation) {
+    return { width: '1024px' };
+  }
+  const rep = Array.isArray(spec.representation) ? spec.representation : [spec.representation];
+  for (const r of rep) {
+    if (r.mark === 'row') {
+      return { width: '1024px' };
+    }
+  }
+  return {};
+}
 </script>
 
 <template>
@@ -23,6 +37,7 @@ const reversedPinned = computed(() =>
       <template v-for="(viz, index) in reversedPinned" :key="viz.id ?? viz.index">
         <div
           :class="`w-500 q-pa-md viz-container ${dashboardStore.isHovered(viz.index) ? 'hovered-viz' : ''}`"
+          :style="getVizWidth(viz.interactiveSpec)"
           @mouseover="dashboardStore.setHoveredVisualizationIndex(viz.index)"
           @mouseleave="dashboardStore.setHoveredVisualizationIndex(null)"
         >
