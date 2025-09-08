@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, reactive } from 'vue';
+import { isInteger, round } from 'lodash-es';
 import { useDataPackageStore } from 'src/stores/dataPackageStore';
 const dataPackageStore = useDataPackageStore();
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
@@ -89,18 +90,22 @@ const rangeMinMax = computed<{ min: number; max: number }>(() => {
   return defaultMinMax;
 });
 
+function formatNumber(n: number) {
+  return isInteger(n) ? n.toString() : round(n, 2).toFixed(2);
+}
+
 const minDisplayText = computed(() => {
   if (rangeModel.value.min <= rangeMinMax.value.min) {
     return 'min';
   }
-  return `${rangeModel.value.min}`;
+  return `${formatNumber(rangeModel.value.min)}`;
 });
 
 const maxDisplayText = computed(() => {
   if (rangeModel.value.max >= rangeMinMax.value.max) {
     return 'max';
   }
-  return `${rangeModel.value.max}`;
+  return `${formatNumber(rangeModel.value.max)}`;
 });
 </script>
 
