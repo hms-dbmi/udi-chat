@@ -19,12 +19,12 @@ const reversedPinned = computed(() =>
 function getVizWidth(spec: any) {
   // todo derive value from w-500 and margin/padding
   if (!spec.representation) {
-    return { width: '1024px' };
+    return { width: '934px' };
   }
   const rep = Array.isArray(spec.representation) ? spec.representation : [spec.representation];
   for (const r of rep) {
     if (r.mark === 'row') {
-      return { width: '1024px' };
+      return { width: '934px' };
     }
   }
   return {};
@@ -67,7 +67,7 @@ function getVizWidth(spec: any) {
 
 <style scoped lang="scss">
 .w-500 {
-  width: 500px;
+  width: 455px;
 }
 
 .short-text-element {
