@@ -117,23 +117,24 @@ function getPathForResource(resourceId: string) {
 
 <template>
   <div class="row justify-center items-center">
-    <div
-      v-for="chip in chips"
-      :key="chip.id"
-      class="count-chip self-center q-pa-sm"
-      :title="chip.label"
-    >
+    <template v-for="chip in chips" :key="chip.id">
       <UDIVis :spec="specMap[chip.id].spec">
         <template #default="{ data, allData, isSubset }">
-          <q-icon v-if="chip.icon" :name="chip.icon" size="32px" class="chip-icon q-mr-xs" />
-          <div class="chip-text">
-            <div class="chip-top">
-              <span class="chip-count">{{ data[0].count }}</span>
-              <span v-if="allData[0].count !== data[0].count" class="chip-total">
-                / {{ allData[0].count }}</span
-              >
+          <div
+            class="count-chip self-center q-pa-sm"
+            :title="chip.label"
+            v-if="allData[0].count > 1"
+          >
+            <q-icon v-if="chip.icon" :name="chip.icon" size="32px" class="chip-icon q-mr-xs" />
+            <div class="chip-text">
+              <div class="chip-top">
+                <span class="chip-count">{{ data[0].count }}</span>
+                <span v-if="allData[0].count !== data[0].count" class="chip-total">
+                  / {{ allData[0].count }}</span
+                >
+              </div>
+              <div class="chip-type">{{ chip.label }}</div>
             </div>
-            <div class="chip-type">{{ chip.label }}</div>
           </div>
         </template>
       </UDIVis>
@@ -146,7 +147,7 @@ function getPathForResource(resourceId: string) {
           />
         </template>
       </UDIVis>
-    </div>
+    </template>
   </div>
 </template>
 
