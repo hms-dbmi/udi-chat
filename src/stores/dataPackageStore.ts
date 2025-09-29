@@ -16,7 +16,8 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
   // const dataPackagePath = './data/MoTrPAC/C2M2_datapackage_udi.json';
   // const dataPackagePath = './data/SenNet/C2M2_datapackage_udi.json';
   // const dataPackagePath = './data/4DN/datapackage_udi.json';
-  const dataPackagePath = './data/penguins/datapackage.json';
+  // const dataPackagePath = './data/penguins/datapackage.json';
+  const dataPackagePath = './data/hubmap_avr/datapackage.json';
   // TODO: make swappable on the fly
 
   // load json into ref
@@ -304,15 +305,17 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
         const fks = resource.schema?.foreignKeys ?? [];
         for (const fk of fks) {
           if (fk.reference.resource === target) {
+            const key1 = fk.fields[fk.fields.length - 1];
+            const key2 = fk.reference.fields[fk.reference.fields.length - 1];
             if (reverse) {
               return {
-                originKey: fk.reference.fields[0],
-                targetKey: fk.fields[0],
+                originKey: key2,
+                targetKey: key1,
               };
             }
             return {
-              originKey: fk.fields[0],
-              targetKey: fk.reference.fields[0],
+              originKey: key1,
+              targetKey: key2,
             };
           }
         }
