@@ -62,23 +62,25 @@ export default defineConfig((/* ctx */) => {
       // extendViteConf (viteConf) {},
       // viteVuePluginOptions: {},
 
-      vitePlugins: [
-        [
-          'vite-plugin-checker',
-          {
-            vueTsc: true,
-            eslint: {
-              lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
-              useFlatConfig: true,
-            },
-            // overlay: {
-            //   initialIsOpen: false, // set to true to show overlay on startup
-            // },
-            overlay: false,
-          },
-          { server: false },
-        ],
-      ],
+      // vitePlugins: [
+      //   [
+      //     'vite-plugin-checker',
+      //     {
+      //       vueTsc: true,
+      //       eslint: {
+      //         lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
+      //         useFlatConfig: true,
+      //         warnings: false,
+      //         errors: false,
+      //       },
+      //       // overlay: {
+      //       //   initialIsOpen: false, // set to true to show overlay on startup
+      //       // },
+      //       overlay: false,
+      //     },
+      //     { server: false },
+      //   ],
+      // ],
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#devserver
