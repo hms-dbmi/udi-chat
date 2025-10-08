@@ -11,13 +11,16 @@ export type ExportRowSet = {
 };
 
 export const useDataPackageStore = defineStore('dataPackageStore', () => {
-  // const dataPackagePath = './data/hubmap_2025-05-05/datapackage_udi.json';
+  const dataPackagePath = './data/hubmap_2025-05-05/datapackage_udi.json';
+  // const dataPackagePath = './data/penguins/datapackage.json';
+
   // const dataPackagePath = './data/MetabolomicsWorkbench/C2M2_datapackage_udi.json';
   // const dataPackagePath = './data/MoTrPAC/C2M2_datapackage_udi.json';
   // const dataPackagePath = './data/SenNet/C2M2_datapackage_udi.json';
   // const dataPackagePath = './data/4DN/datapackage_udi.json';
-  // const dataPackagePath = './data/penguins/datapackage.json';
-  const dataPackagePath = './data/hubmap_avr/datapackage.json';
+  // const dataPackagePath = './data/hubmap_avr/datapackage.json';
+
+  // const dataPackagePath = './data/hubmap_cell_counts/datapackage_udi.json';
   // TODO: make swappable on the fly
 
   // load json into ref
@@ -149,6 +152,7 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
           field: col,
           type: 'interval',
           fieldDescription: fieldDescriptions[col] ?? '',
+          // @ts-ignore
           domain: { min: stats.min, max: stats.max },
         });
       } else {
@@ -288,7 +292,7 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
 
   const entityNames = computed<string[]>(() => {
     if (!dataPackage.value || !dataPackage.value.resources) return [];
-    return dataPackage.value.resources.map((r) => r.name);
+    return dataPackage.value.resources.map((r: any) => r.name);
   });
 
   const filteredData = ref<Map<string, ExportRowSet>>(new Map());
