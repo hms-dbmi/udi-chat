@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { QScrollArea } from 'quasar';
 import { ref, computed, onMounted, watch, toRaw } from 'vue';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, cloneDeep } from 'lodash-es';
 // import ollama from 'ollama/browser';
 import { type Message, useConversationStore } from '../stores/conversationStore';
 import type { ToolCall } from 'ollama';
@@ -75,25 +75,33 @@ function sendMessage(event: Event) {
   scrollToBottom();
 }
 
+function constructQueryBody(removeLastMessage = false) {
+  const messages = cloneDeep(conversationStore.messages);
+  if (removeLastMessage) {
+    messages.pop();
+  }
+  return {
+    model: model.value,
+    messages,
+    dataSchema: dataPackageStore.dataPackageString,
+    dataDomains: dataPackageStore.dataDomainsString,
+  };
+}
+
+const model = ref('agenticx/UDI-VIS-Beta-v2-Llama-3.1-8B');
+
 async function queryLLM() {
   llmResponding.value = true;
 
   const server = `http://localhost:${port}/v1`;
   // const model = 'agenticx/UDI-VIS-Beta-v0-Llama-3.1-8B';
-  const model = 'agenticx/UDI-VIS-Beta-v2-Llama-3.1-8B';
   try {
     const response = await fetch(`${server}/yac/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model,
-        messages: conversationStore.messages,
-        dataSchema: dataPackageStore.dataPackageString,
-        dataDomains: dataPackageStore.dataDomainsString,
-        // tools: agentTools,
-      }),
+      body: JSON.stringify(constructQueryBody()),
     });
 
     if (!response.ok) {
@@ -177,6 +185,48 @@ function saveConversation() {
   const a = document.createElement('a');
   a.href = url;
   a.download = 'conversation.json';
+  a.click();
+}
+
+function getLastToolCallList(): ToolCall[] {
+  for (let i = conversationStore.messages.length - 1; i >= 0; i--) {
+    const message = conversationStore.messages[i];
+    if (
+      message &&
+      message.role === 'assistant' &&
+      message.tool_calls &&
+      message.tool_calls.length > 0
+    ) {
+      return message.tool_calls;
+    }
+  }
+  return [];
+}
+
+function saveTestCase() {
+  const inputBody = constructQueryBody(true);
+  let orchestrator_choice: 'both' | 'get-subset-of-data' | 'render-visualization';
+  const tool_calls = getLastToolCallList().map((call) => call.function);
+  // determine orchestrator choice based on tool calls
+  const containsFilterCall = tool_calls.some((call) => call.name === 'FilterData');
+  const containsVisCall = tool_calls.some((call) => call.name === 'RenderVisualization');
+  if (containsFilterCall && containsVisCall) {
+    orchestrator_choice = 'both';
+  } else if (containsFilterCall) {
+    orchestrator_choice = 'get-subset-of-data';
+  } else {
+    orchestrator_choice = 'render-visualization';
+  }
+  const testCase = JSON.stringify({
+    input: inputBody,
+    expected: { tool_calls, orchestrator_choice },
+  });
+
+  const blob = new Blob([testCase], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'test_case.json';
   a.click();
 }
 
@@ -364,6 +414,13 @@ watch(
         :disable="llmResponding"
         icon-right="save"
         label="Save"
+      ></q-btn>
+      <q-btn
+        class="q-mr-sm"
+        @click="saveTestCase"
+        :disable="llmResponding"
+        icon-right="save"
+        label="Save Test Case"
       ></q-btn>
       <q-checkbox class="q-mr-sm" v-model="showDebugInfo" label="Debug" toggle-color="primary" />
       <q-checkbox
