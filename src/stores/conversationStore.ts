@@ -9,10 +9,12 @@ export interface Message {
 }
 
 export interface ToolCall {
-  function: {
-    name: string;
-    arguments: Arguments;
-  };
+  function: FlatToolCall;
+}
+
+export interface FlatToolCall {
+  name: string;
+  arguments: Arguments;
 }
 
 export interface Arguments {
