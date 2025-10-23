@@ -3,6 +3,9 @@
     <q-header elevated class="bg-white text-black">
       <q-toolbar>
         <q-toolbar-title shrink>Benchmark Results</q-toolbar-title>
+        <div>
+          {{ benchmarkStore.passedCount }} "perfect" of {{ benchmarkStore.numberOfItems }} items
+        </div>
       </q-toolbar>
     </q-header>
 
@@ -13,8 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-
+import { useBenchmarkStore } from 'src/stores/benchmarkStore';
+const benchmarkStore = useBenchmarkStore();
 defineOptions({
   name: 'BenchmarkLayout',
 });
