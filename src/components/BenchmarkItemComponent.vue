@@ -98,6 +98,29 @@ const failedChecks = computed(() => {
             v-if="tool_call.name == 'RenderVisualization'"
             :spec="JSON.parse(tool_call.arguments.spec)"
           />
+          <div v-if="tool_call.name == 'FilterData'">
+            <q-chip dense square color="grey-3" text-color="grey-9">
+              type: {{ tool_call.arguments.filter.filterType }}
+            </q-chip>
+            <q-chip
+              v-if="tool_call.arguments.filter.filterType === 'interval'"
+              dense
+              square
+              color="grey-3"
+              text-color="grey-9"
+            >
+              range: {{ tool_call.arguments.filter.intervalRange }}
+            </q-chip>
+            <q-chip
+              v-if="tool_call.arguments.filter.filterType === 'point'"
+              dense
+              square
+              color="grey-3"
+              text-color="grey-9"
+            >
+              values: {{ tool_call.arguments.filter.pointValues }}
+            </q-chip>
+          </div>
         </div>
         <q-separator />
         <q-expansion-item dense expand-icon="unfold_more" label="Raw" class="text-caption">
@@ -125,6 +148,29 @@ const failedChecks = computed(() => {
             v-if="tool_call.name == 'RenderVisualization'"
             :spec="JSON.parse(tool_call.arguments.spec)"
           />
+          <div v-if="tool_call.name == 'FilterData'">
+            <q-chip dense square color="grey-3" text-color="grey-9">
+              type: {{ tool_call.arguments.filter.filterType }}
+            </q-chip>
+            <q-chip
+              v-if="tool_call.arguments.filter.filterType === 'interval'"
+              dense
+              square
+              color="grey-3"
+              text-color="grey-9"
+            >
+              range: {{ tool_call.arguments.filter.intervalRange }}
+            </q-chip>
+            <q-chip
+              v-if="tool_call.arguments.filter.filterType === 'point'"
+              dense
+              square
+              color="grey-3"
+              text-color="grey-9"
+            >
+              values: {{ tool_call.arguments.filter.pointValues }}
+            </q-chip>
+          </div>
         </div>
         <q-separator />
         <q-expansion-item dense expand-icon="unfold_more" label="Raw" class="text-caption">
