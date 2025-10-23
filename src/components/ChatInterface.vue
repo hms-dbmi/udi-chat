@@ -230,6 +230,26 @@ function saveTestCase() {
   a.click();
 }
 
+function saveDataDomains() {
+  const dataDomains = dataPackageStore.dataDomainsString;
+  const blob = new Blob([dataDomains], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'data_domains.json';
+  a.click();
+}
+
+function saveDataSchema() {
+  const dataSchema = dataPackageStore.dataPackageString;
+  const blob = new Blob([dataSchema], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'data_schema.json';
+  a.click();
+}
+
 function bgColor(role: 'user' | 'system' | 'assistant'): string {
   switch (role) {
     case 'user':
@@ -421,6 +441,20 @@ watch(
         :disable="llmResponding"
         icon-right="save"
         label="Save Test Case"
+      ></q-btn>
+      <q-btn
+        class="q-mr-sm"
+        @click="saveDataDomains"
+        :disable="llmResponding"
+        icon-right="save"
+        label="Save Data Domains"
+      ></q-btn>
+      <q-btn
+        class="q-mr-sm"
+        @click="saveDataSchema"
+        :disable="llmResponding"
+        icon-right="save"
+        label="Save Data Schema"
       ></q-btn>
       <q-checkbox class="q-mr-sm" v-model="showDebugInfo" label="Debug" toggle-color="primary" />
       <q-checkbox
