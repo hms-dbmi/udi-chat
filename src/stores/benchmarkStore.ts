@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import type { FlatToolCall, Message } from './conversationStore';
 
@@ -52,9 +52,27 @@ export const useBenchmarkStore = defineStore('benchmarkStore', () => {
       console.error('Failed to fetch benchmark items:', error);
     }
   }
-
   // Call fetchBenchmarkItems initially to populate the store
   fetchBenchmarkItems();
 
-  return { benchmarkItems };
+  const numberOfItems = computed(() => benchmarkItems.value.length);
+
+  const passedCount = computed(() => {
+    let count = 0;
+    for (const item of benchmarkItems.value) {
+      let allPass = true;
+      for (const checkKey in item.rubric) {
+        if (!item.rubric[checkKey].pass) {
+          allPass = false;
+          break;
+        }
+      }
+      if (allPass) {
+        count++;
+      }
+    }
+    return count;
+  });
+
+  return { benchmarkItems, numberOfItems, passedCount };
 });
