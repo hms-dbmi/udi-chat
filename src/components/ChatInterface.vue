@@ -32,7 +32,7 @@ const llmResponding = ref(false);
 
 const client = { value: null };
 const llmBaseUrl = import.meta.env.VITE_LLM_API_BASE_URL ?? 'http://localhost';
-const port = import.meta.env.VITE_LLM_API_PORT_URL ?? 55001;
+const port = import.meta.env.VITE_LLM_API_PORT ?? 55001;
 
 onMounted(() => {
   client.value = new OpenAI({
