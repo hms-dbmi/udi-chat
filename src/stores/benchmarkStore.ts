@@ -2,9 +2,8 @@ import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import type { FlatToolCall, Message } from './conversationStore';
 
-const PORT = 55001;
-// const benchmarkEndpoint = `http://localhost:${PORT}/v1/yac/benchmark_analysis`;
-const benchmarkEndpoint = `./data/benchmark/benchmark_analysis.json`;
+const benchmarkEndpoint =
+  import.meta.env.VITE_BENCHMARK_ENDPOINT_URL ?? `./data/benchmark/benchmark_analysis.json`;
 
 export interface BenchmarkStoreState {
   benchmarkItems: BenchmarkItem[];

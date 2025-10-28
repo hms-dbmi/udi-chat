@@ -31,22 +31,12 @@ const messageArea = ref<InstanceType<typeof QScrollArea> | null>(null);
 const llmResponding = ref(false);
 
 const client = { value: null };
-
-const port = 55001;
+const llmBaseUrl = import.meta.env.VITE_LLM_API_BASE_URL ?? 'http://localhost';
+const port = import.meta.env.VITE_LLM_API_PORT_URL ?? 55001;
 
 onMounted(() => {
-  // apiKey: process.env['OPENAI_API_KEY'], // This is the default and can be omitted
-
-  // # Modify OpenAI's API key and API base to use vLLM's API server.
-  // openai_api_key = "EMPTY"
-  // openai_api_base = "http://localhost:8000/v1"
-  // client = OpenAI(
-  //     api_key=openai_api_key,
-  //     base_url=openai_api_base,
-  // )
-
   client.value = new OpenAI({
-    baseURL: `http://localhost:${port}/v1`, // vLLM API server
+    baseURL: `${llmBaseUrl}:${port}/v1`, // vLLM API server
     apiKey: 'EMPTY', // Replace with your OpenAI API key if needed
     dangerouslyAllowBrowser: true,
   });
@@ -93,7 +83,7 @@ const model = ref('agenticx/UDI-VIS-Beta-v2-Llama-3.1-8B');
 async function queryLLM() {
   llmResponding.value = true;
 
-  const server = `http://localhost:${port}/v1`;
+  const server = `${llmBaseUrl}:${port}/v1`;
   // const model = 'agenticx/UDI-VIS-Beta-v0-Llama-3.1-8B';
   try {
     const response = await fetch(`${server}/yac/completions`, {

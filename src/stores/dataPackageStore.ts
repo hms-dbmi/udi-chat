@@ -11,7 +11,11 @@ export type ExportRowSet = {
 };
 
 export const useDataPackageStore = defineStore('dataPackageStore', () => {
-  const dataPackagePath = './data/hubmap_api/datapackage_udi.json';
+  const dataPackagePath =
+    import.meta.env.VITE_DATA_PACKAGE_PATH ?? './data/hubmap_2025-05-05/datapackage_udi.json';
+  // const dataPackagePath = './data/hubmap_api/datapackage_udi.json';
+  // const dataPackagePath = './data/hubmap_2024-10-10/datapackage_udi.json';
+  // const dataPackagePath = './data/hubmap_api/datapackage_udi.json';
   // const dataPackagePath = './data/penguins/datapackage.json';
 
   // const dataPackagePath = './data/hubmap_2025-05-05/datapackage_udi.json';

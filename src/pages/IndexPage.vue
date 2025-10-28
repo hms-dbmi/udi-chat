@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, provide } from 'vue';
+import { ref } from 'vue';
 import ChatInterface from 'components/ChatInterface.vue';
 import VizDashboard from 'components/VizDashboard.vue';
 import FilterToolbar from 'components/FilterToolbar.vue';

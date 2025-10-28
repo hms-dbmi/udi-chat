@@ -2,7 +2,15 @@
   <q-layout view="lHh Lpr lFf">
     <q-header elevated class="bg-white text-black">
       <q-toolbar>
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+        <q-btn
+          v-if="!isProduction"
+          flat
+          dense
+          round
+          icon="menu"
+          aria-label="Menu"
+          @click="toggleLeftDrawer"
+        />
         <q-toolbar-title shrink>YAC</q-toolbar-title>
         <q-space />
         <q-toggle
@@ -16,7 +24,7 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" bordered>
+    <q-drawer v-if="!isProduction" v-model="leftDrawerOpen" bordered>
       <ConversationList></ConversationList>
     </q-drawer>
 
@@ -27,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+const isProduction = import.meta.env.VITE_PRODUCTION === 'true';
 import DownloadButton from 'components/DownloadButton.vue';
 import { ref } from 'vue';
 import ConversationList from 'components/ConversationList.vue';
