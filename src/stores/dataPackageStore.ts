@@ -11,8 +11,10 @@ export type ExportRowSet = {
 };
 
 export const useDataPackageStore = defineStore('dataPackageStore', () => {
-  const dataPackagePath = './data/hubmap_2025-05-05/datapackage_udi.json';
+  const dataPackagePath = './data/hubmap_api/datapackage_udi.json';
   // const dataPackagePath = './data/penguins/datapackage.json';
+
+  // const dataPackagePath = './data/hubmap_2025-05-05/datapackage_udi.json';
 
   // const dataPackagePath = './data/MetabolomicsWorkbench/C2M2_datapackage_udi.json';
   // const dataPackagePath = './data/MoTrPAC/C2M2_datapackage_udi.json';
