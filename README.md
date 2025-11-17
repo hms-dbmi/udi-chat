@@ -57,6 +57,7 @@ See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-
 | `VITE_DATA_PACKAGE_PATH`      | Path to the data package that lists all data resources available to visualize. | `./data/hubmap_2025-05-05/datapackage_udi.json` |
 | `VITE_PRODUCTION`             | Toggles production mode, set to true to hide debug features.                   | `false`                                         |
 | `VITE_BENCHMARK_ENDPOINT_URL` | Path or endpoint for benchmark analysis results.                               | `./data/benchmark/benchmark_analysis.json`      |
+| `VITE_AUTH_TOKEN`             | Token for validation on the backend.                                           | `""`                                            |
 
 Example .env file:
 
