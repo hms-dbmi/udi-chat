@@ -30,17 +30,17 @@ const messageArea = ref<InstanceType<typeof QScrollArea> | null>(null);
 
 const llmResponding = ref(false);
 
-const client = { value: null };
+// const client = { value: null };
 const llmBaseUrl = import.meta.env.VITE_LLM_API_BASE_URL ?? 'http://localhost';
 const port = import.meta.env.VITE_LLM_API_PORT ?? 55001;
 
-onMounted(() => {
-  client.value = new OpenAI({
-    baseURL: `${llmBaseUrl}:${port}/v1`, // vLLM API server
-    apiKey: 'EMPTY', // Replace with your OpenAI API key if needed
-    dangerouslyAllowBrowser: true,
-  });
-});
+// onMounted(() => {
+//   client.value = new OpenAI({
+//     baseURL: `${llmBaseUrl}:${port}/v1`, // vLLM API server
+//     apiKey: 'EMPTY', // Replace with your OpenAI API key if needed
+//     dangerouslyAllowBrowser: true,
+//   });
+// });
 
 function sendMessage(event: Event) {
   if (event instanceof KeyboardEvent && event.shiftKey) {
