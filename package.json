@@ -18,7 +18,7 @@
     "@types/lodash-es": "^4.17.12",
     "arquero": "^8.0.3",
     "jszip": "^3.10.1",
-    "lodash-es": "^4.17.21",
+    "lodash-es": "^4.17.23",
     "ollama": "^0.5.10",
     "openai": "^5.5.1",
     "pinia": "^3.0.1",
