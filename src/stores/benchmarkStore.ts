@@ -6,7 +6,13 @@ const benchmarkEndpoint =
   import.meta.env.VITE_BENCHMARK_ENDPOINT_URL ?? `./data/benchmark/benchmark_analysis.json`;
 
 export interface BenchmarkStoreState {
-  benchmarkItems: BenchmarkItem[];
+  benchmarkAnalysis: BenchmarkAnalysis;
+}
+
+export interface BenchmarkAnalysis {
+  metadata: Record<string, any>;
+  scores: Record<string, any>;
+  results: BenchmarkItem[];
 }
 
 export interface BenchmarkItem {
@@ -36,8 +42,9 @@ export interface RubricCheck {
 }
 
 export const useBenchmarkStore = defineStore('benchmarkStore', () => {
-  const benchmarkItems = ref<BenchmarkItem[]>([]);
   // fetch from benchmarkEndpoint and populate benchmarkItems
+  const benchmarkAnalysis = ref<BenchmarkAnalysis | null>(null);
+  const benchmarkItems = computed(() => benchmarkAnalysis.value?.results ?? []);
 
   async function fetchBenchmarkItems() {
     try {
@@ -47,7 +54,7 @@ export const useBenchmarkStore = defineStore('benchmarkStore', () => {
       }
       const data = await response.json();
       // console.log(data);
-      benchmarkItems.value = data;
+      benchmarkAnalysis.value = data;
     } catch (error) {
       console.error('Failed to fetch benchmark items:', error);
     }
