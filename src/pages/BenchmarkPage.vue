@@ -12,15 +12,20 @@ defineOptions({ name: 'IndexPage' });
     <q-virtual-scroll
       style="width: 100%"
       :items="benchmarkStore.benchmarkItems"
-      separator
       v-slot="{ item, index }"
     >
-      <q-item :key="index" dense class="q-pa-none">
-        <q-item-section>
-          <BenchmarkItemComponent :item="item" />
-        </q-item-section>
-      </q-item>
+      <div :key="index" class="benchmark-row">
+        <BenchmarkItemComponent :item="item" />
+      </div>
     </q-virtual-scroll>
   </q-page>
 </template>
-<style scoped></style>
+<style scoped>
+.benchmark-row {
+  padding: 16px 0;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.18);
+}
+.benchmark-row:last-child {
+  border-bottom: none;
+}
+</style>
