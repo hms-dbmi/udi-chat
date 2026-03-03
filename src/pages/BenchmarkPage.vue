@@ -66,6 +66,24 @@ function saveJson() {
   URL.revokeObjectURL(url);
 }
 
+const codeCounts = computed(() => {
+  const counts: Record<string, number> = Object.fromEntries(codebook.value.map((c) => [c, 0]));
+  for (const applied of Object.values(annotations.value)) {
+    for (const code of applied) {
+      if (code in counts) counts[code]!++;
+    }
+  }
+  return counts;
+});
+
+const exclusiveCounts = computed(() => {
+  const counts: Record<string, number> = Object.fromEntries(codebook.value.map((c) => [c, 0]));
+  for (const applied of Object.values(annotations.value)) {
+    if (applied.length === 1 && applied[0]! in counts) counts[applied[0]!]!++;
+  }
+  return counts;
+});
+
 const fileInput = ref<HTMLInputElement | null>(null);
 
 function loadJson(event: Event) {
@@ -139,6 +157,40 @@ function loadJson(event: Event) {
       <input ref="fileInput" type="file" accept=".json" style="display: none" @change="loadJson" />
     </div>
 
+    <!-- ── Code summary ─────────────────────────────────────────────────────── -->
+    <q-card v-if="codebook.length > 0" flat bordered class="q-pa-sm">
+      <div class="summary-grid">
+        <!-- column headers -->
+        <div />
+        <div />
+        <span class="text-caption text-grey-5">any</span>
+        <div />
+        <span class="text-caption text-grey-5">only</span>
+        <!-- rows -->
+        <template v-for="code in codebook" :key="code">
+          <span class="summary-label text-caption text-grey-8">{{ code }}</span>
+          <span class="summary-count text-caption text-grey-6">{{ codeCounts[code] }}</span>
+          <div class="summary-track">
+            <div
+              class="summary-bar"
+              :style="{
+                width: codedCount > 0 ? (codeCounts[code]! / codedCount) * 100 + '%' : '0%',
+              }"
+            />
+          </div>
+          <span class="summary-count text-caption text-grey-6">{{ exclusiveCounts[code] }}</span>
+          <div class="summary-track">
+            <div
+              class="summary-bar summary-bar-exclusive"
+              :style="{
+                width: codedCount > 0 ? (exclusiveCounts[code]! / codedCount) * 100 + '%' : '0%',
+              }"
+            />
+          </div>
+        </template>
+      </div>
+    </q-card>
+
     <!-- ── Coding panel ─────────────────────────────────────────────────────── -->
     <q-card flat bordered class="q-pa-sm">
       <div class="row items-center no-wrap" style="gap: 12px">
@@ -196,5 +248,35 @@ function loadJson(event: Event) {
 }
 .page-chip {
   min-width: 28px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: minmax(80px, 180px) 28px 1fr 28px 1fr;
+  align-items: center;
+  gap: 4px 10px;
+}
+.summary-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.summary-track {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.summary-bar {
+  height: 100%;
+  background: var(--q-primary);
+  border-radius: 4px;
+  transition: width 0.25s ease;
+}
+.summary-bar-exclusive {
+  background: var(--q-secondary);
+}
+.summary-count {
+  text-align: right;
 }
 </style>
