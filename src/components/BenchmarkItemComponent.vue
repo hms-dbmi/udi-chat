@@ -69,12 +69,20 @@ interface DiffRow {
   type: 'same' | 'changed' | 'remove' | 'add';
 }
 
-function prettyRubricValue(v: string | number): string {
-  if (typeof v === 'number') return String(v);
+function prettyRubricValue(v: unknown): string {
+  if (typeof v === 'string') {
+    // Try to parse as JSON so the diff is on formatted lines, not a blob
+    try {
+      return JSON.stringify(JSON.parse(v), null, 2);
+    } catch {
+      return v;
+    }
+  }
+  // object, array, number, boolean, null, undefined…
   try {
-    return JSON.stringify(JSON.parse(v), null, 2);
+    return JSON.stringify(v, null, 2) ?? String(v);
   } catch {
-    return v;
+    return String(v);
   }
 }
 
