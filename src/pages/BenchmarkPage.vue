@@ -96,7 +96,6 @@ function loadJson(event: Event) {
       <q-btn
         flat
         round
-        dense
         icon="chevron_left"
         :disable="currentIndex === 0"
         @click="go(currentIndex - 1)"
@@ -107,7 +106,6 @@ function loadJson(event: Event) {
       <q-btn
         flat
         round
-        dense
         icon="chevron_right"
         :disable="currentIndex === total - 1"
         @click="go(currentIndex + 1)"
@@ -119,7 +117,7 @@ function loadJson(event: Event) {
           v-for="(item, i) in items"
           :key="i"
           dense
-          size="xs"
+          size="sm"
           padding="2px 5px"
           :color="itemPasses(item) ? 'positive' : 'negative'"
           :unelevated="currentIndex === i"
