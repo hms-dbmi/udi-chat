@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-
 import { useBenchmarkStore } from 'src/stores/benchmarkStore';
 import BenchmarkItemComponent from 'src/components/BenchmarkItemComponent.vue';
 const benchmarkStore = useBenchmarkStore();
