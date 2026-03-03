@@ -2,7 +2,7 @@
 import { BenchmarkItem, RubricCheck } from 'src/stores/benchmarkStore';
 import { FlatToolCall } from 'src/stores/conversationStore';
 import { UDIVis } from 'udi-toolkit';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   item: BenchmarkItem;
@@ -38,6 +38,12 @@ const passedChecks = computed(() => {
 const failedChecks = computed(() => {
   const list = Object.entries(item.rubric ?? {}).filter(([, check]) => !check.pass);
   return Object.fromEntries(list);
+});
+
+// Defer heavy viz rendering until after the item is mounted into the virtual scroll
+const mounted = ref(false);
+onMounted(() => {
+  mounted.value = true;
 });
 
 // ── Raw dialog ────────────────────────────────────────────────────────────────
@@ -254,7 +260,7 @@ function openDiff(key: string, check: RubricCheck) {
             <div class="text-caption text-weight-medium">Tool Call {{ index + 1 }}</div>
             <div class="text-caption text-grey-8">Name: {{ tool_call.name }}</div>
             <UDIVis
-              v-if="tool_call.name === 'RenderVisualization'"
+              v-if="mounted && tool_call.name === 'RenderVisualization'"
               :spec="JSON.parse(tool_call.arguments['spec'] as string)"
             />
             <div v-if="tool_call.name === 'FilterData'">
@@ -297,7 +303,7 @@ function openDiff(key: string, check: RubricCheck) {
             <div class="text-caption text-weight-medium">Tool Call {{ index + 1 }}</div>
             <div class="text-caption text-grey-8">Name: {{ tool_call.name }}</div>
             <UDIVis
-              v-if="tool_call.name === 'RenderVisualization'"
+              v-if="mounted && tool_call.name === 'RenderVisualization'"
               :spec="JSON.parse(tool_call.arguments['spec'] as string)"
             />
             <div v-if="tool_call.name === 'FilterData'">
