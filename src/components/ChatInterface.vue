@@ -109,6 +109,9 @@ async function queryLLM() {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token.value}`,
+        ...(globalStore.customApiKeyEnabled && globalStore.hasApiKey
+          ? { 'X-OpenAI-Key': globalStore.apiKey }
+          : {}),
       },
       body: JSON.stringify(constructQueryBody()),
     });
