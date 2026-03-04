@@ -33,7 +33,24 @@ const llmResponding = ref(false);
 // const client = { value: null };
 const llmBaseUrl = import.meta.env.VITE_LLM_API_BASE_URL ?? 'http://localhost';
 const port = import.meta.env.VITE_LLM_API_PORT ?? 55001;
-const token = import.meta.env.VITE_AUTH_TOKEN;
+const envToken = import.meta.env.VITE_AUTH_TOKEN;
+const token = computed(() =>
+  globalStore.customApiKeyEnabled && globalStore.hasApiKey ? globalStore.apiKey : envToken,
+);
+
+const showApiKeyInput = ref(false);
+const apiKeyDraft = ref(globalStore.apiKey);
+
+function saveApiKey() {
+  globalStore.setApiKey(apiKeyDraft.value);
+  apiKeyDraft.value = '';
+  showApiKeyInput.value = false;
+}
+
+function cancelApiKeyInput() {
+  apiKeyDraft.value = '';
+  showApiKeyInput.value = false;
+}
 
 // onMounted(() => {
 //   client.value = new OpenAI({
@@ -91,7 +108,7 @@ async function queryLLM() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token.value}`,
       },
       body: JSON.stringify(constructQueryBody()),
     });
@@ -396,7 +413,40 @@ watch(
   </q-scroll-area>
 
   <div class="flex w-400 q-mt-md column justify-end">
-    <div class="flex row q-mb-lg">
+    <div
+      v-if="globalStore.customApiKeyEnabled && (!globalStore.hasApiKey || showApiKeyInput)"
+      class="q-mb-lg q-mx-sm"
+    >
+      <p class="text-body2 q-mb-sm">
+        Enter your API key to start chatting. Your key is stored locally in your browser and sent
+        only to the configured backend.
+      </p>
+      <q-input
+        v-model="apiKeyDraft"
+        outlined
+        type="password"
+        label="API Key"
+        class="q-mb-sm"
+      />
+      <div class="flex row q-gutter-sm">
+        <q-btn
+          color="primary"
+          label="Save API key"
+          no-caps
+          @click="saveApiKey"
+          :disable="apiKeyDraft.length === 0"
+        />
+        <q-btn
+          v-if="globalStore.hasApiKey"
+          flat
+          label="Cancel"
+          no-caps
+          @click="cancelApiKeyInput"
+        />
+      </div>
+    </div>
+
+    <div v-else class="flex row q-mb-lg">
       <q-input
         class="flex-grow-1 q-mx-sm"
         v-model="inputText"
@@ -416,6 +466,17 @@ watch(
           icon-right="send"
           label="Send"
           no-caps
+        />
+        <q-btn
+          v-if="globalStore.customApiKeyEnabled"
+          flat
+          dense
+          size="sm"
+          class="q-mr-sm q-mt-xs"
+          label="Set API Key"
+          icon="key"
+          no-caps
+          @click="apiKeyDraft = globalStore.apiKey; showApiKeyInput = true"
         />
       </div>
     </div>
