@@ -33,10 +33,7 @@ const llmResponding = ref(false);
 // const client = { value: null };
 const llmBaseUrl = import.meta.env.VITE_LLM_API_BASE_URL ?? 'http://localhost';
 const port = import.meta.env.VITE_LLM_API_PORT ?? 55001;
-const envToken = import.meta.env.VITE_AUTH_TOKEN;
-const token = computed(() =>
-  globalStore.customApiKeyEnabled && globalStore.hasApiKey ? globalStore.apiKey : envToken,
-);
+const token = import.meta.env.VITE_AUTH_TOKEN;
 
 const showApiKeyInput = ref(false);
 const apiKeyDraft = ref(globalStore.apiKey);
@@ -108,7 +105,7 @@ async function queryLLM() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token.value}`,
+        Authorization: `Bearer ${token}`,
         ...(globalStore.customApiKeyEnabled && globalStore.hasApiKey
           ? { 'X-OpenAI-Key': globalStore.apiKey }
           : {}),
