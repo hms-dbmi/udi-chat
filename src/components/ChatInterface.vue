@@ -35,17 +35,41 @@ const llmBaseUrl = import.meta.env.VITE_LLM_API_BASE_URL ?? 'http://localhost';
 const port = import.meta.env.VITE_LLM_API_PORT ?? 55001;
 const token = import.meta.env.VITE_AUTH_TOKEN;
 
+const apiKeyValidationUrl =
+  import.meta.env.VITE_CUSTOM_API_KEY_VALIDATION_URL ?? 'https://api.openai.com/v1/models';
+
 const showApiKeyInput = ref(false);
 const apiKeyDraft = ref(globalStore.apiKey);
+const apiKeyValidating = ref(false);
+const apiKeyError = ref('');
 
-function saveApiKey() {
-  globalStore.setApiKey(apiKeyDraft.value);
-  apiKeyDraft.value = '';
-  showApiKeyInput.value = false;
+async function saveApiKey() {
+  apiKeyError.value = '';
+  apiKeyValidating.value = true;
+  try {
+    const response = await fetch(apiKeyValidationUrl, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${apiKeyDraft.value}` },
+    });
+    if (!response.ok) {
+      apiKeyError.value =
+        response.status === 401
+          ? 'Invalid API key.'
+          : `Validation failed (HTTP ${response.status}).`;
+      return;
+    }
+    globalStore.setApiKey(apiKeyDraft.value);
+    showApiKeyInput.value = false;
+  } catch {
+    apiKeyError.value = 'Could not reach validation endpoint.';
+  } finally {
+    apiKeyValidating.value = false;
+  }
 }
 
 function cancelApiKeyInput() {
   apiKeyDraft.value = '';
+  apiKeyError.value = '';
   showApiKeyInput.value = false;
 }
 
@@ -427,6 +451,8 @@ watch(
         type="password"
         label="API Key"
         class="q-mb-sm"
+        :error="apiKeyError.length > 0"
+        :error-message="apiKeyError"
       />
       <div class="flex row q-gutter-sm">
         <q-btn
@@ -434,7 +460,8 @@ watch(
           label="Save API key"
           no-caps
           @click="saveApiKey"
-          :disable="apiKeyDraft.length === 0"
+          :disable="apiKeyDraft.length === 0 || apiKeyValidating"
+          :loading="apiKeyValidating"
         />
         <q-btn
           v-if="globalStore.hasApiKey"

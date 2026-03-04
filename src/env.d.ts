@@ -16,6 +16,7 @@ interface ImportMetaEnv {
   readonly VITE_PRODUCTION?: string;
   readonly VITE_BENCHMARK_ENDPOINT_URL?: string;
   readonly VITE_ENABLE_CUSTOM_API_KEY?: string;
+  readonly VITE_CUSTOM_API_KEY_VALIDATION_URL?: string;
 }
 
 interface ImportMeta {
