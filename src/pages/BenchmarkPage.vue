@@ -51,6 +51,8 @@ function addNewCode() {
 }
 
 // ── Save / Load ───────────────────────────────────────────────────────────────
+const summaryExpanded = ref(true);
+
 const codedCount = computed(
   () => Object.values(annotations.value).filter((a) => a.length > 0).length,
 );
@@ -159,36 +161,52 @@ function loadJson(event: Event) {
 
     <!-- ── Code summary ─────────────────────────────────────────────────────── -->
     <q-card v-if="codebook.length > 0" flat bordered class="q-pa-sm">
-      <div class="summary-grid">
-        <!-- column headers -->
+
+      <!-- collapsed: inline counts -->
+      <div class="row items-center" style="gap: 8px">
+        <q-btn
+          flat round dense size="xs"
+          :icon="summaryExpanded ? 'expand_less' : 'expand_more'"
+          @click="summaryExpanded = !summaryExpanded"
+        />
+        <template v-if="!summaryExpanded">
+          <span
+            v-for="code in codebook"
+            :key="code"
+            class="text-caption text-grey-7"
+          >
+            {{ code }}: <strong>{{ codeCounts[code] }}</strong>
+          </span>
+        </template>
+        <span v-else class="text-caption text-grey-5">Summary</span>
+      </div>
+
+      <!-- expanded: bar chart grid -->
+      <div v-if="summaryExpanded" class="summary-grid q-mt-xs">
         <div />
         <div />
         <span class="text-caption text-grey-5">any</span>
         <div />
         <span class="text-caption text-grey-5">only</span>
-        <!-- rows -->
         <template v-for="code in codebook" :key="code">
           <span class="summary-label text-caption text-grey-8">{{ code }}</span>
           <span class="summary-count text-caption text-grey-6">{{ codeCounts[code] }}</span>
           <div class="summary-track">
             <div
               class="summary-bar"
-              :style="{
-                width: codedCount > 0 ? (codeCounts[code]! / codedCount) * 100 + '%' : '0%',
-              }"
+              :style="{ width: codedCount > 0 ? (codeCounts[code]! / codedCount) * 100 + '%' : '0%' }"
             />
           </div>
           <span class="summary-count text-caption text-grey-6">{{ exclusiveCounts[code] }}</span>
           <div class="summary-track">
             <div
               class="summary-bar summary-bar-exclusive"
-              :style="{
-                width: codedCount > 0 ? (exclusiveCounts[code]! / codedCount) * 100 + '%' : '0%',
-              }"
+              :style="{ width: codedCount > 0 ? (exclusiveCounts[code]! / codedCount) * 100 + '%' : '0%' }"
             />
           </div>
         </template>
       </div>
+
     </q-card>
 
     <!-- ── Coding panel ─────────────────────────────────────────────────────── -->
