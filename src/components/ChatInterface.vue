@@ -441,7 +441,7 @@ watch(
       v-if="globalStore.customApiKeyEnabled && (!globalStore.hasApiKey || showApiKeyInput)"
       class="q-mb-lg q-mx-sm"
     >
-      <p class="text-body2 q-mb-sm">
+      <p class="text-body2 q-mb-sm q-ml-xs">
         Enter your API key to start chatting. Your key is stored locally in your browser and sent
         only to the configured backend.
       </p>
@@ -503,7 +503,10 @@ watch(
           label="Set API Key"
           icon="key"
           no-caps
-          @click="apiKeyDraft = globalStore.apiKey; showApiKeyInput = true"
+          @click="
+            apiKeyDraft = globalStore.apiKey;
+            showApiKeyInput = true;
+          "
         />
       </div>
     </div>
