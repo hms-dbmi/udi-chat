@@ -39,18 +39,24 @@ const apiKeyValidationUrl =
   import.meta.env.VITE_CUSTOM_API_KEY_VALIDATION_URL ?? 'https://api.openai.com/v1/models';
 
 const showApiKeyInput = ref(false);
-const apiKeyDraft = ref(globalStore.apiKey);
+const apiKeyDraft = ref(globalStore.getApiKey());
 const apiKeyValidating = ref(false);
 const apiKeyError = ref('');
 
 async function saveApiKey() {
   apiKeyError.value = '';
   apiKeyValidating.value = true;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetch(apiKeyValidationUrl, {
       method: 'GET',
       headers: { Authorization: `Bearer ${apiKeyDraft.value}` },
+      signal: controller.signal,
     });
+    // Cancel the response body immediately — we only need the status code,
+    // and the body (e.g. full OpenAI model list) can be very large
+    response.body?.cancel();
     if (!response.ok) {
       apiKeyError.value =
         response.status === 401
@@ -63,6 +69,7 @@ async function saveApiKey() {
   } catch {
     apiKeyError.value = 'Could not reach validation endpoint.';
   } finally {
+    clearTimeout(timeout);
     apiKeyValidating.value = false;
   }
 }
@@ -131,7 +138,7 @@ async function queryLLM() {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
         ...(globalStore.customApiKeyEnabled && globalStore.hasApiKey
-          ? { 'X-OpenAI-Key': globalStore.apiKey }
+          ? { 'X-OpenAI-Key': globalStore.getApiKey() }
           : {}),
       },
       body: JSON.stringify(constructQueryBody()),
@@ -437,8 +444,9 @@ watch(
   </q-scroll-area>
 
   <div class="flex w-400 q-mt-md column justify-end">
+    <!-- Using `v-show` instead of `v-if` to avoid breaking Vue Devtools -->
     <div
-      v-if="globalStore.customApiKeyEnabled && (!globalStore.hasApiKey || showApiKeyInput)"
+      v-show="globalStore.customApiKeyEnabled && (!globalStore.hasApiKey || showApiKeyInput)"
       class="q-mb-lg q-mx-sm"
     >
       <p class="text-body2 q-mb-sm q-ml-xs">
@@ -453,6 +461,8 @@ watch(
         class="q-mb-sm"
         :error="apiKeyError.length > 0"
         :error-message="apiKeyError"
+        name="api-key-input"
+        data-1p-ignore
       />
       <div class="flex row q-gutter-sm">
         <q-btn
@@ -473,7 +483,10 @@ watch(
       </div>
     </div>
 
-    <div v-else class="flex row q-mb-lg">
+    <div
+      v-show="!globalStore.customApiKeyEnabled || (globalStore.hasApiKey && !showApiKeyInput)"
+      class="flex row q-mb-lg"
+    >
       <q-input
         class="flex-grow-1 q-mx-sm"
         v-model="inputText"
@@ -504,7 +517,7 @@ watch(
           icon="key"
           no-caps
           @click="
-            apiKeyDraft = globalStore.apiKey;
+            apiKeyDraft = globalStore.getApiKey();
             showApiKeyInput = true;
           "
         />

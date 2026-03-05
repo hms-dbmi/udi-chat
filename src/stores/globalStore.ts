@@ -1,26 +1,27 @@
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { defineStore } from 'pinia';
+import { useStorage } from '@vueuse/core';
 
 const CUSTOM_API_KEY_ENABLED = import.meta.env.VITE_ENABLE_CUSTOM_API_KEY === 'true';
 const LOCAL_STORAGE_KEY = 'udi-custom-api-key';
+
+// Declared at module scope (outside defineStore) to avoid Pinia Dev Tools tracking
+const apiKeyStorage = CUSTOM_API_KEY_ENABLED ? useStorage(LOCAL_STORAGE_KEY, '') : ref('');
 
 export const useGlobalStore = defineStore('globalStore', () => {
   const debugMode = ref<boolean>(false);
 
   const customApiKeyEnabled = CUSTOM_API_KEY_ENABLED;
-  const apiKey = ref<string>(
-    CUSTOM_API_KEY_ENABLED ? (localStorage.getItem(LOCAL_STORAGE_KEY) ?? '') : '',
-  );
-  const hasApiKey = computed(() => apiKey.value.length > 0);
+  const hasApiKey = ref(apiKeyStorage.value.length > 0);
 
   function setApiKey(key: string) {
-    apiKey.value = key;
-    if (key) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, key);
-    } else {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-    }
+    apiKeyStorage.value = key;
+    hasApiKey.value = key.length > 0;
   }
 
-  return { debugMode, customApiKeyEnabled, apiKey, hasApiKey, setApiKey };
+  function getApiKey() {
+    return apiKeyStorage.value;
+  }
+
+  return { debugMode, customApiKeyEnabled, hasApiKey, setApiKey, getApiKey };
 });
