@@ -58,6 +58,8 @@ See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-
 | `VITE_PRODUCTION`             | Toggles production mode, set to true to hide debug features.                   | `false`                                         |
 | `VITE_BENCHMARK_ENDPOINT_URL` | Path or endpoint for benchmark analysis results.                               | `./data/benchmark/benchmark_analysis.json`      |
 | `VITE_AUTH_TOKEN`             | Token for validation on the backend.                                           | `""`                                            |
+| `VITE_ENABLE_CUSTOM_API_KEY`  | When `true`, allows users to provide their own API key via the UI.             | `false`                                         |
+| `VITE_CUSTOM_API_KEY_VALIDATION_URL` | Endpoint used to validate user-provided API keys.                       | `https://api.openai.com/v1/models`              |
 
 Example .env file:
 
@@ -72,4 +74,7 @@ VITE_DATA_PACKAGE_PATH=./data/my_awesome_data/datapackage.json
 
 # Mode toggle
 VITE_PRODUCTION=true
+
+# Enable user-provided API key input in the chat UI
+# VITE_ENABLE_CUSTOM_API_KEY=true
 ```

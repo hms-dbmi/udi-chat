@@ -35,6 +35,51 @@ const llmBaseUrl = import.meta.env.VITE_LLM_API_BASE_URL ?? 'http://localhost';
 const port = import.meta.env.VITE_LLM_API_PORT ?? 55001;
 const token = import.meta.env.VITE_AUTH_TOKEN;
 
+const apiKeyValidationUrl =
+  import.meta.env.VITE_CUSTOM_API_KEY_VALIDATION_URL ?? 'https://api.openai.com/v1/models';
+
+const showApiKeyInput = ref(false);
+const apiKeyDraft = ref(globalStore.getApiKey());
+const apiKeyValidating = ref(false);
+const apiKeyError = ref('');
+
+async function saveApiKey() {
+  apiKeyError.value = '';
+  apiKeyValidating.value = true;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch(apiKeyValidationUrl, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${apiKeyDraft.value}` },
+      signal: controller.signal,
+    });
+    // Cancel the response body immediately — we only need the status code,
+    // and the body (e.g. full OpenAI model list) can be very large
+    response.body?.cancel();
+    if (!response.ok) {
+      apiKeyError.value =
+        response.status === 401
+          ? 'Invalid API key.'
+          : `Validation failed (HTTP ${response.status}).`;
+      return;
+    }
+    globalStore.setApiKey(apiKeyDraft.value);
+    showApiKeyInput.value = false;
+  } catch {
+    apiKeyError.value = 'Could not reach validation endpoint.';
+  } finally {
+    clearTimeout(timeout);
+    apiKeyValidating.value = false;
+  }
+}
+
+function cancelApiKeyInput() {
+  apiKeyDraft.value = '';
+  apiKeyError.value = '';
+  showApiKeyInput.value = false;
+}
+
 // onMounted(() => {
 //   client.value = new OpenAI({
 //     baseURL: `${llmBaseUrl}:${port}/v1`, // vLLM API server
@@ -92,6 +137,9 @@ async function queryLLM() {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
+        ...(globalStore.customApiKeyEnabled && globalStore.hasApiKey
+          ? { 'X-OpenAI-Key': globalStore.getApiKey() }
+          : {}),
       },
       body: JSON.stringify(constructQueryBody()),
     });
@@ -396,7 +444,49 @@ watch(
   </q-scroll-area>
 
   <div class="flex w-400 q-mt-md column justify-end">
-    <div class="flex row q-mb-lg">
+    <!-- Using `v-show` instead of `v-if` to avoid breaking Vue Devtools -->
+    <div
+      v-show="globalStore.customApiKeyEnabled && (!globalStore.hasApiKey || showApiKeyInput)"
+      class="q-mb-lg q-mx-sm"
+    >
+      <p class="text-body2 q-mb-sm q-ml-xs">
+        Enter your API key to start chatting. Your key is stored locally in your browser and sent
+        only to the configured backend.
+      </p>
+      <q-input
+        v-model="apiKeyDraft"
+        outlined
+        type="password"
+        label="API Key"
+        class="q-mb-sm"
+        :error="apiKeyError.length > 0"
+        :error-message="apiKeyError"
+        name="api-key-input"
+        data-1p-ignore
+      />
+      <div class="flex row q-gutter-sm">
+        <q-btn
+          color="primary"
+          label="Save API key"
+          no-caps
+          @click="saveApiKey"
+          :disable="apiKeyDraft.length === 0 || apiKeyValidating"
+          :loading="apiKeyValidating"
+        />
+        <q-btn
+          v-if="globalStore.hasApiKey"
+          flat
+          label="Cancel"
+          no-caps
+          @click="cancelApiKeyInput"
+        />
+      </div>
+    </div>
+
+    <div
+      v-show="!globalStore.customApiKeyEnabled || (globalStore.hasApiKey && !showApiKeyInput)"
+      class="flex row q-mb-lg"
+    >
       <q-input
         class="flex-grow-1 q-mx-sm"
         v-model="inputText"
@@ -416,6 +506,20 @@ watch(
           icon-right="send"
           label="Send"
           no-caps
+        />
+        <q-btn
+          v-if="globalStore.customApiKeyEnabled"
+          flat
+          dense
+          size="sm"
+          class="q-mr-sm q-mt-xs"
+          label="Set API Key"
+          icon="key"
+          no-caps
+          @click="
+            apiKeyDraft = globalStore.getApiKey();
+            showApiKeyInput = true;
+          "
         />
       </div>
     </div>
