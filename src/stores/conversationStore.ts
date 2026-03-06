@@ -15,6 +15,7 @@ export interface ToolCall {
 export interface FlatToolCall {
   name: string;
   arguments: Arguments;
+  meta?: Record<string, unknown>;
 }
 
 export interface Arguments {

@@ -51,6 +51,17 @@ function openRaw(title: string, data: unknown) {
   showRawDialog.value = true;
 }
 
+// ── Meta dialog ───────────────────────────────────────────────────────────────
+const showMetaDialog = ref(false);
+const metaDialogData = ref<Record<string, unknown>>({});
+const metaDialogTitle = ref('');
+
+function openMeta(title: string, meta: Record<string, unknown>) {
+  metaDialogTitle.value = title;
+  metaDialogData.value = meta;
+  showMetaDialog.value = true;
+}
+
 // ── Diff dialog ───────────────────────────────────────────────────────────────
 interface DiffOp {
   op: 'same' | 'remove' | 'add';
@@ -302,7 +313,14 @@ function openDiff(key: string, check: RubricCheck) {
           </div>
           <q-separator />
           <div v-for="(tool_call, index) in item.output.tool_calls" :key="index" class="q-mb-xs">
-            <div class="text-caption text-weight-medium">Tool Call {{ index + 1 }}</div>
+            <div class="row items-center justify-between">
+              <div class="text-caption text-weight-medium">Tool Call {{ index + 1 }}</div>
+              <q-btn
+                v-if="tool_call.meta"
+                flat dense size="xs" icon="info_outline" label="Meta"
+                @click="openMeta(`Tool Call ${index + 1} — Meta`, tool_call.meta)"
+              />
+            </div>
             <div class="text-caption text-grey-8">Name: {{ tool_call.name }}</div>
             <UDIVis
               v-if="tool_call.name === 'RenderVisualization'"
@@ -401,6 +419,43 @@ function openDiff(key: string, check: RubricCheck) {
         </div>
       </q-card>
     </q-dialog>
+
+    <!-- Meta dialog -->
+    <q-dialog v-model="showMetaDialog">
+      <q-card style="min-width: 360px; max-width: 80vw">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-subtitle2">{{ metaDialogTitle }}</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+        <q-separator />
+        <q-card-section>
+          <div v-for="(val, key) in metaDialogData" :key="key" class="meta-row">
+            <span class="meta-key text-caption text-weight-medium text-grey-7">{{ key }}</span>
+            <!-- nested object -->
+            <div v-if="val !== null && typeof val === 'object' && !Array.isArray(val)" class="meta-nested">
+              <div v-for="(v2, k2) in (val as Record<string, unknown>)" :key="k2" class="row items-baseline q-gutter-xs">
+                <span class="text-caption text-grey-6">{{ k2 }}:</span>
+                <span class="text-caption text-grey-10">{{ v2 }}</span>
+              </div>
+            </div>
+            <!-- array -->
+            <span v-else-if="Array.isArray(val)" class="text-caption text-grey-10">
+              {{ (val as unknown[]).join(', ') }}
+            </span>
+            <!-- primitive — highlight validation_retries > 0 -->
+            <span v-else>
+              <q-badge
+                v-if="key === 'validation_retries'"
+                :color="(val as number) > 0 ? 'warning' : 'positive'"
+                :label="String(val)"
+              />
+              <span v-else class="text-caption text-grey-10 meta-value">{{ val }}</span>
+            </span>
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
@@ -417,6 +472,28 @@ function openDiff(key: string, check: RubricCheck) {
   line-height: 1.35;
   margin: 0;
   white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ── Meta dialog ─────────────────────────────────────────────────────────────── */
+.meta-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.meta-row:last-child {
+  border-bottom: none;
+}
+.meta-nested {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.meta-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
   word-break: break-all;
 }
 
