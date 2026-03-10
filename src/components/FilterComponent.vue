@@ -10,6 +10,7 @@ const dataFiltersStore = useDataFilterStore();
 interface FilterComponentProps {
   message: any; // Replace with the actual type of message
   index: number;
+  toolCallIndex?: number;
   extractFilterSpecFromMessage: (message: any) => any; // Replace with the actual type
   tweakable: boolean;
 }
@@ -27,7 +28,9 @@ const filterType = computed(() => {
 });
 
 const dataSelection = computed<DataSelection | null>(() => {
-  const key = dataFiltersStore.messageFilterKey(props.index);
+  const key = props.toolCallIndex != null
+    ? dataFiltersStore.messageFilterKeyWithToolCall(props.index, props.toolCallIndex)
+    : dataFiltersStore.messageFilterKey(props.index);
   if (!(key in dataFiltersStore.dataSelections)) {
     return null;
   }

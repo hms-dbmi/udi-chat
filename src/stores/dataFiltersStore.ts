@@ -25,6 +25,11 @@ export interface FilterCallArgs {
   max: number;
 }
 
+export interface ExtractedFilter {
+  args: FilterCallArgs;
+  toolCallIndex: number;
+}
+
 export const useDataFilterStore = defineStore('dataFilterStore', () => {
   const conversationStore = useConversationStore();
   const dataPackageStore = useDataPackageStore();
@@ -83,45 +88,46 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
         const message = messages.value[i];
         if (!message) continue;
         if (!containsFilterCall(message)) continue;
-        const filterSpec = extractFilterSpecFromMessage(message);
-        if (!filterSpec) continue;
-        const key = messageFilterKey(i);
-        if (key in dataSelections.value) continue;
-        if (filterSpec.filter.filterType === 'interval') {
-          if (
-            dataPackageStore.isValidIntervalFilter(filterSpec.entity, filterSpec.field).isValid !==
-            'yes'
-          ) {
-            continue;
-          }
+        const filters = extractAllFilterSpecsFromMessage(message);
+        for (const { args: filterSpec, toolCallIndex } of filters) {
+          const key = messageFilterKeyWithToolCall(i, toolCallIndex);
+          if (key in dataSelections.value) continue;
+          if (filterSpec.filter.filterType === 'interval') {
+            if (
+              dataPackageStore.isValidIntervalFilter(filterSpec.entity, filterSpec.field).isValid !==
+              'yes'
+            ) {
+              continue;
+            }
 
-          dataSelections.value[key] = {
-            dataSourceKey: filterSpec.entity,
-            type: 'interval',
-            selection: {
-              [filterSpec.field]: [
-                filterSpec.filter.intervalRange.min,
-                filterSpec.filter.intervalRange.max,
-              ],
-            },
-          };
-        } else {
-          if (
-            dataPackageStore.isValidPointFilter(
-              filterSpec.entity,
-              filterSpec.field,
-              filterSpec.filter.pointValues,
-            ).isValid !== 'yes'
-          ) {
-            continue;
+            dataSelections.value[key] = {
+              dataSourceKey: filterSpec.entity,
+              type: 'interval',
+              selection: {
+                [filterSpec.field]: [
+                  filterSpec.filter.intervalRange.min,
+                  filterSpec.filter.intervalRange.max,
+                ],
+              },
+            };
+          } else {
+            if (
+              dataPackageStore.isValidPointFilter(
+                filterSpec.entity,
+                filterSpec.field,
+                filterSpec.filter.pointValues,
+              ).isValid !== 'yes'
+            ) {
+              continue;
+            }
+            dataSelections.value[key] = {
+              dataSourceKey: filterSpec.entity,
+              type: 'point',
+              selection: {
+                [filterSpec.field]: filterSpec.filter.pointValues,
+              },
+            };
           }
-          dataSelections.value[key] = {
-            dataSourceKey: filterSpec.entity,
-            type: 'point',
-            selection: {
-              [filterSpec.field]: filterSpec.filter.pointValues,
-            },
-          };
         }
       }
     },
@@ -184,14 +190,23 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     return toolCall.arguments;
   }
 
-  function messageFilterKey(messageIndex: number): string {
+  function messageFilterKeyWithToolCall(messageIndex: number, toolCallIndex: number): string {
     const message = messages.value[messageIndex];
-    return message?.linkedVisFilterId ?? `message-filter-${messageIndex}`;
+    return message?.linkedVisFilterId ?? `message-filter-${messageIndex}-${toolCallIndex}`;
+  }
+
+  function messageFilterKey(messageIndex: number): string {
+    return messageFilterKeyWithToolCall(messageIndex, 0);
   }
 
   function messageIndex(messageFilterKey: string): number | null {
     const match = messageFilterKey.match(/message-filter-(\d+)/);
     return match ? parseInt(match[1]) : null;
+  }
+
+  function toolCallIndexFromKey(filterKey: string): number {
+    const match = filterKey.match(/message-filter-\d+-(\d+)/);
+    return match ? parseInt(match[1]) : 0;
   }
 
   function containsFilterCall(message: Message): boolean {
@@ -235,31 +250,25 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     };
   }
 
-  function extractFilterSpecFromMessage(message: Message): FilterCallArgs | null {
+  function extractAllFilterSpecsFromMessage(message: Message): ExtractedFilter[] {
     if (!message.tool_calls || message.tool_calls.length === 0) {
-      return null;
+      return [];
     }
-    const renderToolCalls = message.tool_calls
-      .map((call) => {
-        if (!call.function) {
-          // for backwards compatibility with old saved message chains
-          return call;
-        }
-        return {
-          name: call.function.name,
-          arguments: call.function.arguments,
-        };
-      })
-      .filter((call) => call.name === 'FilterData');
-    if (renderToolCalls.length === 0) {
-      return null;
+    const results: ExtractedFilter[] = [];
+    for (let i = 0; i < message.tool_calls.length; i++) {
+      const call = message.tool_calls[i];
+      const name = getToolCallName(call);
+      if (name !== 'FilterData') continue;
+      const args = getToolCallArgs(call);
+      if (!args) continue;
+      results.push({ args: args as FilterCallArgs, toolCallIndex: i });
     }
+    return results;
+  }
 
-    const firstToolCall = renderToolCalls[0];
-    if (!firstToolCall) return null;
-    const functionArgs = firstToolCall.arguments;
-    if (!functionArgs) return null;
-    return functionArgs;
+  function extractFilterSpecFromMessage(message: Message): FilterCallArgs | null {
+    const filters = extractAllFilterSpecsFromMessage(message);
+    return filters.length > 0 ? filters[0].args : null;
   }
 
   return {
@@ -270,6 +279,8 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     containsFilterCall,
     generateFilterMessage,
     extractFilterSpecFromMessage,
+    extractAllFilterSpecsFromMessage,
     messageFilterKey,
+    messageFilterKeyWithToolCall,
   };
 });
