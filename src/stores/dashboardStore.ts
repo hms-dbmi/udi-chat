@@ -12,10 +12,16 @@ import { useConversationStore } from './conversationStore';
 
 export interface PinnedVisualization {
   index: number;
+  toolCallIndex: number;
   spec: UDIGrammar;
   interactiveSpec: UDIGrammar;
   userPrompt: string;
   uuid: string;
+}
+
+export interface ExtractedSpec {
+  spec: object;
+  toolCallIndex: number;
 }
 
 export const useDashboardStore = defineStore('dashboardStore', () => {
@@ -23,104 +29,120 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   const dataFilterStore = useDataFilterStore();
   const conversationStore = useConversationStore();
   const { messages } = storeToRefs(conversationStore);
-  const pinnedVisualizations = ref<Map<number, PinnedVisualization>>(new Map());
+  const pinnedVisualizations = ref<Map<string, PinnedVisualization>>(new Map());
 
   const filterAllNullValues = ref<boolean>(true);
 
-  const hoveredVisualizationIndex = ref<number | null>(null);
-  function setHoveredVisualizationIndex(index: number | null) {
+  const hoveredVisualizationIndex = ref<string | null>(null);
+  function setHoveredVisualizationIndex(index: string | null) {
     hoveredVisualizationIndex.value = index;
   }
 
-  function isHovered(index: number): boolean {
+  function isHovered(index: string): boolean {
     return hoveredVisualizationIndex.value === index;
   }
 
-  function pinVisualization(index: number, spec: UDIGrammar, userPrompt: string) {
+  function pinKey(messageIndex: number, toolCallIndex: number): string {
+    return `${messageIndex}-${toolCallIndex}`;
+  }
+
+  function pinVisualization(index: number, toolCallIndex: number, spec: UDIGrammar, userPrompt: string) {
     const uuid = 'udi_' + uuidv4();
     const interactiveSpec = injectInteractivity(spec, uuid);
-    pinnedVisualizations.value.set(index, {
+    const key = pinKey(index, toolCallIndex);
+    pinnedVisualizations.value.set(key, {
       index,
+      toolCallIndex,
       spec,
       interactiveSpec,
       userPrompt,
       uuid,
     });
-    // updateSpecFilters();
   }
 
   watch(
     messages,
     () => {
       for (let i = 0; i < messages.value.length; i++) {
-        if (pinnedVisualizations.value.has(i)) continue;
         const message = messages.value[i];
         if (!message) continue;
         if (message.role !== 'assistant') continue;
-        const spec = extractUdiSpecFromMessage(message);
-        if (!spec) continue;
-        let userPromptIndex = i - 1;
-        while (userPromptIndex >= 0 && messages.value?.[userPromptIndex]?.role !== 'user') {
-          userPromptIndex--;
+        const specs = extractAllUdiSpecsFromMessage(message);
+        if (specs.length === 0) continue;
+        for (const { spec, toolCallIndex } of specs) {
+          const key = pinKey(i, toolCallIndex);
+          if (pinnedVisualizations.value.has(key)) continue;
+          let userPromptIndex = i - 1;
+          while (userPromptIndex >= 0 && messages.value?.[userPromptIndex]?.role !== 'user') {
+            userPromptIndex--;
+          }
+          if (userPromptIndex < 0) {
+            console.warn('No user prompt found before the assistant message');
+            continue;
+          }
+          const userPrompt = messages.value?.[userPromptIndex]?.content ?? '';
+          pinVisualization(i, toolCallIndex, spec as UDIGrammar, userPrompt);
         }
-        if (userPromptIndex < 0) {
-          console.warn('No user prompt found before the assistant message');
-          return;
-        }
-        const userPrompt = messages.value?.[userPromptIndex]?.content ?? '';
-        pinVisualization(i, spec, userPrompt);
       }
     },
     { deep: true },
   );
 
-  function extractUdiSpecFromMessage(message: Message): object | null {
-    if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
-      return null;
-    }
-    const renderToolCalls = message.tool_calls
-      .map((call) => {
-        if (!call.function) {
-          // for backwards compatibility with old saved message chains
-          return call;
-        }
-        return {
-          name: call.function.name,
-          arguments: call.function.arguments,
-        };
-      })
-      .filter((call) => call.name === 'RenderVisualization');
-    if (renderToolCalls.length === 0) {
-      return null;
-    }
-
-    const firstToolCall = renderToolCalls[0];
-    if (!firstToolCall) return null;
-    const functionArgs = firstToolCall.arguments;
+  function parseSpecFromToolCall(toolCall: { name: string; arguments: Record<string, any> }): object | null {
+    const functionArgs = toolCall.arguments;
     if (!functionArgs) return null;
     const specString = functionArgs.spec;
-    let spec: object | null = null;
     if (!specString) return null;
     if (typeof specString === 'string') {
       try {
-        spec = JSON.parse(specString);
+        return JSON.parse(specString);
       } catch (e) {
         console.error('Failed to parse response as JSON:', e);
-        throw new Error('Invalid response format');
+        return null;
       }
     }
-    return spec;
+    return null;
   }
 
-  function updateMessageWithNewSpec(index: number, newSpec: UDIGrammar): void {
+  function normalizeToolCalls(message: Message) {
+    if (!message.tool_calls) return [];
+    return message.tool_calls.map((call, index) => {
+      const normalized = call.function
+        ? { name: call.function.name, arguments: call.function.arguments }
+        : { name: call.name, arguments: call.arguments };
+      return { ...normalized, originalIndex: index };
+    });
+  }
+
+  function extractAllUdiSpecsFromMessage(message: Message): ExtractedSpec[] {
+    if (message.role !== 'assistant' || !message.tool_calls || message.tool_calls.length === 0) {
+      return [];
+    }
+    const results: ExtractedSpec[] = [];
+    for (const call of normalizeToolCalls(message)) {
+      if (call.name !== 'RenderVisualization') continue;
+      const spec = parseSpecFromToolCall(call);
+      if (spec) {
+        results.push({ spec, toolCallIndex: call.originalIndex });
+      }
+    }
+    return results;
+  }
+
+  function extractUdiSpecFromMessage(message: Message): object | null {
+    const specs = extractAllUdiSpecsFromMessage(message);
+    return specs.length > 0 ? specs[0].spec : null;
+  }
+
+  function updateMessageWithNewSpec(index: number, newSpec: UDIGrammar, toolCallIndex?: number): void {
     const message = messages.value[index];
     if (!message || message.role !== 'assistant' || !message.tool_calls) return;
-    const renderToolCallIndex = message.tool_calls.findIndex(
+    const targetIndex = toolCallIndex ?? message.tool_calls.findIndex(
       (call) => call.function && call.function.name === 'RenderVisualization',
     );
-    if (renderToolCallIndex === -1) return;
+    if (targetIndex === -1 || targetIndex >= message.tool_calls.length) return;
     const newToolCalls = cloneDeep(message.tool_calls);
-    newToolCalls[renderToolCallIndex] = {
+    newToolCalls[targetIndex] = {
       function: {
         name: 'RenderVisualization',
         arguments: {
@@ -221,13 +243,13 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
 
   watch(() => filterIds.value.join('|'), updateSpecFilters);
 
-  function unpinVisualization(index: number) {
-    pinnedVisualizations.value.delete(index);
+  function unpinVisualization(key: string) {
+    pinnedVisualizations.value.delete(key);
     updateSpecFilters();
   }
 
-  function isPinned(index: number): boolean {
-    return pinnedVisualizations.value.has(index);
+  function isPinned(key: string): boolean {
+    return pinnedVisualizations.value.has(key);
   }
 
   function injectInteractivity(spec: UDIGrammar, id: string): UDIGrammar {
@@ -311,8 +333,8 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     updateSpecFilters();
   });
 
-  function updatePinnedVisualizationSpec(index: number, newSpec: UDIGrammar) {
-    const viz = pinnedVisualizations.value.get(index);
+  function updatePinnedVisualizationSpec(key: string, newSpec: UDIGrammar) {
+    const viz = pinnedVisualizations.value.get(key);
     if (!viz) return;
     viz.spec = newSpec;
     viz.interactiveSpec = injectInteractivity(newSpec, viz.uuid);
@@ -328,9 +350,11 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     setHoveredVisualizationIndex,
     filterAllNullValues,
     extractUdiSpecFromMessage,
+    extractAllUdiSpecsFromMessage,
     updateMessageWithNewSpec,
     getNamedFilters,
     filterIds,
     updatePinnedVisualizationSpec,
+    pinKey,
   };
 });

@@ -36,9 +36,9 @@ function getVizWidth(spec: any) {
     <div class="flex row q-gutter-lg q-pa-md" style="flex-wrap: wrap">
       <template v-for="(viz, index) in reversedPinned" :key="viz.id ?? viz.index">
         <div
-          :class="`w-500 q-pa-md viz-container ${dashboardStore.isHovered(viz.index) ? 'hovered-viz' : ''}`"
+          :class="`w-500 q-pa-md viz-container ${dashboardStore.isHovered(dashboardStore.pinKey(viz.index, viz.toolCallIndex)) ? 'hovered-viz' : ''}`"
           :style="getVizWidth(viz.interactiveSpec)"
-          @mouseover="dashboardStore.setHoveredVisualizationIndex(viz.index)"
+          @mouseover="dashboardStore.setHoveredVisualizationIndex(dashboardStore.pinKey(viz.index, viz.toolCallIndex))"
           @mouseleave="dashboardStore.setHoveredVisualizationIndex(null)"
         >
           <q-toolbar dense>

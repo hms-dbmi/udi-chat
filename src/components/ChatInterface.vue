@@ -320,6 +320,76 @@ const displayedMessages = computed(() =>
   ),
 );
 
+interface ToolCallTab {
+  type: 'visualization' | 'filter';
+  toolCallIndex: number;
+  label: string;
+}
+
+function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] {
+  if (message.role !== 'assistant') return [];
+  if (displayIndex === displayedMessages.value.length - 1 && llmResponding.value) return [];
+  if (!message.tool_calls || message.tool_calls.length === 0) return [];
+
+  const tabs: ToolCallTab[] = [];
+  let vizCount = 0;
+  let filterCount = 0;
+
+  for (let i = 0; i < message.tool_calls.length; i++) {
+    const call = message.tool_calls[i];
+    const name = call.function?.name ?? call.name;
+    if (name === 'RenderVisualization') {
+      vizCount++;
+      tabs.push({ type: 'visualization', toolCallIndex: i, label: `Visualization ${vizCount}` });
+    } else if (name === 'FilterData') {
+      filterCount++;
+      tabs.push({ type: 'filter', toolCallIndex: i, label: `Filter ${filterCount}` });
+    }
+  }
+
+  // Simplify labels when there's only one of each type
+  if (vizCount === 1) {
+    const tab = tabs.find((t) => t.type === 'visualization');
+    if (tab) tab.label = 'Visualization';
+  }
+  if (filterCount === 1) {
+    const tab = tabs.find((t) => t.type === 'filter');
+    if (tab) tab.label = 'Filter';
+  }
+
+  return tabs;
+}
+
+const activeTab = ref<Record<number, number>>({});
+
+function getActiveTab(displayIndex: number, tabs: ToolCallTab[]): number {
+  if (activeTab.value[displayIndex] != null) return activeTab.value[displayIndex];
+  return tabs.length > 0 ? tabs[0].toolCallIndex : 0;
+}
+
+function setActiveTab(displayIndex: number, toolCallIndex: number) {
+  activeTab.value[displayIndex] = toolCallIndex;
+}
+
+function extractSpecByToolCallIndex(message: Message, toolCallIndex: number): object | null {
+  if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
+  const call = message.tool_calls[toolCallIndex];
+  const args = call.function?.arguments ?? call.arguments;
+  if (!args?.spec) return null;
+  try {
+    return typeof args.spec === 'string' ? JSON.parse(args.spec) : null;
+  } catch {
+    return null;
+  }
+}
+
+function extractFilterByToolCallIndex(message: Message, toolCallIndex: number): any | null {
+  if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
+  const call = message.tool_calls[toolCallIndex];
+  const args = call.function?.arguments ?? call.arguments;
+  return args ?? null;
+}
+
 function shouldRenderUdiGrammar(message: Message, index: number): boolean {
   if (message.role !== 'assistant') {
     return false;
@@ -342,7 +412,7 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
   return dataFiltersStore.containsFilterCall(message);
 }
 
-function setHovered(index: number) {
+function setHovered(index: string) {
   dashboardStore.setHoveredVisualizationIndex(index);
 }
 function unsetHovered() {
@@ -396,7 +466,7 @@ watch(
       :name="message.role"
       :bg-color="bgColor(message.role)"
       :text-color="textColor(message.role)"
-      @mouseover="setHovered(i)"
+      @mouseover="setHovered(dashboardStore.pinKey(i, getActiveTab(i, getToolCallTabs(message, i))))"
       @mouseleave="unsetHovered"
     >
       <q-markdown
@@ -405,33 +475,108 @@ watch(
         v-if="showDebugInfo"
         :src="JSON.stringify(message)"
       ></q-markdown>
-      <q-markdown
-        show-copy
-        no-typographer
-        v-if="showDebugInfo && message.role === 'assistant' && shouldRenderUdiGrammar(message, i)"
-        :src="JSON.stringify(dashboardStore.extractUdiSpecFromMessage(message))"
-      ></q-markdown>
       <q-markdown class="q-mb-none" v-if="message.content" :src="message.content"></q-markdown>
-      <FilterComponent
-        v-if="shouldRenderFilterComponent(message, i)"
-        :message="message"
-        :index="i"
-        :tweakable="message.role === 'assistant'"
-        :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
-      ></FilterComponent>
 
-      <div
-        v-if="shouldRenderUdiGrammar(message, i)"
-        :class="{ 'hovered-message': dashboardStore.isHovered(i) }"
-      >
-        <VizTweakComponent
+      <!-- Single tool call: render directly without tabs -->
+      <template v-if="getToolCallTabs(message, i).length === 1">
+        <FilterComponent
+          v-if="getToolCallTabs(message, i)[0].type === 'filter'"
           :message="message"
           :index="i"
-          :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
-          :extractUdiSpecFromMessage="dashboardStore.extractUdiSpecFromMessage"
-          :updateMessageWithNewSpec="dashboardStore.updateMessageWithNewSpec"
-        ></VizTweakComponent>
-      </div>
+          :tweakable="message.role === 'assistant'"
+          :extractFilterSpecFromMessage="(msg: Message) => extractFilterByToolCallIndex(msg, getToolCallTabs(message, i)[0].toolCallIndex)"
+        ></FilterComponent>
+        <div
+          v-if="getToolCallTabs(message, i)[0].type === 'visualization'"
+          :class="{ 'hovered-message': dashboardStore.isHovered(dashboardStore.pinKey(i, getToolCallTabs(message, i)[0].toolCallIndex)) }"
+        >
+          <VizTweakComponent
+            :message="message"
+            :index="i"
+            :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
+            :extractUdiSpecFromMessage="(msg: Message) => extractSpecByToolCallIndex(msg, getToolCallTabs(message, i)[0].toolCallIndex)"
+            :updateMessageWithNewSpec="(idx: number, spec: any) => dashboardStore.updateMessageWithNewSpec(idx, spec, getToolCallTabs(message, i)[0].toolCallIndex)"
+          ></VizTweakComponent>
+        </div>
+      </template>
+
+      <!-- Multiple tool calls: render in tabs -->
+      <template v-else-if="getToolCallTabs(message, i).length > 1">
+        <q-tabs
+          :model-value="getActiveTab(i, getToolCallTabs(message, i))"
+          @update:model-value="(val: number) => setActiveTab(i, val)"
+          dense
+          class="text-grey"
+          active-color="primary"
+          indicator-color="primary"
+          align="left"
+          narrow-indicator
+        >
+          <q-tab
+            v-for="tab in getToolCallTabs(message, i)"
+            :key="tab.toolCallIndex"
+            :name="tab.toolCallIndex"
+            :label="tab.label"
+            no-caps
+          />
+        </q-tabs>
+        <q-separator />
+        <q-tab-panels
+          :model-value="getActiveTab(i, getToolCallTabs(message, i))"
+          @update:model-value="(val: number) => setActiveTab(i, val)"
+          animated
+        >
+          <q-tab-panel
+            v-for="tab in getToolCallTabs(message, i)"
+            :key="tab.toolCallIndex"
+            :name="tab.toolCallIndex"
+            class="q-pa-none"
+          >
+            <FilterComponent
+              v-if="tab.type === 'filter'"
+              :message="message"
+              :index="i"
+              :tweakable="message.role === 'assistant'"
+              :extractFilterSpecFromMessage="(msg: Message) => extractFilterByToolCallIndex(msg, tab.toolCallIndex)"
+            ></FilterComponent>
+            <div
+              v-if="tab.type === 'visualization'"
+              :class="{ 'hovered-message': dashboardStore.isHovered(dashboardStore.pinKey(i, tab.toolCallIndex)) }"
+            >
+              <VizTweakComponent
+                :message="message"
+                :index="i"
+                :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
+                :extractUdiSpecFromMessage="(msg: Message) => extractSpecByToolCallIndex(msg, tab.toolCallIndex)"
+                :updateMessageWithNewSpec="(idx: number, spec: any) => dashboardStore.updateMessageWithNewSpec(idx, spec, tab.toolCallIndex)"
+              ></VizTweakComponent>
+            </div>
+          </q-tab-panel>
+        </q-tab-panels>
+      </template>
+
+      <!-- No tool calls: legacy fallback -->
+      <template v-else>
+        <FilterComponent
+          v-if="shouldRenderFilterComponent(message, i)"
+          :message="message"
+          :index="i"
+          :tweakable="message.role === 'assistant'"
+          :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
+        ></FilterComponent>
+        <div
+          v-if="shouldRenderUdiGrammar(message, i)"
+          :class="{ 'hovered-message': dashboardStore.isHovered(dashboardStore.pinKey(i, 0)) }"
+        >
+          <VizTweakComponent
+            :message="message"
+            :index="i"
+            :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
+            :extractUdiSpecFromMessage="dashboardStore.extractUdiSpecFromMessage"
+            :updateMessageWithNewSpec="dashboardStore.updateMessageWithNewSpec"
+          ></VizTweakComponent>
+        </div>
+      </template>
     </q-chat-message>
     <q-chat-message
       v-if="llmResponding && displayedMessages[displayedMessages.length - 1]?.role !== 'assistant'"
