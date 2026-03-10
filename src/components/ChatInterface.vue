@@ -320,6 +320,11 @@ const displayedMessages = computed(() =>
   ),
 );
 
+function realMessageIndex(displayIndex: number): number {
+  const displayed = displayedMessages.value[displayIndex];
+  return conversationStore.messages.indexOf(displayed);
+}
+
 interface ToolCallTab {
   type: 'visualization' | 'filter';
   toolCallIndex: number;
@@ -369,6 +374,19 @@ function getActiveTab(displayIndex: number, tabs: ToolCallTab[]): number {
 
 function setActiveTab(displayIndex: number, toolCallIndex: number) {
   activeTab.value[displayIndex] = toolCallIndex;
+}
+
+function toolCallSummary(tabs: ToolCallTab[]): string {
+  const vizCount = tabs.filter((t) => t.type === 'visualization').length;
+  const filterCount = tabs.filter((t) => t.type === 'filter').length;
+  const parts: string[] = [];
+  if (vizCount > 0) {
+    parts.push(`${vizCount} visualization${vizCount > 1 ? 's' : ''} added to dashboard`);
+  }
+  if (filterCount > 0) {
+    parts.push(`${filterCount} filter${filterCount > 1 ? 's' : ''} applied`);
+  }
+  return parts.join(', ') + '.';
 }
 
 function extractSpecByToolCallIndex(message: Message, toolCallIndex: number): object | null {
@@ -467,7 +485,12 @@ watch(
       :bg-color="bgColor(message.role)"
       :text-color="textColor(message.role)"
       @mouseover="
-        setHovered(dashboardStore.pinKey(i, getActiveTab(i, getToolCallTabs(message, i))))
+        setHovered(
+          dashboardStore.pinKey(
+            realMessageIndex(i),
+            getActiveTab(i, getToolCallTabs(message, i)),
+          ),
+        )
       "
       @mouseleave="unsetHovered"
     >
@@ -479,12 +502,20 @@ watch(
       ></q-markdown>
       <q-markdown class="q-mb-none" v-if="message.content" :src="message.content"></q-markdown>
 
+      <!-- Tool call summary above adjustment widgets -->
+      <div
+        v-if="getToolCallTabs(message, i).length > 0"
+        class="q-pa-sm text-italic"
+      >
+        {{ toolCallSummary(getToolCallTabs(message, i)) }}
+      </div>
+
       <!-- Single tool call: render directly without tabs -->
       <template v-if="getToolCallTabs(message, i).length === 1">
         <FilterComponent
           v-if="getToolCallTabs(message, i)[0].type === 'filter'"
           :message="message"
-          :index="i"
+          :index="realMessageIndex(i)"
           :tool-call-index="getToolCallTabs(message, i)[0].toolCallIndex"
           :tweakable="message.role === 'assistant'"
           :extractFilterSpecFromMessage="
@@ -496,13 +527,16 @@ watch(
           v-if="getToolCallTabs(message, i)[0].type === 'visualization'"
           :class="{
             'hovered-message': dashboardStore.isHovered(
-              dashboardStore.pinKey(i, getToolCallTabs(message, i)[0].toolCallIndex),
+              dashboardStore.pinKey(
+                realMessageIndex(i),
+                getToolCallTabs(message, i)[0].toolCallIndex,
+              ),
             ),
           }"
         >
           <VizTweakComponent
             :message="message"
-            :index="i"
+            :index="realMessageIndex(i)"
             :tool-call-index="getToolCallTabs(message, i)[0].toolCallIndex"
             :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
             :extractUdiSpecFromMessage="
@@ -548,7 +582,10 @@ watch(
           :model-value="getActiveTab(i, getToolCallTabs(message, i))"
           @update:model-value="(val: number) => setActiveTab(i, val)"
           :options="
-            getToolCallTabs(message, i).map((t) => ({ label: t.label, value: t.toolCallIndex }))
+            getToolCallTabs(message, i).map((t) => ({
+              label: t.label,
+              value: t.toolCallIndex,
+            }))
           "
           option-value="value"
           option-label="label"
@@ -573,7 +610,7 @@ watch(
             <FilterComponent
               v-if="tab.type === 'filter'"
               :message="message"
-              :index="i"
+              :index="realMessageIndex(i)"
               :tool-call-index="tab.toolCallIndex"
               :tweakable="message.role === 'assistant'"
               :extractFilterSpecFromMessage="
@@ -584,13 +621,13 @@ watch(
               v-if="tab.type === 'visualization'"
               :class="{
                 'hovered-message': dashboardStore.isHovered(
-                  dashboardStore.pinKey(i, tab.toolCallIndex),
+                  dashboardStore.pinKey(realMessageIndex(i), tab.toolCallIndex),
                 ),
               }"
             >
               <VizTweakComponent
                 :message="message"
-                :index="i"
+                :index="realMessageIndex(i)"
                 :tool-call-index="tab.toolCallIndex"
                 :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
                 :extractUdiSpecFromMessage="
@@ -611,17 +648,21 @@ watch(
         <FilterComponent
           v-if="shouldRenderFilterComponent(message, i)"
           :message="message"
-          :index="i"
+          :index="realMessageIndex(i)"
           :tweakable="message.role === 'assistant'"
           :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
         ></FilterComponent>
         <div
           v-if="shouldRenderUdiGrammar(message, i)"
-          :class="{ 'hovered-message': dashboardStore.isHovered(dashboardStore.pinKey(i, 0)) }"
+          :class="{
+            'hovered-message': dashboardStore.isHovered(
+              dashboardStore.pinKey(realMessageIndex(i), 0),
+            ),
+          }"
         >
           <VizTweakComponent
             :message="message"
-            :index="i"
+            :index="realMessageIndex(i)"
             :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
             :extractUdiSpecFromMessage="dashboardStore.extractUdiSpecFromMessage"
             :updateMessageWithNewSpec="dashboardStore.updateMessageWithNewSpec"
