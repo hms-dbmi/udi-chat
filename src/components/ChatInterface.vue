@@ -485,6 +485,7 @@ watch(
           v-if="getToolCallTabs(message, i)[0].type === 'filter'"
           :message="message"
           :index="i"
+          :tool-call-index="getToolCallTabs(message, i)[0].toolCallIndex"
           :tweakable="message.role === 'assistant'"
           :extractFilterSpecFromMessage="
             (msg: Message) =>
@@ -554,6 +555,7 @@ watch(
               v-if="tab.type === 'filter'"
               :message="message"
               :index="i"
+              :tool-call-index="tab.toolCallIndex"
               :tweakable="message.role === 'assistant'"
               :extractFilterSpecFromMessage="
                 (msg: Message) => extractFilterByToolCallIndex(msg, tab.toolCallIndex)
