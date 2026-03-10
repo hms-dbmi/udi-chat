@@ -48,9 +48,15 @@ async function fetchExamplePrompts() {
     if (!response.ok) return;
     const data = await response.json();
     if (Array.isArray(data)) {
-      examplePrompts.value = data.map((item: unknown) =>
-        typeof item === 'string' ? item : (item as { prompt?: string; text?: string }).prompt ?? (item as { text?: string }).text ?? '',
-      ).filter((p: string) => p.length > 0);
+      examplePrompts.value = data
+        .map((item: unknown) =>
+          typeof item === 'string'
+            ? item
+            : ((item as { prompt?: string; text?: string }).prompt ??
+              (item as { text?: string }).text ??
+              ''),
+        )
+        .filter((p: string) => p.length > 0);
     }
   } catch {
     // silently fail — examples are optional
@@ -554,180 +560,181 @@ watch(
         )
       "
       @mouseleave="unsetHovered"
-    >
-      <q-markdown
-        show-copy
-        no-typographer
-        v-if="showDebugInfo"
-        :src="JSON.stringify(message)"
-      ></q-markdown>
-      <q-markdown class="q-mb-none" v-if="message.content" :src="message.content"></q-markdown>
+      ><div>
+        <q-markdown
+          show-copy
+          no-typographer
+          v-if="showDebugInfo"
+          :src="JSON.stringify(message)"
+        ></q-markdown>
+        <q-markdown class="q-mb-none" v-if="message.content" :src="message.content"></q-markdown>
 
-      <!-- Tool call summary above adjustment widgets -->
-      <div v-if="getToolCallTabs(message, i).length > 0" class="q-pa-sm text-italic">
-        {{ toolCallSummary(getToolCallTabs(message, i)) }}
-      </div>
+        <!-- Tool call summary above adjustment widgets -->
+        <div v-if="getToolCallTabs(message, i).length > 0" class="q-ma-sm text-italic">
+          {{ toolCallSummary(getToolCallTabs(message, i)) }}
+          <q-separator class="q-mt-xs q-mb-sm" />
+        </div>
 
-      <!-- Single tool call: render directly without tabs -->
-      <template v-if="getToolCallTabs(message, i).length === 1">
-        <FilterComponent
-          v-if="getToolCallTabs(message, i)[0].type === 'filter'"
-          :message="message"
-          :index="realMessageIndex(i)"
-          :tool-call-index="getToolCallTabs(message, i)[0].toolCallIndex"
-          :tweakable="message.role === 'assistant'"
-          :extractFilterSpecFromMessage="
-            (msg: Message) =>
-              extractFilterByToolCallIndex(msg, getToolCallTabs(message, i)[0].toolCallIndex)
-          "
-        ></FilterComponent>
-        <div
-          v-if="getToolCallTabs(message, i)[0].type === 'visualization'"
-          :class="{
-            'hovered-message': dashboardStore.isHovered(
-              dashboardStore.pinKey(
-                realMessageIndex(i),
-                getToolCallTabs(message, i)[0].toolCallIndex,
-              ),
-            ),
-          }"
-        >
-          <VizTweakComponent
+        <!-- Single tool call: render directly without tabs -->
+        <template v-if="getToolCallTabs(message, i).length === 1">
+          <FilterComponent
+            v-if="getToolCallTabs(message, i)[0].type === 'filter'"
             :message="message"
             :index="realMessageIndex(i)"
             :tool-call-index="getToolCallTabs(message, i)[0].toolCallIndex"
-            :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
-            :extractUdiSpecFromMessage="
+            :tweakable="message.role === 'assistant'"
+            :extractFilterSpecFromMessage="
               (msg: Message) =>
-                extractSpecByToolCallIndex(msg, getToolCallTabs(message, i)[0].toolCallIndex)
+                extractFilterByToolCallIndex(msg, getToolCallTabs(message, i)[0].toolCallIndex)
             "
-            :updateMessageWithNewSpec="
-              (idx: number, spec: any) =>
-                dashboardStore.updateMessageWithNewSpec(
-                  idx,
-                  spec,
+          ></FilterComponent>
+          <div
+            v-if="getToolCallTabs(message, i)[0].type === 'visualization'"
+            :class="{
+              'hovered-message': dashboardStore.isHovered(
+                dashboardStore.pinKey(
+                  realMessageIndex(i),
                   getToolCallTabs(message, i)[0].toolCallIndex,
-                )
-            "
-          ></VizTweakComponent>
-        </div>
-      </template>
-
-      <!-- Multiple tool calls: render with selector -->
-      <template v-else-if="getToolCallTabs(message, i).length > 1">
-        <!-- Use tabs for 2 items, dropdown for 3+ -->
-        <q-tabs
-          v-if="getToolCallTabs(message, i).length <= 2"
-          :model-value="getActiveTab(i, getToolCallTabs(message, i))"
-          @update:model-value="(val: number) => setActiveTab(i, val)"
-          dense
-          class="text-grey tool-call-tabs"
-          active-color="primary"
-          indicator-color="primary"
-          align="left"
-          narrow-indicator
-        >
-          <q-tab
-            v-for="tab in getToolCallTabs(message, i)"
-            :key="tab.toolCallIndex"
-            :name="tab.toolCallIndex"
-            :label="tab.label"
-            no-caps
-          />
-        </q-tabs>
-        <q-select
-          v-else
-          :model-value="getActiveTab(i, getToolCallTabs(message, i))"
-          @update:model-value="(val: number) => setActiveTab(i, val)"
-          :options="
-            getToolCallTabs(message, i).map((t) => ({
-              label: t.label,
-              value: t.toolCallIndex,
-            }))
-          "
-          option-value="value"
-          option-label="label"
-          emit-value
-          map-options
-          dense
-          outlined
-          class="q-mb-xs"
-        />
-        <q-tab-panels
-          :model-value="getActiveTab(i, getToolCallTabs(message, i))"
-          @update:model-value="(val: number) => setActiveTab(i, val)"
-          animated
-          class="tool-call-tab-panels"
-        >
-          <q-tab-panel
-            v-for="tab in getToolCallTabs(message, i)"
-            :key="tab.toolCallIndex"
-            :name="tab.toolCallIndex"
-            class="q-pa-none prevent-scroll-x"
+                ),
+              ),
+            }"
           >
-            <FilterComponent
-              v-if="tab.type === 'filter'"
+            <VizTweakComponent
               :message="message"
               :index="realMessageIndex(i)"
-              :tool-call-index="tab.toolCallIndex"
-              :tweakable="message.role === 'assistant'"
-              :extractFilterSpecFromMessage="
-                (msg: Message) => extractFilterByToolCallIndex(msg, tab.toolCallIndex)
+              :tool-call-index="getToolCallTabs(message, i)[0].toolCallIndex"
+              :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
+              :extractUdiSpecFromMessage="
+                (msg: Message) =>
+                  extractSpecByToolCallIndex(msg, getToolCallTabs(message, i)[0].toolCallIndex)
               "
-            ></FilterComponent>
-            <div
-              v-if="tab.type === 'visualization'"
-              :class="{
-                'hovered-message': dashboardStore.isHovered(
-                  dashboardStore.pinKey(realMessageIndex(i), tab.toolCallIndex),
-                ),
-              }"
+              :updateMessageWithNewSpec="
+                (idx: number, spec: any) =>
+                  dashboardStore.updateMessageWithNewSpec(
+                    idx,
+                    spec,
+                    getToolCallTabs(message, i)[0].toolCallIndex,
+                  )
+              "
+            ></VizTweakComponent>
+          </div>
+        </template>
+
+        <!-- Multiple tool calls: render with selector -->
+        <template v-else-if="getToolCallTabs(message, i).length > 1">
+          <!-- Use tabs for 2 items, dropdown for 3+ -->
+          <q-tabs
+            v-if="getToolCallTabs(message, i).length <= 2"
+            :model-value="getActiveTab(i, getToolCallTabs(message, i))"
+            @update:model-value="(val: number) => setActiveTab(i, val)"
+            dense
+            class="text-grey tool-call-tabs"
+            active-color="primary"
+            indicator-color="primary"
+            align="left"
+            narrow-indicator
+          >
+            <q-tab
+              v-for="tab in getToolCallTabs(message, i)"
+              :key="tab.toolCallIndex"
+              :name="tab.toolCallIndex"
+              :label="tab.label"
+              no-caps
+            />
+          </q-tabs>
+          <q-select
+            v-else
+            :model-value="getActiveTab(i, getToolCallTabs(message, i))"
+            @update:model-value="(val: number) => setActiveTab(i, val)"
+            :options="
+              getToolCallTabs(message, i).map((t) => ({
+                label: t.label,
+                value: t.toolCallIndex,
+              }))
+            "
+            option-value="value"
+            option-label="label"
+            emit-value
+            map-options
+            dense
+            outlined
+            class="q-mb-xs"
+          />
+          <q-tab-panels
+            :model-value="getActiveTab(i, getToolCallTabs(message, i))"
+            @update:model-value="(val: number) => setActiveTab(i, val)"
+            animated
+            class="tool-call-tab-panels"
+          >
+            <q-tab-panel
+              v-for="tab in getToolCallTabs(message, i)"
+              :key="tab.toolCallIndex"
+              :name="tab.toolCallIndex"
+              class="q-pa-none prevent-scroll-x"
             >
-              <VizTweakComponent
+              <FilterComponent
+                v-if="tab.type === 'filter'"
                 :message="message"
                 :index="realMessageIndex(i)"
                 :tool-call-index="tab.toolCallIndex"
-                :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
-                :extractUdiSpecFromMessage="
-                  (msg: Message) => extractSpecByToolCallIndex(msg, tab.toolCallIndex)
+                :tweakable="message.role === 'assistant'"
+                :extractFilterSpecFromMessage="
+                  (msg: Message) => extractFilterByToolCallIndex(msg, tab.toolCallIndex)
                 "
-                :updateMessageWithNewSpec="
-                  (idx: number, spec: any) =>
-                    dashboardStore.updateMessageWithNewSpec(idx, spec, tab.toolCallIndex)
-                "
-              ></VizTweakComponent>
-            </div>
-          </q-tab-panel>
-        </q-tab-panels>
-      </template>
+              ></FilterComponent>
+              <div
+                v-if="tab.type === 'visualization'"
+                :class="{
+                  'hovered-message': dashboardStore.isHovered(
+                    dashboardStore.pinKey(realMessageIndex(i), tab.toolCallIndex),
+                  ),
+                }"
+              >
+                <VizTweakComponent
+                  :message="message"
+                  :index="realMessageIndex(i)"
+                  :tool-call-index="tab.toolCallIndex"
+                  :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
+                  :extractUdiSpecFromMessage="
+                    (msg: Message) => extractSpecByToolCallIndex(msg, tab.toolCallIndex)
+                  "
+                  :updateMessageWithNewSpec="
+                    (idx: number, spec: any) =>
+                      dashboardStore.updateMessageWithNewSpec(idx, spec, tab.toolCallIndex)
+                  "
+                ></VizTweakComponent>
+              </div>
+            </q-tab-panel>
+          </q-tab-panels>
+        </template>
 
-      <!-- No tool calls: legacy fallback -->
-      <template v-else>
-        <FilterComponent
-          v-if="shouldRenderFilterComponent(message, i)"
-          :message="message"
-          :index="realMessageIndex(i)"
-          :tweakable="message.role === 'assistant'"
-          :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
-        ></FilterComponent>
-        <div
-          v-if="shouldRenderUdiGrammar(message, i)"
-          :class="{
-            'hovered-message': dashboardStore.isHovered(
-              dashboardStore.pinKey(realMessageIndex(i), 0),
-            ),
-          }"
-        >
-          <VizTweakComponent
+        <!-- No tool calls: legacy fallback -->
+        <template v-else>
+          <FilterComponent
+            v-if="shouldRenderFilterComponent(message, i)"
             :message="message"
             :index="realMessageIndex(i)"
-            :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
-            :extractUdiSpecFromMessage="dashboardStore.extractUdiSpecFromMessage"
-            :updateMessageWithNewSpec="dashboardStore.updateMessageWithNewSpec"
-          ></VizTweakComponent>
-        </div>
-      </template>
-    </q-chat-message>
+            :tweakable="message.role === 'assistant'"
+            :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
+          ></FilterComponent>
+          <div
+            v-if="shouldRenderUdiGrammar(message, i)"
+            :class="{
+              'hovered-message': dashboardStore.isHovered(
+                dashboardStore.pinKey(realMessageIndex(i), 0),
+              ),
+            }"
+          >
+            <VizTweakComponent
+              :message="message"
+              :index="realMessageIndex(i)"
+              :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
+              :extractUdiSpecFromMessage="dashboardStore.extractUdiSpecFromMessage"
+              :updateMessageWithNewSpec="dashboardStore.updateMessageWithNewSpec"
+            ></VizTweakComponent>
+          </div>
+        </template></div
+    ></q-chat-message>
     <q-chat-message
       v-if="llmResponding && displayedMessages[displayedMessages.length - 1]?.role !== 'assistant'"
       class="q-mr-lg q-ml-lg"
