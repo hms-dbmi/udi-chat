@@ -4,6 +4,8 @@ node_modules
 .env
 public/data/benchmark/archive/*
 
+.claude/todo
+
 # Quasar core related directories
 .quasar
 /dist
