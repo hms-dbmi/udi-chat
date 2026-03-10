@@ -789,6 +789,7 @@ watch(
 
 .tool-call-tab-panels {
   background: transparent;
+  overflow-x: hidden;
 }
 
 .tool-call-tabs {
