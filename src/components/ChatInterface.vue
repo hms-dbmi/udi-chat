@@ -35,6 +35,38 @@ const llmBaseUrl = import.meta.env.VITE_LLM_API_BASE_URL ?? 'http://localhost';
 const port = import.meta.env.VITE_LLM_API_PORT ?? 55001;
 const token = import.meta.env.VITE_AUTH_TOKEN;
 
+// Example prompts
+const examplePrompts = ref<string[]>([]);
+const examplesLoaded = ref(false);
+const showExamplesModal = ref(false);
+
+const hasMessages = computed(() => conversationStore.messages.some((m) => m.role === 'user'));
+
+async function fetchExamplePrompts() {
+  try {
+    const response = await fetch(`${llmBaseUrl}:${port}/v1/yac/examples`);
+    if (!response.ok) return;
+    const data = await response.json();
+    if (Array.isArray(data)) {
+      examplePrompts.value = data.map((item: unknown) =>
+        typeof item === 'string' ? item : (item as { prompt?: string; text?: string }).prompt ?? (item as { text?: string }).text ?? '',
+      ).filter((p: string) => p.length > 0);
+    }
+  } catch {
+    // silently fail — examples are optional
+  } finally {
+    examplesLoaded.value = true;
+  }
+}
+
+function sendExamplePrompt(prompt: string) {
+  if (llmResponding.value) return;
+  showExamplesModal.value = false;
+  conversationStore.messages.push({ content: prompt, role: 'user' });
+  void queryLLM();
+  scrollToBottom();
+}
+
 const apiKeyValidationUrl =
   import.meta.env.VITE_CUSTOM_API_KEY_VALIDATION_URL ?? 'https://api.openai.com/v1/models';
 
@@ -87,6 +119,10 @@ function cancelApiKeyInput() {
 //     dangerouslyAllowBrowser: true,
 //   });
 // });
+
+onMounted(() => {
+  fetchExamplePrompts();
+});
 
 function sendMessage(event: Event) {
   if (event instanceof KeyboardEvent && event.shiftKey) {
@@ -379,15 +415,43 @@ watch(
 
 <template>
   <div class="full-width">
-    <div class="q-ma-sm q-pl-md">
-      <span class="text-subtitle2">Dataset:</span>
-      <span class="text-subtitle1 q-ml-xs">
-        {{ dataPackageStore?.dataPackage?.['name'] ?? 'loading...' }}</span
+    <div class="q-ma-sm q-pl-md flex items-center justify-between">
+      <div>
+        <span class="text-subtitle2">Dataset:</span>
+        <span class="text-subtitle1 q-ml-xs">
+          {{ dataPackageStore?.dataPackage?.['name'] ?? 'loading...' }}</span
+        >
+      </div>
+      <q-btn
+        v-if="examplePrompts.length > 0"
+        flat
+        dense
+        round
+        icon="lightbulb"
+        color="primary"
+        @click="showExamplesModal = true"
       >
+        <q-tooltip>Example prompts</q-tooltip>
+      </q-btn>
     </div>
     <q-separator />
   </div>
   <q-scroll-area ref="messageArea" class="q-mt-md flex-grow-1" style="height: 1px; width: 400px">
+    <div v-if="!hasMessages && examplePrompts.length > 0" class="q-pa-md">
+      <div class="text-subtitle2 q-mb-sm text-grey-7">Try an example:</div>
+      <div class="q-gutter-sm">
+        <q-btn
+          v-for="(prompt, idx) in examplePrompts"
+          :key="idx"
+          outline
+          color="primary"
+          no-caps
+          class="example-prompt-btn"
+          :label="prompt"
+          @click="sendExamplePrompt(prompt)"
+        />
+      </div>
+    </div>
     <q-chat-message
       v-for="(message, i) in displayedMessages"
       class="q-mr-lg q-ml-lg fix-quasar-message-spacing"
@@ -561,6 +625,29 @@ watch(
       />
     </q-toolbar>
   </div>
+
+  <q-dialog v-model="showExamplesModal">
+    <q-card style="min-width: 350px; max-width: 500px">
+      <q-card-section>
+        <div class="text-h6">Example Prompts</div>
+      </q-card-section>
+      <q-card-section class="q-gutter-sm">
+        <q-btn
+          v-for="(prompt, idx) in examplePrompts"
+          :key="idx"
+          outline
+          color="primary"
+          no-caps
+          class="example-prompt-btn"
+          :label="prompt"
+          @click="sendExamplePrompt(prompt)"
+        />
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="Close" color="primary" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <style lang="scss">
@@ -591,5 +678,11 @@ watch(
 .hovered-message {
   box-shadow: 0 0px 12px 2px #2a9d8f70;
   border-radius: 4px;
+}
+
+.example-prompt-btn {
+  text-align: left;
+  white-space: normal;
+  line-height: 1.3;
 }
 </style>
