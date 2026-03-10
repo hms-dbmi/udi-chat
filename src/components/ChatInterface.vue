@@ -526,7 +526,7 @@ watch(
           :model-value="getActiveTab(i, getToolCallTabs(message, i))"
           @update:model-value="(val: number) => setActiveTab(i, val)"
           dense
-          class="text-grey"
+          class="text-grey tool-call-tabs"
           active-color="primary"
           indicator-color="primary"
           align="left"
@@ -544,6 +544,7 @@ watch(
           :model-value="getActiveTab(i, getToolCallTabs(message, i))"
           @update:model-value="(val: number) => setActiveTab(i, val)"
           animated
+          class="tool-call-tab-panels"
         >
           <q-tab-panel
             v-for="tab in getToolCallTabs(message, i)"
@@ -767,5 +768,13 @@ watch(
 .hovered-message {
   box-shadow: 0 0px 12px 2px #2a9d8f70;
   border-radius: 4px;
+}
+
+.tool-call-tab-panels {
+  background: transparent;
+}
+
+.tool-call-tabs {
+  background: transparent;
 }
 </style>
