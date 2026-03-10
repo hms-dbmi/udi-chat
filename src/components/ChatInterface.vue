@@ -503,6 +503,7 @@ watch(
           <VizTweakComponent
             :message="message"
             :index="i"
+            :tool-call-index="getToolCallTabs(message, i)[0].toolCallIndex"
             :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
             :extractUdiSpecFromMessage="
               (msg: Message) =>
@@ -588,6 +589,7 @@ watch(
               <VizTweakComponent
                 :message="message"
                 :index="i"
+                :tool-call-index="tab.toolCallIndex"
                 :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
                 :extractUdiSpecFromMessage="
                   (msg: Message) => extractSpecByToolCallIndex(msg, tab.toolCallIndex)

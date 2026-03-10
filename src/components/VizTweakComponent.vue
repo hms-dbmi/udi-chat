@@ -10,6 +10,7 @@ const dashboardStore = useDashboardStore();
 interface VizTweakComponentProps {
   message: object;
   index: number;
+  toolCallIndex?: number;
   shouldRenderUdiGrammar: Function;
   extractUdiSpecFromMessage: Function;
   updateMessageWithNewSpec: Function;
@@ -61,7 +62,8 @@ const tweakableParams = computed<TweakableParam[]>(() => {
           // to the same field, they will be linked forever together <3
           const updatedSpec = JSON.parse(updatedSpecJson);
           props.updateMessageWithNewSpec(props.index, updatedSpec);
-          dashboardStore.updatePinnedVisualizationSpec(props.index, spec.value!);
+          const pinKey = dashboardStore.pinKey(props.index, props.toolCallIndex ?? 0);
+          dashboardStore.updatePinnedVisualizationSpec(pinKey, spec.value!);
         },
       });
 
