@@ -520,9 +520,11 @@ watch(
         </div>
       </template>
 
-      <!-- Multiple tool calls: render in tabs -->
+      <!-- Multiple tool calls: render with selector -->
       <template v-else-if="getToolCallTabs(message, i).length > 1">
+        <!-- Use tabs for 2 items, dropdown for 3+ -->
         <q-tabs
+          v-if="getToolCallTabs(message, i).length <= 2"
           :model-value="getActiveTab(i, getToolCallTabs(message, i))"
           @update:model-value="(val: number) => setActiveTab(i, val)"
           dense
@@ -540,6 +542,19 @@ watch(
             no-caps
           />
         </q-tabs>
+        <q-select
+          v-else
+          :model-value="getActiveTab(i, getToolCallTabs(message, i))"
+          @update:model-value="(val: number) => setActiveTab(i, val)"
+          :options="getToolCallTabs(message, i).map((t) => ({ label: t.label, value: t.toolCallIndex }))"
+          option-value="value"
+          option-label="label"
+          emit-value
+          map-options
+          dense
+          outlined
+          class="q-mb-xs"
+        />
         <q-tab-panels
           :model-value="getActiveTab(i, getToolCallTabs(message, i))"
           @update:model-value="(val: number) => setActiveTab(i, val)"
