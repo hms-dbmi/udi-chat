@@ -22,3 +22,10 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist/spa
+        env: 
+          VITE_BENCHMARK_ENDPOINT_URL: ${{ vars.VITE_BENCHMARK_ENDPOINT_URL }}
+          VITE_DATA_PACKAGE_PATH: ${{ vars.VITE_DATA_PACKAGE_PATH }}
+          VITE_ENABLE_CUSTOM_API_KEY: ${{ vars.VITE_ENABLE_CUSTOM_API_KEY }}
+          VITE_PRODUCTION: ${{ vars.VITE_PRODUCTION }}
+          VITE_CUSTOM_API_KEY_VALIDATION_URL: ${{ vars.VITE_CUSTOM_API_KEY_VALIDATION_URL }}
+          
