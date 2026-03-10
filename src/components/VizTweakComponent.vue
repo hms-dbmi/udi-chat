@@ -77,7 +77,6 @@ const tweakableParams = computed<TweakableParam[]>(() => {
 </script>
 
 <template>
-  <div class="q-pa-sm text-italic">Visualization added to dashboard.</div>
   <div class="row">
     <q-select
       class="q-ma-xs"
