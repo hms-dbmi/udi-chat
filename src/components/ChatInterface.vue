@@ -486,10 +486,7 @@ watch(
       :text-color="textColor(message.role)"
       @mouseover="
         setHovered(
-          dashboardStore.pinKey(
-            realMessageIndex(i),
-            getActiveTab(i, getToolCallTabs(message, i)),
-          ),
+          dashboardStore.pinKey(realMessageIndex(i), getActiveTab(i, getToolCallTabs(message, i))),
         )
       "
       @mouseleave="unsetHovered"
@@ -503,10 +500,7 @@ watch(
       <q-markdown class="q-mb-none" v-if="message.content" :src="message.content"></q-markdown>
 
       <!-- Tool call summary above adjustment widgets -->
-      <div
-        v-if="getToolCallTabs(message, i).length > 0"
-        class="q-pa-sm text-italic"
-      >
+      <div v-if="getToolCallTabs(message, i).length > 0" class="q-pa-sm text-italic">
         {{ toolCallSummary(getToolCallTabs(message, i)) }}
       </div>
 
@@ -828,6 +822,7 @@ watch(
 .hovered-message {
   box-shadow: 0 0px 12px 2px #2a9d8f70;
   border-radius: 4px;
+  background-color: #a5e5dd70 !important;
 }
 
 .tool-call-tab-panels {
@@ -835,7 +830,7 @@ watch(
 }
 
 .prevent-scroll-x {
-  overflow-x: hidden !important;
+  overflow: hidden !important;
 }
 
 .tool-call-tabs {
