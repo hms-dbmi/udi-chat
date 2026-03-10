@@ -1,0 +1,32 @@
+name: Deploy Quasar App to GitHub Pages
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+      - name: Install Dependencies
+        run: yarn
+      - name: Install Quasar CLI globally
+        run: yarn global add @quasar/cli
+      - name: Build
+        run: quasar build
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/spa
+        env: 
+          VITE_BENCHMARK_ENDPOINT_URL: ${{ vars.VITE_BENCHMARK_ENDPOINT_URL }}
+          VITE_DATA_PACKAGE_PATH: ${{ vars.VITE_DATA_PACKAGE_PATH }}
+          VITE_ENABLE_CUSTOM_API_KEY: ${{ vars.VITE_ENABLE_CUSTOM_API_KEY }}
+          VITE_PRODUCTION: ${{ vars.VITE_PRODUCTION }}
+          VITE_CUSTOM_API_KEY_VALIDATION_URL: ${{ vars.VITE_CUSTOM_API_KEY_VALIDATION_URL }}
+          VITE_LLM_API_BASE_URL: ${{ vars.VITE_LLM_API_BASE_URL }}
+          VITE_LLM_API_PORT: ${{ vars.VITE_LLM_API_PORT }}
