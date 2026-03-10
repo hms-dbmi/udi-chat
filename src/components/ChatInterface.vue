@@ -547,7 +547,9 @@ watch(
           v-else
           :model-value="getActiveTab(i, getToolCallTabs(message, i))"
           @update:model-value="(val: number) => setActiveTab(i, val)"
-          :options="getToolCallTabs(message, i).map((t) => ({ label: t.label, value: t.toolCallIndex }))"
+          :options="
+            getToolCallTabs(message, i).map((t) => ({ label: t.label, value: t.toolCallIndex }))
+          "
           option-value="value"
           option-label="label"
           emit-value
@@ -566,7 +568,7 @@ watch(
             v-for="tab in getToolCallTabs(message, i)"
             :key="tab.toolCallIndex"
             :name="tab.toolCallIndex"
-            class="q-pa-none"
+            class="q-pa-none prevent-scroll-x"
           >
             <FilterComponent
               v-if="tab.type === 'filter'"
@@ -789,7 +791,10 @@ watch(
 
 .tool-call-tab-panels {
   background: transparent;
-  overflow-x: hidden;
+}
+
+.prevent-scroll-x {
+  overflow-x: hidden !important;
 }
 
 .tool-call-tabs {
