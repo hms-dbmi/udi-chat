@@ -466,7 +466,9 @@ watch(
       :name="message.role"
       :bg-color="bgColor(message.role)"
       :text-color="textColor(message.role)"
-      @mouseover="setHovered(dashboardStore.pinKey(i, getActiveTab(i, getToolCallTabs(message, i))))"
+      @mouseover="
+        setHovered(dashboardStore.pinKey(i, getActiveTab(i, getToolCallTabs(message, i))))
+      "
       @mouseleave="unsetHovered"
     >
       <q-markdown
@@ -484,18 +486,35 @@ watch(
           :message="message"
           :index="i"
           :tweakable="message.role === 'assistant'"
-          :extractFilterSpecFromMessage="(msg: Message) => extractFilterByToolCallIndex(msg, getToolCallTabs(message, i)[0].toolCallIndex)"
+          :extractFilterSpecFromMessage="
+            (msg: Message) =>
+              extractFilterByToolCallIndex(msg, getToolCallTabs(message, i)[0].toolCallIndex)
+          "
         ></FilterComponent>
         <div
           v-if="getToolCallTabs(message, i)[0].type === 'visualization'"
-          :class="{ 'hovered-message': dashboardStore.isHovered(dashboardStore.pinKey(i, getToolCallTabs(message, i)[0].toolCallIndex)) }"
+          :class="{
+            'hovered-message': dashboardStore.isHovered(
+              dashboardStore.pinKey(i, getToolCallTabs(message, i)[0].toolCallIndex),
+            ),
+          }"
         >
           <VizTweakComponent
             :message="message"
             :index="i"
             :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
-            :extractUdiSpecFromMessage="(msg: Message) => extractSpecByToolCallIndex(msg, getToolCallTabs(message, i)[0].toolCallIndex)"
-            :updateMessageWithNewSpec="(idx: number, spec: any) => dashboardStore.updateMessageWithNewSpec(idx, spec, getToolCallTabs(message, i)[0].toolCallIndex)"
+            :extractUdiSpecFromMessage="
+              (msg: Message) =>
+                extractSpecByToolCallIndex(msg, getToolCallTabs(message, i)[0].toolCallIndex)
+            "
+            :updateMessageWithNewSpec="
+              (idx: number, spec: any) =>
+                dashboardStore.updateMessageWithNewSpec(
+                  idx,
+                  spec,
+                  getToolCallTabs(message, i)[0].toolCallIndex,
+                )
+            "
           ></VizTweakComponent>
         </div>
       </template>
@@ -520,7 +539,6 @@ watch(
             no-caps
           />
         </q-tabs>
-        <q-separator />
         <q-tab-panels
           :model-value="getActiveTab(i, getToolCallTabs(message, i))"
           @update:model-value="(val: number) => setActiveTab(i, val)"
@@ -537,18 +555,29 @@ watch(
               :message="message"
               :index="i"
               :tweakable="message.role === 'assistant'"
-              :extractFilterSpecFromMessage="(msg: Message) => extractFilterByToolCallIndex(msg, tab.toolCallIndex)"
+              :extractFilterSpecFromMessage="
+                (msg: Message) => extractFilterByToolCallIndex(msg, tab.toolCallIndex)
+              "
             ></FilterComponent>
             <div
               v-if="tab.type === 'visualization'"
-              :class="{ 'hovered-message': dashboardStore.isHovered(dashboardStore.pinKey(i, tab.toolCallIndex)) }"
+              :class="{
+                'hovered-message': dashboardStore.isHovered(
+                  dashboardStore.pinKey(i, tab.toolCallIndex),
+                ),
+              }"
             >
               <VizTweakComponent
                 :message="message"
                 :index="i"
                 :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
-                :extractUdiSpecFromMessage="(msg: Message) => extractSpecByToolCallIndex(msg, tab.toolCallIndex)"
-                :updateMessageWithNewSpec="(idx: number, spec: any) => dashboardStore.updateMessageWithNewSpec(idx, spec, tab.toolCallIndex)"
+                :extractUdiSpecFromMessage="
+                  (msg: Message) => extractSpecByToolCallIndex(msg, tab.toolCallIndex)
+                "
+                :updateMessageWithNewSpec="
+                  (idx: number, spec: any) =>
+                    dashboardStore.updateMessageWithNewSpec(idx, spec, tab.toolCallIndex)
+                "
               ></VizTweakComponent>
             </div>
           </q-tab-panel>
