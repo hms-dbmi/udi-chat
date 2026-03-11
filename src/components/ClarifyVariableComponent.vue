@@ -25,12 +25,12 @@ function submitFreeText() {
 </script>
 
 <template>
-  <div class="clarify-variable q-pa-md">
+  <div class="q-pa-md">
     <div class="text-body2 q-mb-sm">{{ message }}</div>
 
     <div v-for="(variable, vIdx) in ambiguous_variables" :key="vIdx" class="q-mb-sm">
       <div class="text-caption text-weight-medium q-mb-xs">
-        "{{ variable.query_term }}" could refer to:
+        Select the correct "{{ variable.query_term }}" variable:
       </div>
       <div class="q-gutter-sm">
         <q-btn
@@ -39,12 +39,18 @@ function submitFreeText() {
           outline
           color="primary"
           no-caps
-          dense
           :disable="submitted"
           @click="selectCandidate(candidate.field_name, candidate.entity)"
         >
-          {{ candidate.field_name }}
-          <q-badge outline color="grey-7" class="q-ml-xs">{{ candidate.entity }}</q-badge>
+          <div class="text-left">
+            <div>
+              {{ candidate.field_name }}
+              <q-badge outline color="grey-7" class="q-ml-xs">{{ candidate.entity }}</q-badge>
+            </div>
+            <div v-if="candidate.description" class="text-caption text-grey-7 text-weight-light">
+              {{ candidate.description }}
+            </div>
+          </div>
         </q-btn>
       </div>
     </div>
@@ -71,10 +77,4 @@ function submitFreeText() {
   </div>
 </template>
 
-<style scoped lang="scss">
-.clarify-variable {
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 4px;
-  border-left: 3px solid $primary;
-}
-</style>
+<style scoped lang="scss"></style>
