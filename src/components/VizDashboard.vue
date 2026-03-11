@@ -38,14 +38,27 @@ function getVizWidth(spec: any) {
         <div
           :class="`w-500 q-pa-md viz-container ${dashboardStore.isHovered(dashboardStore.pinKey(viz.index, viz.toolCallIndex)) ? 'hovered-viz' : ''}`"
           :style="getVizWidth(viz.interactiveSpec)"
-          @mouseover="dashboardStore.setHoveredVisualizationIndex(dashboardStore.pinKey(viz.index, viz.toolCallIndex))"
+          @mouseover="
+            dashboardStore.setHoveredVisualizationIndex(
+              dashboardStore.pinKey(viz.index, viz.toolCallIndex),
+            )
+          "
           @mouseleave="dashboardStore.setHoveredVisualizationIndex(null)"
         >
           <q-toolbar dense>
-            <span class="text-caption text-weight-light">Prompt: </span>
-            <span class="text-caption short-text-element q-ml-xs" :title="viz.userPrompt">{{
-              viz.userPrompt
+            <span class="text-caption short-text-element" :title="viz.title || viz.userPrompt">{{
+              viz.title || viz.userPrompt
             }}</span>
+            <!-- <q-space /> -->
+            <q-icon
+              v-if="viz.userPrompt && viz.title"
+              name="chat"
+              size="xs"
+              class="q-ml-sm"
+              color="primary"
+            >
+              <q-tooltip>{{ viz.userPrompt }}</q-tooltip>
+            </q-icon>
             <q-space />
           </q-toolbar>
           <div class="flex-container">

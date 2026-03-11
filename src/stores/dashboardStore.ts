@@ -16,12 +16,14 @@ export interface PinnedVisualization {
   spec: UDIGrammar;
   interactiveSpec: UDIGrammar;
   userPrompt: string;
+  title?: string;
   uuid: string;
 }
 
 export interface ExtractedSpec {
   spec: object;
   toolCallIndex: number;
+  title?: string;
 }
 
 export const useDashboardStore = defineStore('dashboardStore', () => {
@@ -46,7 +48,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     return `${messageIndex}-${toolCallIndex}`;
   }
 
-  function pinVisualization(index: number, toolCallIndex: number, spec: UDIGrammar, userPrompt: string) {
+  function pinVisualization(index: number, toolCallIndex: number, spec: UDIGrammar, userPrompt: string, title?: string) {
     const uuid = 'udi_' + uuidv4();
     const interactiveSpec = injectInteractivity(spec, uuid);
     const key = pinKey(index, toolCallIndex);
@@ -56,6 +58,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       spec,
       interactiveSpec,
       userPrompt,
+      title,
       uuid,
     });
   }
@@ -69,7 +72,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
         if (message.role !== 'assistant') continue;
         const specs = extractAllUdiSpecsFromMessage(message);
         if (specs.length === 0) continue;
-        for (const { spec, toolCallIndex } of specs) {
+        for (const { spec, toolCallIndex, title } of specs) {
           const key = pinKey(i, toolCallIndex);
           if (pinnedVisualizations.value.has(key)) continue;
           let userPromptIndex = i - 1;
@@ -81,7 +84,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
             continue;
           }
           const userPrompt = messages.value?.[userPromptIndex]?.content ?? '';
-          pinVisualization(i, toolCallIndex, spec as UDIGrammar, userPrompt);
+          pinVisualization(i, toolCallIndex, spec as UDIGrammar, userPrompt, title);
         }
       }
     },
@@ -123,7 +126,8 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       if (call.name !== 'RenderVisualization') continue;
       const spec = parseSpecFromToolCall(call);
       if (spec) {
-        results.push({ spec, toolCallIndex: call.originalIndex });
+        const title = call.arguments?.title;
+        results.push({ spec, toolCallIndex: call.originalIndex, title: typeof title === 'string' ? title : undefined });
       }
     }
     return results;
