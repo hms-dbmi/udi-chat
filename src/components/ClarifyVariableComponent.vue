@@ -1,15 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import type { ClarifyVariableArgs } from 'src/types/toolCallArgs';
 
-export interface ClarifyCandidate {
-  name: string;
-  description?: string;
-}
-
-const props = defineProps<{
-  context: string;
-  candidates: ClarifyCandidate[];
-}>();
+const props = defineProps<ClarifyVariableArgs>();
 
 const emit = defineEmits<{
   (e: 'select', value: string): void;
@@ -18,10 +11,10 @@ const emit = defineEmits<{
 const submitted = ref(false);
 const freeText = ref('');
 
-function selectCandidate(name: string) {
+function selectCandidate(fieldName: string, entity: string) {
   if (submitted.value) return;
   submitted.value = true;
-  emit('select', name);
+  emit('select', `${fieldName} (${entity})`);
 }
 
 function submitFreeText() {
@@ -33,29 +26,27 @@ function submitFreeText() {
 
 <template>
   <div class="clarify-variable q-pa-md">
-    <div class="text-body2 q-mb-sm">{{ context }}</div>
+    <div class="text-body2 q-mb-sm">{{ message }}</div>
 
-    <div class="q-gutter-sm q-mb-sm">
-      <q-btn
-        v-for="(candidate, idx) in candidates"
-        :key="idx"
-        outline
-        color="primary"
-        no-caps
-        dense
-        :disable="submitted"
-        @click="selectCandidate(candidate.name)"
-      >
-        {{ candidate.name }}
-        <q-icon
-          v-if="candidate.description"
-          name="info"
-          size="xs"
-          class="q-ml-xs"
+    <div v-for="(variable, vIdx) in ambiguous_variables" :key="vIdx" class="q-mb-sm">
+      <div class="text-caption text-weight-medium q-mb-xs">
+        "{{ variable.query_term }}" could refer to:
+      </div>
+      <div class="q-gutter-sm">
+        <q-btn
+          v-for="(candidate, cIdx) in variable.candidates"
+          :key="cIdx"
+          outline
+          color="primary"
+          no-caps
+          dense
+          :disable="submitted"
+          @click="selectCandidate(candidate.field_name, candidate.entity)"
         >
-          <q-tooltip>{{ candidate.description }}</q-tooltip>
-        </q-icon>
-      </q-btn>
+          {{ candidate.field_name }}
+          <q-badge outline color="grey-7" class="q-ml-xs">{{ candidate.entity }}</q-badge>
+        </q-btn>
+      </div>
     </div>
 
     <div class="flex row items-center q-gutter-sm">
