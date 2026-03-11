@@ -47,7 +47,7 @@ function submitFreeText() {
               {{ candidate.field_name }}
               <q-badge outline color="grey-7" class="q-ml-xs">{{ candidate.entity }}</q-badge>
             </div>
-            <div v-if="candidate.description" class="text-caption text-grey-7 text-weight-light">
+            <div v-if="candidate.description" class="text-caption text-weight-light">
               {{ candidate.description }}
             </div>
           </div>
