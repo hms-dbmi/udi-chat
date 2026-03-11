@@ -45,12 +45,8 @@ const plainText = computed(() =>
 </template>
 
 <style scoped lang="scss">
-.free-text-explain {
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 4px;
-}
-
 .structured-value {
   color: $primary;
+  text-decoration: underline;
 }
 </style>
