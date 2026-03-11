@@ -482,7 +482,7 @@ function extractFilterByToolCallIndex(message: Message, toolCallIndex: number): 
 function extractExplainByToolCallIndex(
   message: Message,
   toolCallIndex: number,
-): { response_text: string; response_type: string } | null {
+): { response_text: string; response_type: string; resolved_text?: string } | null {
   if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
   const call = message.tool_calls[toolCallIndex];
   const args = call.function?.arguments ?? call.arguments;
@@ -490,6 +490,7 @@ function extractExplainByToolCallIndex(
   return {
     response_text: args.response_text,
     response_type: args.response_type ?? 'general',
+    resolved_text: args.resolved_text,
   };
 }
 
@@ -707,6 +708,7 @@ watch(
             v-if="getToolCallTabs(message, i)[0].type === 'explain'"
             :response-text="extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.response_text ?? ''"
             :response-type="extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.response_type ?? 'general'"
+            :resolved-text="extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.resolved_text"
           />
           <RebuffComponent
             v-if="getToolCallTabs(message, i)[0].type === 'rebuff'"
@@ -811,6 +813,7 @@ watch(
                 v-if="tab.type === 'explain'"
                 :response-text="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.response_text ?? ''"
                 :response-type="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.response_type ?? 'general'"
+                :resolved-text="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.resolved_text"
               />
               <RebuffComponent
                 v-if="tab.type === 'rebuff'"

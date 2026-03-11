@@ -1,0 +1,58 @@
+{
+  "functions": [
+    {
+      "name": "entity_count",
+      "description": "Returns the number of entities/tables in the data package",
+      "parameters": [],
+      "returns": "number"
+    },
+    {
+      "name": "entity_names",
+      "description": "Returns a comma-separated list of entity names",
+      "parameters": [],
+      "returns": "string"
+    },
+    {
+      "name": "field_count",
+      "description": "Returns the number of fields for a given entity",
+      "parameters": [
+        { "name": "entity", "type": "string", "description": "Entity/table name" }
+      ],
+      "returns": "number"
+    },
+    {
+      "name": "field_names",
+      "description": "Returns a comma-separated list of field names for a given entity",
+      "parameters": [
+        { "name": "entity", "type": "string", "description": "Entity/table name" }
+      ],
+      "returns": "string"
+    },
+    {
+      "name": "field_type",
+      "description": "Returns the data type of a specific field",
+      "parameters": [
+        { "name": "entity", "type": "string", "description": "Entity/table name" },
+        { "name": "field", "type": "string", "description": "Field name" }
+      ],
+      "returns": "string"
+    },
+    {
+      "name": "row_count",
+      "description": "Returns the number of rows for a given entity",
+      "parameters": [
+        { "name": "entity", "type": "string", "description": "Entity/table name" }
+      ],
+      "returns": "number"
+    },
+    {
+      "name": "sample_values",
+      "description": "Returns a few example values for a field",
+      "parameters": [
+        { "name": "entity", "type": "string", "description": "Entity/table name" },
+        { "name": "field", "type": "string", "description": "Field name" }
+      ],
+      "returns": "string"
+    }
+  ]
+}
