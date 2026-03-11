@@ -271,6 +271,27 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     return filters.length > 0 ? filters[0].args : null;
   }
 
+  function resetFilters() {
+    dataSelections.value = {};
+    internalDataSelections.value = {};
+  }
+
+  function clearFilter(key: string) {
+    clearSelectionValues(dataSelections.value[key]);
+    clearSelectionValues(internalDataSelections.value[key]);
+  }
+
+  function clearSelectionValues(sel: DataSelection | undefined) {
+    if (!sel?.selection) return;
+    for (const field of Object.keys(sel.selection)) {
+      if (sel.type === 'point') {
+        sel.selection[field] = [];
+      } else if (sel.type === 'interval') {
+        sel.selection[field] = [0, 0];
+      }
+    }
+  }
+
   return {
     dataSelections,
     validDataSelections,
@@ -282,5 +303,7 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     extractAllFilterSpecsFromMessage,
     messageFilterKey,
     messageFilterKeyWithToolCall,
+    resetFilters,
+    clearFilter,
   };
 });

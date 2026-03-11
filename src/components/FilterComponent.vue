@@ -21,7 +21,7 @@ const filterArgs = computed<FilterCallArgs | null>(() => {
 });
 
 const filterType = computed(() => {
-  if (!filterArgs.value) {
+  if (!filterArgs.value?.filter) {
     return null;
   }
   return filterArgs.value.filter.filterType;

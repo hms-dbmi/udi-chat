@@ -11,6 +11,9 @@ type DataSelection = {
 };
 
 const dataFiltersStore = useDataFilterStore();
+function clearFilter(chip: { id: string }) {
+  dataFiltersStore.clearFilter(chip.id);
+}
 
 const chips = computed(() => {
   const entries = Object.entries(
@@ -86,20 +89,34 @@ function formatSelectionValue(sel: DataSelection): string {
 
 <template>
   <div class="row items-center wrap">
-    <q-chip
+    <div
       v-for="(chip, index) in chips"
       :key="chip.id"
-      :title="`${chip.dataSourceKey} - ${chip.type}`"
-      color="black"
-      :class="`bg-white q-mt-none
-      force-border-grey
-      ${index == 0 ? 'q-ml-none' : ''}`"
-      square
-      outline
+      class="chip-wrapper"
     >
-      <span v-html="chip.valueText"></span>
-      <!-- TODO, should really update the data model and render directly instead of using v-html -->
-    </q-chip>
+      <q-btn
+        class="chip-close-btn"
+        flat
+        dense
+        round
+        icon="close"
+        size="6px"
+        @click="clearFilter(chip)"
+      >
+        <q-tooltip>Remove filter</q-tooltip>
+      </q-btn>
+      <q-chip
+        :title="`${chip.dataSourceKey} - ${chip.type}`"
+        color="black"
+        :class="`bg-white q-mt-none
+        force-border-grey
+        ${index == 0 ? 'q-ml-none' : ''}`"
+        square
+        outline
+      >
+        <span v-html="chip.valueText"></span>
+      </q-chip>
+    </div>
   </div>
 </template>
 
@@ -118,5 +135,30 @@ function formatSelectionValue(sel: DataSelection): string {
 .yac-chip-filter-value {
   font-family: 'Roboto Mono';
   font-size: 1em;
+}
+
+.chip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.chip-close-btn {
+  position: absolute;
+  top: -6px;
+  right: -2px;
+  z-index: 10;
+  background: white;
+  border: 1px solid #cad5da;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.chip-wrapper:hover .chip-close-btn,
+.chip-wrapper:focus-within .chip-close-btn,
+.chip-close-btn:focus {
+  opacity: 1;
+  pointer-events: auto;
 }
 </style>

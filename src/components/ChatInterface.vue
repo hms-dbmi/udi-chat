@@ -23,8 +23,30 @@ import { storeToRefs } from 'pinia';
 const dataFiltersStore = useDataFilterStore();
 const { internalDataSelections } = storeToRefs(dataFiltersStore);
 
+import { useMemoryBankStore } from 'src/stores/memoryBankStore';
+const memoryBankStore = useMemoryBankStore();
+
 const conversationStore = useConversationStore();
 const inputText = ref('');
+
+const showResetModal = ref(false);
+const showMemoryBank = ref(false);
+
+function resetConversation() {
+  showResetModal.value = false;
+  conversationStore.newConversation();
+  dashboardStore.clearAllVisualizations();
+  dataFiltersStore.resetFilters();
+  memoryBankStore.clearMemoryBank();
+}
+
+const memoryBankEntries = computed(() =>
+  Array.from(memoryBankStore.closedVisualizations.entries()),
+);
+
+function restoreVisualization(key: string) {
+  dashboardStore.restoreFromMemoryBank(key);
+}
 
 const messageArea = ref<InstanceType<typeof QScrollArea> | null>(null);
 
@@ -516,17 +538,38 @@ watch(
           {{ dataPackageStore?.dataPackage?.['name'] ?? 'loading...' }}</span
         >
       </div>
-      <q-btn
-        v-if="examplePrompts.length > 0"
-        flat
-        dense
-        round
-        icon="lightbulb"
-        color="primary"
-        @click="showExamplesModal = true"
-      >
-        <q-tooltip>Example prompts</q-tooltip>
-      </q-btn>
+      <div class="row items-center no-wrap">
+        <q-btn flat dense round @click="showMemoryBank = true" :disable="memoryBankEntries.length === 0">
+          <q-icon>
+            <img src="/icons/memory-bank.svg" style="width: 20px; height: 20px; opacity: 0.7" />
+          </q-icon>
+          <q-badge v-if="memoryBankEntries.length > 0" color="accent" floating>
+            {{ memoryBankEntries.length }}
+          </q-badge>
+          <q-tooltip>Memory Bank</q-tooltip>
+        </q-btn>
+        <q-btn
+          flat
+          dense
+          round
+          icon="restart_alt"
+          color="primary"
+          @click="showResetModal = true"
+        >
+          <q-tooltip>Reset conversation</q-tooltip>
+        </q-btn>
+        <q-btn
+          v-if="examplePrompts.length > 0"
+          flat
+          dense
+          round
+          icon="lightbulb"
+          color="primary"
+          @click="showExamplesModal = true"
+        >
+          <q-tooltip>Example prompts</q-tooltip>
+        </q-btn>
+      </div>
     </div>
     <q-separator />
   </div>
@@ -886,6 +929,63 @@ watch(
       </q-card-actions>
     </q-card>
   </q-dialog>
+
+  <q-dialog v-model="showResetModal">
+    <q-card style="min-width: 350px; max-width: 450px">
+      <q-card-section>
+        <div class="text-h6">Reset Conversation</div>
+      </q-card-section>
+      <q-card-section>
+        This will clear all messages, visualizations, and filters.
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn flat label="Reset" color="negative" @click="resetConversation" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+  <q-dialog v-model="showMemoryBank">
+    <q-card style="width: 90vw; max-width: 1200px; max-height: 90vh">
+      <q-card-section class="row items-center">
+        <div class="text-h6">Memory Bank</div>
+        <q-space />
+        <q-btn flat round dense icon="close" v-close-popup />
+      </q-card-section>
+      <q-card-section class="q-pt-none" style="overflow-y: auto; max-height: calc(90vh - 120px)">
+        <div v-if="memoryBankEntries.length === 0" class="text-grey-6 text-center q-pa-lg">
+          No closed visualizations yet.
+        </div>
+        <div v-else class="flex row q-gutter-lg" style="flex-wrap: wrap">
+          <div
+            v-for="[key, viz] in memoryBankEntries"
+            :key="key"
+            class="memory-bank-card q-pa-md"
+          >
+            <q-toolbar dense>
+              <span class="text-caption short-text-element" :title="viz.title || viz.userPrompt">{{
+                viz.title || viz.userPrompt
+              }}</span>
+              <q-space />
+              <q-btn
+                flat
+                dense
+                round
+                icon="restore"
+                size="sm"
+                color="primary"
+                @click="restoreVisualization(key)"
+              >
+                Restore
+                <q-tooltip>Restore to Dashboard</q-tooltip>
+              </q-btn>
+            </q-toolbar>
+            <UDIVis :spec="viz.interactiveSpec" />
+          </div>
+        </div>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
 </template>
 
 <style lang="scss">
@@ -935,5 +1035,19 @@ watch(
   text-align: left;
   white-space: normal;
   line-height: 1.3;
+}
+
+.memory-bank-card {
+  width: 455px;
+  border-radius: 4px;
+  border: 1px solid var(--Gray-Gray04, #cad5da);
+  background: var(--Generic-White, #fff);
+  box-shadow: 0 4px 12px 2px rgba(0, 0, 0, 0.15);
+}
+
+.memory-bank-card .short-text-element {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 </style>

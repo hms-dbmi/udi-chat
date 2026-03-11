@@ -1,7 +1,7 @@
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { defineStore, storeToRefs } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
-import { cloneDeep, filter } from 'lodash-es';
+import { cloneDeep, filter, isEqual } from 'lodash-es';
 import type { UDIGrammar } from 'udi-toolkit/dist/GrammarTypes.d.ts';
 import { isArray } from 'vega';
 // import { sourceFields } from 'src/stores/sourceFields';
@@ -9,6 +9,7 @@ import { useDataPackageStore } from './dataPackageStore';
 import { useDataFilterStore } from './dataFiltersStore';
 import type { Message } from './conversationStore';
 import { useConversationStore } from './conversationStore';
+import { useMemoryBankStore } from './memoryBankStore';
 
 export interface PinnedVisualization {
   index: number;
@@ -30,8 +31,10 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   const dataPackageStore = useDataPackageStore();
   const dataFilterStore = useDataFilterStore();
   const conversationStore = useConversationStore();
+  const memoryBankStore = useMemoryBankStore();
   const { messages } = storeToRefs(conversationStore);
   const pinnedVisualizations = ref<Map<string, PinnedVisualization>>(new Map());
+  const expandedVisualizations = ref<Set<string>>(new Set());
 
   const filterAllNullValues = ref<boolean>(true);
 
@@ -157,25 +160,42 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     message.tool_calls = newToolCalls;
   }
 
+  function buildTransformation(viz: PinnedVisualization): object[] {
+    const currentSourceName = Array.isArray(viz.interactiveSpec.source)
+      ? viz.interactiveSpec.source.at(0)?.name
+      : viz.interactiveSpec.source?.name;
+
+    const newFilters = getNamedFilters(filterIds.value, currentSourceName ?? 'unknown_source');
+    const baseTrans = cloneDeep(viz.spec.transformation ?? []);
+    const nullFilters = filterAllNullValues.value
+      ? getRepresentedFields(viz.spec).map((field) => ({ filter: `d['${field}'] != null` }))
+      : [];
+
+    return [...newFilters, ...baseTrans, ...nullFilters];
+  }
+
   function updateSpecFilters() {
-    // Iterate over pinned visualizations and update their interactive specs
     for (const viz of pinnedVisualizations.value.values()) {
-      const updatedSpec: UDIGrammar = cloneDeep(viz.spec);
+      const newTransformation = buildTransformation(viz);
+
+      if (isEqual(viz.interactiveSpec.transformation, newTransformation)) {
+        continue;
+      }
+
       const updatedInteractiveSpec: UDIGrammar = cloneDeep(viz.interactiveSpec);
-
-      const currentSourceName = Array.isArray(updatedInteractiveSpec.source)
-        ? updatedInteractiveSpec.source.at(0)?.name
-        : updatedInteractiveSpec.source?.name;
-
-      const newFilters = getNamedFilters(filterIds.value, currentSourceName ?? 'unknown_source');
-
-      const baseTrans = updatedSpec.transformation ?? [];
-      const nullFilters = filterAllNullValues.value
-        ? getRepresentedFields(updatedSpec).map((field) => ({ filter: `d['${field}'] != null` }))
-        : [];
-
-      updatedInteractiveSpec.transformation = [...newFilters, ...baseTrans, ...nullFilters];
+      updatedInteractiveSpec.transformation = newTransformation;
       viz.interactiveSpec = updatedInteractiveSpec;
+    }
+  }
+
+  /** Update only a single viz's transformation — used during restore to
+   *  avoid the expensive full updateSpecFilters pass over all vizzes. */
+  function updateSingleVizFilters(viz: PinnedVisualization) {
+    const newTransformation = buildTransformation(viz);
+    if (!isEqual(viz.interactiveSpec.transformation, newTransformation)) {
+      const updated: UDIGrammar = cloneDeep(viz.interactiveSpec);
+      updated.transformation = newTransformation;
+      viz.interactiveSpec = updated;
     }
   }
 
@@ -245,11 +265,61 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     return ids;
   });
 
-  watch(() => filterIds.value.join('|'), updateSpecFilters);
+  // Only update spec filters when filter IDs are added, not removed.
+  // Removed IDs leave stale named filters that are harmless no-ops (the
+  // toolkit skips filters whose selection doesn't exist). This avoids
+  // expensive deep-clone + re-render of all remaining visualizations.
+  let suppressFilterWatch = false;
+  watch(() => filterIds.value.join('|'), (newVal, oldVal) => {
+    if (suppressFilterWatch) return;
+    if (!oldVal) {
+      updateSpecFilters();
+      return;
+    }
+    const oldSet = new Set(oldVal.split('|'));
+    const hasAdditions = newVal.split('|').some((id) => id && !oldSet.has(id));
+    if (hasAdditions) {
+      updateSpecFilters();
+    }
+  });
 
   function unpinVisualization(key: string) {
+    const viz = pinnedVisualizations.value.get(key);
+    if (viz) {
+      memoryBankStore.addToMemoryBank(key, viz);
+    }
     pinnedVisualizations.value.delete(key);
+    expandedVisualizations.value.delete(key);
+  }
+
+  function restoreFromMemoryBank(key: string) {
+    const viz = memoryBankStore.closedVisualizations.get(key);
+    if (!viz) return;
+    // Update only the restored viz's transformation — don't trigger
+    // updateSpecFilters which would deep-clone + re-render ALL vizzes.
+    updateSingleVizFilters(viz);
+    suppressFilterWatch = true;
+    pinnedVisualizations.value.set(key, viz);
+    memoryBankStore.removeFromMemoryBank(key);
+    nextTick(() => { suppressFilterWatch = false; });
+  }
+
+  function clearAllVisualizations() {
+    pinnedVisualizations.value.clear();
+    expandedVisualizations.value.clear();
     updateSpecFilters();
+  }
+
+  function toggleExpanded(key: string) {
+    if (expandedVisualizations.value.has(key)) {
+      expandedVisualizations.value.delete(key);
+    } else {
+      expandedVisualizations.value.add(key);
+    }
+  }
+
+  function isExpanded(key: string): boolean {
+    return expandedVisualizations.value.has(key);
   }
 
   function isPinned(key: string): boolean {
@@ -360,5 +430,10 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     filterIds,
     updatePinnedVisualizationSpec,
     pinKey,
+    expandedVisualizations,
+    toggleExpanded,
+    isExpanded,
+    restoreFromMemoryBank,
+    clearAllVisualizations,
   };
 });

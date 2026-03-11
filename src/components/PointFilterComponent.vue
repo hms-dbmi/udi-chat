@@ -123,6 +123,16 @@ const options = computed(() => {
     class="q-mx-sm"
   >
     <q-option-group color="accent" :options="options" type="checkbox" v-model="selectedValues" />
+    <q-btn
+      v-if="selectedValues.length > 0"
+      flat
+      dense
+      no-caps
+      color="accent"
+      label="Clear all"
+      class="q-mt-sm"
+      @click="selectedValues = []"
+    />
   </div>
   <div v-else class="q-mx-sm">
     <span class="text-negative">Error: Invalid filter. </span>
