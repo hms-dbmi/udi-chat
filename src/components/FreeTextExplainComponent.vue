@@ -1,20 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useDataPackageStore } from 'src/stores/dataPackageStore';
-import {
-  evaluateStructuredText,
-  hasStructuredReferences,
-  type StructuredTextSegment,
-} from 'src/utils/structuredTextParser';
-import type { FreeTextResponseType } from 'src/types/toolCallArgs';
+import type { FreeTextResponseType, TextSegment } from 'src/types/toolCallArgs';
 
 const props = defineProps<{
-  text: string;
+  text: TextSegment[];
   responseType: FreeTextResponseType;
-  resolvedText?: string;
+  hasStructuredElements: boolean;
 }>();
-
-const dataPackageStore = useDataPackageStore();
 
 const typeIcon: Record<string, string> = {
   capabilities: 'info',
@@ -22,28 +14,12 @@ const typeIcon: Record<string, string> = {
   general: 'chat',
 };
 
-const isStructured = computed(() => hasStructuredReferences(props.text));
-
-const segments = computed<StructuredTextSegment[]>(() => {
-  if (!isStructured.value) return [];
-  try {
-    const result = evaluateStructuredText(props.text, dataPackageStore);
-    const hasFailed = result.some((s) => s.type === 'text' && /\{\w+\(/.test(s.content));
-    if (hasFailed && props.resolvedText) return [];
-    return result;
-  } catch {
-    return [];
-  }
-});
-
-const displayText = computed(() => {
-  if (isStructured.value && segments.value.length > 0) {
-    return segments.value.map((s) => s.content).join('');
-  }
-  return props.resolvedText || props.text;
-});
-
-const useSegmentedRender = computed(() => isStructured.value && segments.value.length > 0);
+/** Flatten segments into a single markdown string for non-structured rendering. */
+const plainText = computed(() =>
+  props.text
+    .map((seg) => (typeof seg === 'string' ? seg : (seg.value ?? JSON.stringify(seg))))
+    .join(''),
+);
 </script>
 
 <template>
@@ -51,13 +27,18 @@ const useSegmentedRender = computed(() => isStructured.value && segments.value.l
     <div class="flex items-start q-gutter-sm">
       <q-icon :name="typeIcon[responseType] ?? 'chat'" size="sm" color="grey-7" class="q-mt-xs" />
       <div class="flex-grow-1">
-        <template v-if="useSegmentedRender">
-          <span v-for="(seg, idx) in segments" :key="idx">
-            <span v-if="seg.type === 'text'">{{ seg.content }}</span>
-            <strong v-else class="structured-value">{{ seg.content }}</strong>
+        <template v-if="hasStructuredElements">
+          <span v-for="(seg, idx) in text" :key="idx">
+            <span v-if="typeof seg === 'string'">{{ seg }}</span>
+            <strong v-else class="structured-value">
+              {{ seg.value }}
+              <q-tooltip v-if="seg.label ?? seg.expression ?? seg.function">
+                {{ seg.label ?? seg.expression ?? seg.function }}
+              </q-tooltip>
+            </strong>
           </span>
         </template>
-        <q-markdown v-else class="q-mb-none" :src="displayText"></q-markdown>
+        <q-markdown v-else class="q-mb-none" :src="plainText"></q-markdown>
       </div>
     </div>
   </div>

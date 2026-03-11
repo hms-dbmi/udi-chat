@@ -498,12 +498,11 @@ function extractExplainByToolCallIndex(
   if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
   const call = message.tool_calls[toolCallIndex];
   const args = call.function?.arguments ?? call.arguments;
-  if (!args?.user_request) return null;
+  if (!args?.text) return null;
   return {
-    user_request: args.user_request,
     response_type: args.response_type ?? 'general',
-    text: args.text,
-    resolved_text: args.resolved_text,
+    text: Array.isArray(args.text) ? args.text : [args.text],
+    has_structured_elements: args.has_structured_elements ?? false,
   };
 }
 
@@ -712,15 +711,15 @@ watch(
             v-if="getToolCallTabs(message, i)[0].type === 'explain'"
             :text="
               extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
-                ?.text ?? ''
+                ?.text ?? []
             "
             :response-type="
               extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
                 ?.response_type ?? 'general'
             "
-            :resolved-text="
+            :has-structured-elements="
               extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
-                ?.resolved_text
+                ?.has_structured_elements ?? false
             "
           />
           <RebuffComponent
@@ -839,13 +838,14 @@ watch(
               </div>
               <FreeTextExplainComponent
                 v-if="tab.type === 'explain'"
-                :text="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.text ?? ''"
+                :text="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.text ?? []"
                 :response-type="
                   extractExplainByToolCallIndex(message, tab.toolCallIndex)?.response_type ??
                   'general'
                 "
-                :resolved-text="
-                  extractExplainByToolCallIndex(message, tab.toolCallIndex)?.resolved_text
+                :has-structured-elements="
+                  extractExplainByToolCallIndex(message, tab.toolCallIndex)
+                    ?.has_structured_elements ?? false
                 "
               />
               <RebuffComponent

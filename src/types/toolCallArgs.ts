@@ -38,13 +38,23 @@ export interface ClarifyVariableArgs {
 // ---------------------------------------------------------------------------
 export type FreeTextResponseType = 'capabilities' | 'data_summary' | 'general';
 
+/**
+ * A structured text element resolved server-side from a `{function(args)}`
+ * reference. Plain text portions are bare strings in the segments array.
+ */
+export interface StructuredTextElement {
+  value: string;
+  [key: string]: unknown;
+}
+
+/** An individual segment is either a plain string or a resolved structured element. */
+export type TextSegment = string | StructuredTextElement;
+
 export interface FreeTextExplainArgs {
-  user_request: string;
   response_type: FreeTextResponseType;
-  /** Added by the backend after generation — not in the LLM tool schema. */
-  text?: string;
-  /** Pre-resolved fallback for structured text references. */
-  resolved_text?: string;
+  /** Mixed array of plain strings and structured element objects, resolved server-side. */
+  text: TextSegment[];
+  has_structured_elements: boolean;
 }
 
 // ---------------------------------------------------------------------------
