@@ -387,6 +387,7 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
   let filterCount = 0;
   let explainCount = 0;
   let rebuffCount = 0;
+  let clarifyCount = 0;
 
   for (let i = 0; i < message.tool_calls.length; i++) {
     const call = message.tool_calls[i];
@@ -404,6 +405,7 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
       rebuffCount++;
       tabs.push({ type: 'rebuff', toolCallIndex: i, label: `Notice ${rebuffCount}` });
     } else if (name === 'ClarifyVariable') {
+      clarifyCount++;
       tabs.push({ type: 'clarify', toolCallIndex: i, label: 'Clarification' });
     }
   }
@@ -425,6 +427,10 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
     const tab = tabs.find((t) => t.type === 'rebuff');
     if (tab) tab.label = 'Notice';
   }
+  if (clarifyCount === 1) {
+    const tab = tabs.find((t) => t.type === 'clarify');
+    if (tab) tab.label = 'Clarification';
+  }
 
   return tabs;
 }
@@ -444,6 +450,7 @@ function toolCallSummary(tabs: ToolCallTab[]): string {
   const vizCount = tabs.filter((t) => t.type === 'visualization').length;
   const filterCount = tabs.filter((t) => t.type === 'filter').length;
   const explainCount = tabs.filter((t) => t.type === 'explain').length;
+  const clarifyCount = tabs.filter((t) => t.type === 'clarify').length;
   const parts: string[] = [];
   if (vizCount > 0) {
     parts.push(`${vizCount} visualization${vizCount > 1 ? 's' : ''} added to dashboard`);
@@ -458,6 +465,10 @@ function toolCallSummary(tabs: ToolCallTab[]): string {
   if (rebuffCount > 0) {
     parts.push(`${rebuffCount} notice${rebuffCount > 1 ? 's' : ''}`);
   }
+  if (clarifyCount > 0) {
+    parts.push(`${clarifyCount} clarification${clarifyCount > 1 ? 's' : ''}`);
+  }
+
   return parts.join(', ') + '.';
 }
 
