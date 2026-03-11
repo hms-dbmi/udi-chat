@@ -19,6 +19,7 @@ const dataPackageStore = useDataPackageStore();
 
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 import VizTweakComponent from './VizTweakComponent.vue';
+import FreeTextExplainComponent from './FreeTextExplainComponent.vue';
 import { storeToRefs } from 'pinia';
 const dataFiltersStore = useDataFilterStore();
 const { internalDataSelections } = storeToRefs(dataFiltersStore);
@@ -368,7 +369,7 @@ function realMessageIndex(displayIndex: number): number {
 }
 
 interface ToolCallTab {
-  type: 'visualization' | 'filter';
+  type: 'visualization' | 'filter' | 'explain';
   toolCallIndex: number;
   label: string;
 }
@@ -381,6 +382,7 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
   const tabs: ToolCallTab[] = [];
   let vizCount = 0;
   let filterCount = 0;
+  let explainCount = 0;
 
   for (let i = 0; i < message.tool_calls.length; i++) {
     const call = message.tool_calls[i];
@@ -391,6 +393,9 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
     } else if (name === 'FilterData') {
       filterCount++;
       tabs.push({ type: 'filter', toolCallIndex: i, label: `Filter ${filterCount}` });
+    } else if (name === 'FreeTextExplain') {
+      explainCount++;
+      tabs.push({ type: 'explain', toolCallIndex: i, label: `Explanation ${explainCount}` });
     }
   }
 
@@ -402,6 +407,10 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
   if (filterCount === 1) {
     const tab = tabs.find((t) => t.type === 'filter');
     if (tab) tab.label = 'Filter';
+  }
+  if (explainCount === 1) {
+    const tab = tabs.find((t) => t.type === 'explain');
+    if (tab) tab.label = 'Explanation';
   }
 
   return tabs;
@@ -421,12 +430,16 @@ function setActiveTab(displayIndex: number, toolCallIndex: number) {
 function toolCallSummary(tabs: ToolCallTab[]): string {
   const vizCount = tabs.filter((t) => t.type === 'visualization').length;
   const filterCount = tabs.filter((t) => t.type === 'filter').length;
+  const explainCount = tabs.filter((t) => t.type === 'explain').length;
   const parts: string[] = [];
   if (vizCount > 0) {
     parts.push(`${vizCount} visualization${vizCount > 1 ? 's' : ''} added to dashboard`);
   }
   if (filterCount > 0) {
     parts.push(`${filterCount} filter${filterCount > 1 ? 's' : ''} applied`);
+  }
+  if (explainCount > 0) {
+    parts.push(`${explainCount} explanation${explainCount > 1 ? 's' : ''}`);
   }
   return parts.join(', ') + '.';
 }
@@ -448,6 +461,20 @@ function extractFilterByToolCallIndex(message: Message, toolCallIndex: number): 
   const call = message.tool_calls[toolCallIndex];
   const args = call.function?.arguments ?? call.arguments;
   return args ?? null;
+}
+
+function extractExplainByToolCallIndex(
+  message: Message,
+  toolCallIndex: number,
+): { response_text: string; response_type: string } | null {
+  if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
+  const call = message.tool_calls[toolCallIndex];
+  const args = call.function?.arguments ?? call.arguments;
+  if (!args?.response_text) return null;
+  return {
+    response_text: args.response_text,
+    response_type: args.response_type ?? 'general',
+  };
 }
 
 function shouldRenderUdiGrammar(message: Message, index: number): boolean {
@@ -618,6 +645,11 @@ watch(
               "
             ></VizTweakComponent>
           </div>
+          <FreeTextExplainComponent
+            v-if="getToolCallTabs(message, i)[0].type === 'explain'"
+            :response-text="extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.response_text ?? ''"
+            :response-type="extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.response_type ?? 'general'"
+          />
         </template>
 
         <!-- Multiple tool calls: render with selector -->
@@ -704,6 +736,11 @@ watch(
                   "
                 ></VizTweakComponent>
               </div>
+              <FreeTextExplainComponent
+                v-if="tab.type === 'explain'"
+                :response-text="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.response_text ?? ''"
+                :response-type="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.response_type ?? 'general'"
+              />
             </q-tab-panel>
           </q-tab-panels>
         </template>
