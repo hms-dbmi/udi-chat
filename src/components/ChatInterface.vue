@@ -952,7 +952,12 @@ watch(
         <q-space />
         <q-btn flat round dense icon="close" v-close-popup />
       </q-card-section>
-      <q-card-section class="q-pt-none" style="overflow-y: auto; max-height: calc(90vh - 120px)">
+      <q-card-section class="q-pt-none q-pb-sm">
+        <div class="text-body2 text-grey-7">
+          Closed visualizations are stored here. Restore them to the dashboard at any time.
+        </div>
+      </q-card-section>
+      <q-card-section class="q-pt-none" style="overflow-y: auto; max-height: calc(90vh - 160px)">
         <div v-if="memoryBankEntries.length === 0" class="text-grey-6 text-center q-pa-lg">
           No closed visualizations yet.
         </div>
