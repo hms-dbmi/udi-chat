@@ -496,10 +496,7 @@ function extractExplainByToolCallIndex(
   };
 }
 
-function extractRebuffByToolCallIndex(
-  message: Message,
-  toolCallIndex: number,
-): RebuffArgs | null {
+function extractRebuffByToolCallIndex(message: Message, toolCallIndex: number): RebuffArgs | null {
   if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
   const call = message.tool_calls[toolCallIndex];
   const args = call.function?.arguments ?? call.arguments;
@@ -702,19 +699,40 @@ watch(
           </div>
           <FreeTextExplainComponent
             v-if="getToolCallTabs(message, i)[0].type === 'explain'"
-            :text="extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.text ?? ''"
-            :response-type="extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.response_type ?? 'general'"
-            :resolved-text="extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.resolved_text"
+            :text="
+              extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.text ?? ''
+            "
+            :response-type="
+              extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.response_type ?? 'general'
+            "
+            :resolved-text="
+              extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.resolved_text
+            "
           />
           <RebuffComponent
             v-if="getToolCallTabs(message, i)[0].type === 'rebuff'"
-            :user_request="extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.user_request ?? ''"
-            :reason="extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.reason ?? ''"
+            :user_request="
+              extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.user_request ?? ''
+            "
+            :reason="
+              extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.reason ?? ''
+            "
           />
           <ClarifyVariableComponent
             v-if="getToolCallTabs(message, i)[0].type === 'clarify'"
-            :message="extractClarifyByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.message ?? ''"
-            :ambiguous_variables="extractClarifyByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.ambiguous_variables ?? []"
+            :message="
+              extractClarifyByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.message ?? ''
+            "
+            :ambiguous_variables="
+              extractClarifyByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.ambiguous_variables ?? []
+            "
             @select="handleClarifySelect"
           />
         </template>
@@ -806,18 +824,28 @@ watch(
               <FreeTextExplainComponent
                 v-if="tab.type === 'explain'"
                 :text="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.text ?? ''"
-                :response-type="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.response_type ?? 'general'"
-                :resolved-text="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.resolved_text"
+                :response-type="
+                  extractExplainByToolCallIndex(message, tab.toolCallIndex)?.response_type ??
+                  'general'
+                "
+                :resolved-text="
+                  extractExplainByToolCallIndex(message, tab.toolCallIndex)?.resolved_text
+                "
               />
               <RebuffComponent
                 v-if="tab.type === 'rebuff'"
-                :user_request="extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.user_request ?? ''"
+                :user_request="
+                  extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.user_request ?? ''
+                "
                 :reason="extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.reason ?? ''"
               />
               <ClarifyVariableComponent
                 v-if="tab.type === 'clarify'"
                 :message="extractClarifyByToolCallIndex(message, tab.toolCallIndex)?.message ?? ''"
-                :ambiguous_variables="extractClarifyByToolCallIndex(message, tab.toolCallIndex)?.ambiguous_variables ?? []"
+                :ambiguous_variables="
+                  extractClarifyByToolCallIndex(message, tab.toolCallIndex)?.ambiguous_variables ??
+                  []
+                "
                 @select="handleClarifySelect"
               />
             </q-tab-panel>
