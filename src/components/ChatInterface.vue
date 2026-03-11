@@ -20,6 +20,7 @@ const dataPackageStore = useDataPackageStore();
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 import VizTweakComponent from './VizTweakComponent.vue';
 import FreeTextExplainComponent from './FreeTextExplainComponent.vue';
+import RebuffComponent from './RebuffComponent.vue';
 import { storeToRefs } from 'pinia';
 const dataFiltersStore = useDataFilterStore();
 const { internalDataSelections } = storeToRefs(dataFiltersStore);
@@ -369,7 +370,7 @@ function realMessageIndex(displayIndex: number): number {
 }
 
 interface ToolCallTab {
-  type: 'visualization' | 'filter' | 'explain';
+  type: 'visualization' | 'filter' | 'explain' | 'rebuff';
   toolCallIndex: number;
   label: string;
 }
@@ -383,6 +384,7 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
   let vizCount = 0;
   let filterCount = 0;
   let explainCount = 0;
+  let rebuffCount = 0;
 
   for (let i = 0; i < message.tool_calls.length; i++) {
     const call = message.tool_calls[i];
@@ -396,6 +398,9 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
     } else if (name === 'FreeTextExplain') {
       explainCount++;
       tabs.push({ type: 'explain', toolCallIndex: i, label: `Explanation ${explainCount}` });
+    } else if (name === 'Rebuff') {
+      rebuffCount++;
+      tabs.push({ type: 'rebuff', toolCallIndex: i, label: `Notice ${rebuffCount}` });
     }
   }
 
@@ -411,6 +416,10 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
   if (explainCount === 1) {
     const tab = tabs.find((t) => t.type === 'explain');
     if (tab) tab.label = 'Explanation';
+  }
+  if (rebuffCount === 1) {
+    const tab = tabs.find((t) => t.type === 'rebuff');
+    if (tab) tab.label = 'Notice';
   }
 
   return tabs;
@@ -440,6 +449,10 @@ function toolCallSummary(tabs: ToolCallTab[]): string {
   }
   if (explainCount > 0) {
     parts.push(`${explainCount} explanation${explainCount > 1 ? 's' : ''}`);
+  }
+  const rebuffCount = tabs.filter((t) => t.type === 'rebuff').length;
+  if (rebuffCount > 0) {
+    parts.push(`${rebuffCount} notice${rebuffCount > 1 ? 's' : ''}`);
   }
   return parts.join(', ') + '.';
 }
@@ -477,6 +490,23 @@ function extractExplainByToolCallIndex(
   };
 }
 
+function extractRebuffByToolCallIndex(
+  message: Message,
+  toolCallIndex: number,
+): { reason: string; available_capabilities: string[]; suggestions: string[] } | null {
+  if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
+  const call = message.tool_calls[toolCallIndex];
+  const args = call.function?.arguments ?? call.arguments;
+  if (!args?.reason) return null;
+  return {
+    reason: args.reason,
+    available_capabilities: Array.isArray(args.available_capabilities)
+      ? args.available_capabilities
+      : [],
+    suggestions: Array.isArray(args.suggestions) ? args.suggestions : [],
+  };
+}
+
 function shouldRenderUdiGrammar(message: Message, index: number): boolean {
   if (message.role !== 'assistant') {
     return false;
@@ -497,6 +527,10 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
     return false;
   }
   return dataFiltersStore.containsFilterCall(message);
+}
+
+function handleRebuffSuggestion(suggestion: string) {
+  inputText.value = suggestion;
 }
 
 function setHovered(index: string) {
@@ -650,6 +684,13 @@ watch(
             :response-text="extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.response_text ?? ''"
             :response-type="extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.response_type ?? 'general'"
           />
+          <RebuffComponent
+            v-if="getToolCallTabs(message, i)[0].type === 'rebuff'"
+            :reason="extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.reason ?? ''"
+            :available-capabilities="extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.available_capabilities ?? []"
+            :suggestions="extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.suggestions ?? []"
+            @select-suggestion="handleRebuffSuggestion"
+          />
         </template>
 
         <!-- Multiple tool calls: render with selector -->
@@ -740,6 +781,13 @@ watch(
                 v-if="tab.type === 'explain'"
                 :response-text="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.response_text ?? ''"
                 :response-type="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.response_type ?? 'general'"
+              />
+              <RebuffComponent
+                v-if="tab.type === 'rebuff'"
+                :reason="extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.reason ?? ''"
+                :available-capabilities="extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.available_capabilities ?? []"
+                :suggestions="extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.suggestions ?? []"
+                @select-suggestion="handleRebuffSuggestion"
               />
             </q-tab-panel>
           </q-tab-panels>
