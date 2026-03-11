@@ -63,14 +63,14 @@ export interface FreeTextExplainArgs {
 export interface FilterDataArgs {
   entity: string;
   field: string;
-  filterType: 'point' | 'interval';
-  /** Present when filterType is 'interval'. */
-  intervalRange?: {
-    min: number;
-    max: number;
+  filter: {
+    filterType: 'point' | 'interval';
+    intervalRange: {
+      min: number;
+      max: number;
+    };
+    pointValues: string[];
   };
-  /** Present when filterType is 'point'. */
-  pointValues?: string[];
 }
 
 // ---------------------------------------------------------------------------

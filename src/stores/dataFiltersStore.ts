@@ -13,12 +13,16 @@ export interface DataFilterState {
 export interface FilterCallArgs {
   entity: string;
   field: string;
-  filterType: 'interval' | 'point';
-  intervalRange?: {
-    min: number;
-    max: number;
+  filter: {
+    filterType: 'interval' | 'point';
+    intervalRange: {
+      min: number;
+      max: number;
+    };
+    pointValues: string[];
   };
-  pointValues?: string[];
+  min: number;
+  max: number;
 }
 
 export interface ExtractedFilter {
@@ -88,32 +92,30 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
         for (const { args: filterSpec, toolCallIndex } of filters) {
           const key = messageFilterKeyWithToolCall(i, toolCallIndex);
           if (key in dataSelections.value) continue;
-          if (filterSpec.filterType === 'interval') {
+          if (filterSpec.filter.filterType === 'interval') {
             if (
               dataPackageStore.isValidIntervalFilter(filterSpec.entity, filterSpec.field).isValid !==
               'yes'
             ) {
               continue;
             }
-            if (!filterSpec.intervalRange) continue;
 
             dataSelections.value[key] = {
               dataSourceKey: filterSpec.entity,
               type: 'interval',
               selection: {
                 [filterSpec.field]: [
-                  filterSpec.intervalRange.min,
-                  filterSpec.intervalRange.max,
+                  filterSpec.filter.intervalRange.min,
+                  filterSpec.filter.intervalRange.max,
                 ],
               },
             };
           } else {
-            if (!filterSpec.pointValues) continue;
             if (
               dataPackageStore.isValidPointFilter(
                 filterSpec.entity,
                 filterSpec.field,
-                filterSpec.pointValues,
+                filterSpec.filter.pointValues,
               ).isValid !== 'yes'
             ) {
               continue;
@@ -122,7 +124,7 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
               dataSourceKey: filterSpec.entity,
               type: 'point',
               selection: {
-                [filterSpec.field]: filterSpec.pointValues,
+                [filterSpec.field]: filterSpec.filter.pointValues,
               },
             };
           }
@@ -152,13 +154,12 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
           if (!args) continue;
           if (args.entity !== selection.dataSourceKey) continue;
           if (selection.type !== 'interval') continue; // TODO: handle point selections
-          if (!args.intervalRange) continue;
           for (const [selectionField, intervalSelection] of Object.entries(
             selection.selection ?? {},
           )) {
             if (args.field !== selectionField) continue;
-            args.intervalRange.min = intervalSelection[0];
-            args.intervalRange.max = intervalSelection[1];
+            args.filter.intervalRange.min = intervalSelection[0];
+            args.filter.intervalRange.max = intervalSelection[1];
           }
         }
       }
@@ -234,10 +235,14 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
             arguments: {
               entity: selection.dataSourceKey,
               field: field,
-              filterType: selection.type,
-              ...(selection.type === 'interval'
-                ? { intervalRange: { min: range[0], max: range[1] } }
-                : { pointValues: range }),
+              filter: {
+                filterType: selection.type,
+                intervalRange: {
+                  min: range[0],
+                  max: range[1],
+                },
+                pointValues: range,
+              },
             },
           },
         },

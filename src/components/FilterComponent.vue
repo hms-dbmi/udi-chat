@@ -24,7 +24,7 @@ const filterType = computed(() => {
   if (!filterArgs.value) {
     return null;
   }
-  return filterArgs.value.filterType;
+  return filterArgs.value.filter.filterType;
 });
 
 const dataSelection = computed<DataSelection | null>(() => {
