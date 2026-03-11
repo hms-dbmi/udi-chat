@@ -30,12 +30,7 @@ const plainText = computed(() =>
         <template v-if="hasStructuredElements">
           <span v-for="(seg, idx) in text" :key="idx">
             <span v-if="typeof seg === 'string'">{{ seg }}</span>
-            <strong v-else class="structured-value">
-              {{ seg.value }}
-              <q-tooltip v-if="seg.label ?? seg.expression ?? seg.function">
-                {{ seg.label ?? seg.expression ?? seg.function }}
-              </q-tooltip>
-            </strong>
+            <strong v-else class="structured-value">{{ seg.value }}<q-tooltip v-if="seg.label ?? seg.expression ?? seg.function">{{ seg.label ?? seg.expression ?? seg.function }}</q-tooltip></strong>
           </span>
         </template>
         <q-markdown v-else class="q-mb-none" :src="plainText"></q-markdown>
