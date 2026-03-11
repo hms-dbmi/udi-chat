@@ -10,8 +10,8 @@
 // Rebuff
 // ---------------------------------------------------------------------------
 export interface RebuffArgs {
-  user_request: string;
-  reason: string;
+  message: string;
+  suggestions: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -20,6 +20,7 @@ export interface RebuffArgs {
 export interface ClarifyCandidate {
   field_name: string;
   entity: string;
+  description?: string;
 }
 
 export interface AmbiguousVariable {

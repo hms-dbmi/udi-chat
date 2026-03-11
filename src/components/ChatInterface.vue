@@ -511,10 +511,10 @@ function extractRebuffByToolCallIndex(message: Message, toolCallIndex: number): 
   if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
   const call = message.tool_calls[toolCallIndex];
   const args = call.function?.arguments ?? call.arguments;
-  if (!args?.reason) return null;
+  if (!args?.message) return null;
   return {
-    user_request: args.user_request ?? '',
-    reason: args.reason,
+    message: args.message,
+    suggestions: Array.isArray(args.suggestions) ? args.suggestions : [],
   };
 }
 
@@ -725,14 +725,19 @@ watch(
           />
           <RebuffComponent
             v-if="getToolCallTabs(message, i)[0].type === 'rebuff'"
-            :user_request="
+            :message="
               extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
-                ?.user_request ?? ''
+                ?.message ?? ''
             "
-            :reason="
+            :capabilities="
               extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
-                ?.reason ?? ''
+                ?.capabilities ?? []
             "
+            :suggestions="
+              extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.suggestions ?? []
+            "
+            @select-suggestion="handleClarifySelect"
           />
           <ClarifyVariableComponent
             v-if="getToolCallTabs(message, i)[0].type === 'clarify'"
@@ -845,10 +850,11 @@ watch(
               />
               <RebuffComponent
                 v-if="tab.type === 'rebuff'"
-                :user_request="
-                  extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.user_request ?? ''
+                :message="extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.message ?? ''"
+                :suggestions="
+                  extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.suggestions ?? []
                 "
-                :reason="extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.reason ?? ''"
+                @select-suggestion="handleClarifySelect"
               />
               <ClarifyVariableComponent
                 v-if="tab.type === 'clarify'"
