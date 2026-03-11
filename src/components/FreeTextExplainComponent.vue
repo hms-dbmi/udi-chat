@@ -14,10 +14,16 @@ const typeIcon: Record<string, string> = {
   general: 'chat',
 };
 
-/** Flatten segments into a single markdown string for non-structured rendering. */
-const plainText = computed(() =>
+/** Build a single markdown string, embedding structured values as inline HTML. */
+const markdownText = computed(() =>
   props.text
-    .map((seg) => (typeof seg === 'string' ? seg : (seg.value ?? JSON.stringify(seg))))
+    .map((seg) => {
+      if (typeof seg === 'string') return seg;
+      const value = seg.value ?? JSON.stringify(seg);
+      const tooltip = seg.label ?? seg.expression ?? seg.function;
+      const dataAttr = tooltip ? ` data-tooltip="${String(tooltip).replace(/"/g, '&quot;')}"` : '';
+      return `<strong class="structured-value"${dataAttr}>${value}</strong>`;
+    })
     .join(''),
 );
 </script>
@@ -27,21 +33,33 @@ const plainText = computed(() =>
     <div class="flex items-start q-gutter-sm">
       <q-icon :name="typeIcon[responseType] ?? 'chat'" size="sm" color="grey-7" class="q-mt-xs" />
       <div class="flex-grow-1">
-        <template v-if="hasStructuredElements">
-          <span v-for="(seg, idx) in text" :key="idx">
-            <span v-if="typeof seg === 'string'">{{ seg }}</span>
-            <strong v-else class="structured-value">{{ seg.value }}<q-tooltip v-if="seg.label ?? seg.expression ?? seg.function">{{ seg.label ?? seg.expression ?? seg.function }}</q-tooltip></strong>
-          </span>
-        </template>
-        <q-markdown v-else class="q-mb-none" :src="plainText"></q-markdown>
+        <q-markdown class="q-mb-none" :src="markdownText"></q-markdown>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped lang="scss">
-.structured-value {
+<style lang="scss">
+.free-text-explain .structured-value {
   color: $primary;
   text-decoration: underline;
+  position: relative;
+}
+
+.free-text-explain .structured-value[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-weight: normal;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 9999;
 }
 </style>
