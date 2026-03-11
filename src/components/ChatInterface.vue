@@ -21,6 +21,7 @@ import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 import VizTweakComponent from './VizTweakComponent.vue';
 import FreeTextExplainComponent from './FreeTextExplainComponent.vue';
 import RebuffComponent from './RebuffComponent.vue';
+import ClarifyVariableComponent from './ClarifyVariableComponent.vue';
 import { storeToRefs } from 'pinia';
 const dataFiltersStore = useDataFilterStore();
 const { internalDataSelections } = storeToRefs(dataFiltersStore);
@@ -370,7 +371,7 @@ function realMessageIndex(displayIndex: number): number {
 }
 
 interface ToolCallTab {
-  type: 'visualization' | 'filter' | 'explain' | 'rebuff';
+  type: 'visualization' | 'filter' | 'explain' | 'rebuff' | 'clarify';
   toolCallIndex: number;
   label: string;
 }
@@ -401,6 +402,8 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
     } else if (name === 'Rebuff') {
       rebuffCount++;
       tabs.push({ type: 'rebuff', toolCallIndex: i, label: `Notice ${rebuffCount}` });
+    } else if (name === 'ClarifyVariable') {
+      tabs.push({ type: 'clarify', toolCallIndex: i, label: 'Clarification' });
     }
   }
 
@@ -531,6 +534,27 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
 
 function handleRebuffSuggestion(suggestion: string) {
   inputText.value = suggestion;
+}
+
+function extractClarifyByToolCallIndex(
+  message: Message,
+  toolCallIndex: number,
+): { context: string; candidates: { name: string; description?: string }[] } | null {
+  if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
+  const call = message.tool_calls[toolCallIndex];
+  const args = call.function?.arguments ?? call.arguments;
+  if (!args?.candidates) return null;
+  return {
+    context: args.context ?? '',
+    candidates: Array.isArray(args.candidates) ? args.candidates : [],
+  };
+}
+
+function handleClarifySelect(value: string) {
+  if (llmResponding.value) return;
+  conversationStore.messages.push({ content: value, role: 'user' });
+  void queryLLM();
+  scrollToBottom();
 }
 
 function setHovered(index: string) {
@@ -691,6 +715,12 @@ watch(
             :suggestions="extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.suggestions ?? []"
             @select-suggestion="handleRebuffSuggestion"
           />
+          <ClarifyVariableComponent
+            v-if="getToolCallTabs(message, i)[0].type === 'clarify'"
+            :context="extractClarifyByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.context ?? ''"
+            :candidates="extractClarifyByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)?.candidates ?? []"
+            @select="handleClarifySelect"
+          />
         </template>
 
         <!-- Multiple tool calls: render with selector -->
@@ -788,6 +818,12 @@ watch(
                 :available-capabilities="extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.available_capabilities ?? []"
                 :suggestions="extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.suggestions ?? []"
                 @select-suggestion="handleRebuffSuggestion"
+              />
+              <ClarifyVariableComponent
+                v-if="tab.type === 'clarify'"
+                :context="extractClarifyByToolCallIndex(message, tab.toolCallIndex)?.context ?? ''"
+                :candidates="extractClarifyByToolCallIndex(message, tab.toolCallIndex)?.candidates ?? []"
+                @select="handleClarifySelect"
               />
             </q-tab-panel>
           </q-tab-panels>
