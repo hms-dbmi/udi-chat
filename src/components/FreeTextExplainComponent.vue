@@ -28,9 +28,7 @@ const segments = computed<StructuredTextSegment[]>(() => {
   try {
     const result = evaluateStructuredText(props.responseText, dataPackageStore);
     // If any segment failed to evaluate (still contains raw reference), fall back
-    const hasFailed = result.some(
-      (s) => s.type === 'text' && /\{\w+\(/.test(s.content),
-    );
+    const hasFailed = result.some((s) => s.type === 'text' && /\{\w+\(/.test(s.content));
     if (hasFailed && props.resolvedText) return [];
     return result;
   } catch {
@@ -46,20 +44,16 @@ const displayText = computed(() => {
   return props.resolvedText || props.responseText;
 });
 
-const useSegmentedRender = computed(
-  () => isStructured.value && segments.value.length > 0,
-);
+const useSegmentedRender = computed(() => isStructured.value && segments.value.length > 0);
 </script>
 
 <template>
+  <div>blarg</div>
+  <div>displayText: {{ displayText }}</div>
+  <div>props: {{ props }}</div>
   <div class="free-text-explain q-pa-sm">
     <div class="flex items-start q-gutter-sm">
-      <q-icon
-        :name="typeIcon[responseType] ?? 'chat'"
-        size="sm"
-        color="grey-7"
-        class="q-mt-xs"
-      />
+      <q-icon :name="typeIcon[responseType] ?? 'chat'" size="sm" color="grey-7" class="q-mt-xs" />
       <div class="flex-grow-1">
         <template v-if="useSegmentedRender">
           <span v-for="(seg, idx) in segments" :key="idx">
