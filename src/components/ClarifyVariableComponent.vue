@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import type { ClarifyVariableArgs } from 'src/types/toolCallArgs';
 
 const props = defineProps<ClarifyVariableArgs>();
@@ -11,10 +11,38 @@ const emit = defineEmits<{
 const submitted = ref(false);
 const freeText = ref('');
 
-function selectCandidate(fieldName: string, entity: string) {
+/** Track which candidate is selected per ambiguous variable (by index). */
+const selections = ref<Record<number, string>>({});
+
+function toggleCandidate(vIdx: number, fieldName: string, entity: string) {
   if (submitted.value) return;
+  const value = `${fieldName} (${entity})`;
+  if (selections.value[vIdx] === value) {
+    delete selections.value[vIdx];
+  } else {
+    selections.value[vIdx] = value;
+  }
+  trySubmit();
+}
+
+function isSelected(vIdx: number, fieldName: string, entity: string): boolean {
+  return selections.value[vIdx] === `${fieldName} (${entity})`;
+}
+
+const allSelected = computed(() => {
+  return (
+    props.ambiguous_variables.length > 0 &&
+    props.ambiguous_variables.every((_, idx) => idx in selections.value)
+  );
+});
+
+function trySubmit() {
+  if (!allSelected.value || submitted.value) return;
   submitted.value = true;
-  emit('select', `${fieldName} (${entity})`);
+  const parts = props.ambiguous_variables.map((v, idx) => {
+    return `${v.query_term}: ${selections.value[idx]}`;
+  });
+  emit('select', parts.join(', '));
 }
 
 function submitFreeText() {
@@ -36,16 +64,26 @@ function submitFreeText() {
         <q-btn
           v-for="(candidate, cIdx) in variable.candidates"
           :key="cIdx"
-          outline
-          color="primary"
+          :outline="!isSelected(vIdx, candidate.field_name, candidate.entity)"
+          :color="'primary'"
+          :class="{
+            'selected-candidate': isSelected(vIdx, candidate.field_name, candidate.entity),
+          }"
           no-caps
           :disable="submitted"
-          @click="selectCandidate(candidate.field_name, candidate.entity)"
+          @click="toggleCandidate(vIdx, candidate.field_name, candidate.entity)"
         >
           <div class="text-left">
             <div>
               {{ candidate.field_name }}
-              <q-badge outline color="grey-7" class="q-ml-xs">{{ candidate.entity }}</q-badge>
+              <q-badge
+                outline
+                :color="
+                  isSelected(vIdx, candidate.field_name, candidate.entity) ? 'white' : 'grey-8'
+                "
+                class="q-ml-xs"
+                >{{ candidate.entity }}</q-badge
+              >
             </div>
             <div v-if="candidate.description" class="text-caption text-weight-light">
               {{ candidate.description }}
