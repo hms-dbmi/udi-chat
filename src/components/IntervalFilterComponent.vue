@@ -22,8 +22,9 @@ const rangeModel = computed<{ min: number; max: number }>({
     const selection = props.dataSelection.selection;
     if (!selection) return defaultVal;
     if (field.value in selection) {
-      const [min, max] = selection[field.value] as [number, number];
-      return { min, max };
+      const arr = selection[field.value] as number[];
+      if (!arr || arr.length < 2) return defaultVal;
+      return { min: arr[0] as number, max: arr[1] as number };
     }
     return defaultVal;
   },
