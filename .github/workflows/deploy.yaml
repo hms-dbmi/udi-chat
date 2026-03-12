@@ -17,12 +17,7 @@ jobs:
         run: yarn global add @quasar/cli
       - name: Build
         run: quasar build
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/spa
-        env: 
+        env:
           VITE_BENCHMARK_ENDPOINT_URL: ${{ vars.VITE_BENCHMARK_ENDPOINT_URL }}
           VITE_DATA_PACKAGE_PATH: ${{ vars.VITE_DATA_PACKAGE_PATH }}
           VITE_ENABLE_CUSTOM_API_KEY: ${{ vars.VITE_ENABLE_CUSTOM_API_KEY }}
@@ -30,3 +25,8 @@ jobs:
           VITE_CUSTOM_API_KEY_VALIDATION_URL: ${{ vars.VITE_CUSTOM_API_KEY_VALIDATION_URL }}
           VITE_LLM_API_BASE_URL: ${{ vars.VITE_LLM_API_BASE_URL }}
           VITE_LLM_API_PORT: ${{ vars.VITE_LLM_API_PORT }}
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/spa
