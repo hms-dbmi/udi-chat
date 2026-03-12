@@ -50,7 +50,7 @@ export default defineConfig((/* ctx */) => {
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      publicPath: process.env.GITHUB_ACTIONS ? '/udi-chat/' : '/',
+      // publicPath: '/',
       // analyze: true,
       // env: {},
       // rawDefine: {}
