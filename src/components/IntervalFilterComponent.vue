@@ -96,11 +96,17 @@ function formatNumber(n: number) {
 }
 
 const minDisplayText = computed(() => {
-  return `${formatNumber(Math.max(rangeModel.value.min, rangeMinMax.value.min))}`;
+  if (rangeModel.value.min <= rangeMinMax.value.min) {
+    return 'min';
+  }
+  return `${formatNumber(rangeModel.value.min)}`;
 });
 
 const maxDisplayText = computed(() => {
-  return `${formatNumber(Math.min(rangeModel.value.max, rangeMinMax.value.max))}`;
+  if (rangeModel.value.max >= rangeMinMax.value.max) {
+    return 'max';
+  }
+  return `${formatNumber(rangeModel.value.max)}`;
 });
 </script>
 
