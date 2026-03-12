@@ -45,6 +45,10 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
       if (selection.selection == null || Object.keys(selection.selection).length === 0) {
         continue;
       }
+      // Skip cleared filters (empty arrays from clearFilter)
+      if (Object.values(selection.selection).every((v) => Array.isArray(v) && v.length === 0)) {
+        continue;
+      }
       if (!key.startsWith('message-filter-')) {
         // exclude internal filters here.
         continue;
@@ -287,7 +291,7 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
       if (sel.type === 'point') {
         sel.selection[field] = [];
       } else if (sel.type === 'interval') {
-        sel.selection[field] = [0, 0];
+        sel.selection[field] = [];
       }
     }
   }

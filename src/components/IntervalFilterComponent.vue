@@ -22,8 +22,9 @@ const rangeModel = computed<{ min: number; max: number }>({
     const selection = props.dataSelection.selection;
     if (!selection) return defaultVal;
     if (field.value in selection) {
-      const [min, max] = selection[field.value] as [number, number];
-      return { min, max };
+      const arr = selection[field.value] as number[];
+      if (!arr || arr.length < 2) return defaultVal;
+      return { min: arr[0] as number, max: arr[1] as number };
     }
     return defaultVal;
   },
@@ -95,17 +96,11 @@ function formatNumber(n: number) {
 }
 
 const minDisplayText = computed(() => {
-  if (rangeModel.value.min <= rangeMinMax.value.min) {
-    return 'min';
-  }
-  return `${formatNumber(rangeModel.value.min)}`;
+  return `${formatNumber(Math.max(rangeModel.value.min, rangeMinMax.value.min))}`;
 });
 
 const maxDisplayText = computed(() => {
-  if (rangeModel.value.max >= rangeMinMax.value.max) {
-    return 'max';
-  }
-  return `${formatNumber(rangeModel.value.max)}`;
+  return `${formatNumber(Math.min(rangeModel.value.max, rangeMinMax.value.max))}`;
 });
 </script>
 
