@@ -26,15 +26,15 @@ const splashMessage = ref(splashMessages[Math.floor(Math.random() * splashMessag
         <path
           d="M190 32 C150 28, 80 25, 40 30 C25 32, 15 35, 8 38"
           stroke="#57B4E9"
-          stroke-width="2.5"
+          stroke-width="3.5"
           stroke-linecap="round"
           fill="none"
-          stroke-dasharray="4 3"
+
         />
         <path
-          d="M18 28 L6 38 L16 46"
+          d="M14 26 L6 38 L16 46"
           stroke="#57B4E9"
-          stroke-width="2.5"
+          stroke-width="3.5"
           stroke-linecap="round"
           stroke-linejoin="round"
           fill="none"
@@ -118,9 +118,9 @@ const splashMessage = ref(splashMessages[Math.floor(Math.random() * splashMessag
 }
 
 .splash-arrow {
-  width: 60%;
-  max-width: 300px;
-  min-width: 120px;
+  width: 80%;
+  max-width: 400px;
+  min-width: 150px;
   height: auto;
   margin-top: 16px;
   opacity: 0.7;
