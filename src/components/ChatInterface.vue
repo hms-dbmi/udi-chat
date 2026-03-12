@@ -19,6 +19,10 @@ const dataPackageStore = useDataPackageStore();
 
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 import VizTweakComponent from './VizTweakComponent.vue';
+import FreeTextExplainComponent from './FreeTextExplainComponent.vue';
+import RebuffComponent from './RebuffComponent.vue';
+import ClarifyVariableComponent from './ClarifyVariableComponent.vue';
+import type { FreeTextExplainArgs, RebuffArgs, ClarifyVariableArgs } from 'src/types/toolCallArgs';
 import { storeToRefs } from 'pinia';
 const dataFiltersStore = useDataFilterStore();
 const { internalDataSelections } = storeToRefs(dataFiltersStore);
@@ -391,7 +395,7 @@ function realMessageIndex(displayIndex: number): number {
 }
 
 interface ToolCallTab {
-  type: 'visualization' | 'filter';
+  type: 'visualization' | 'filter' | 'explain' | 'rebuff' | 'clarify';
   toolCallIndex: number;
   label: string;
 }
@@ -404,6 +408,9 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
   const tabs: ToolCallTab[] = [];
   let vizCount = 0;
   let filterCount = 0;
+  let explainCount = 0;
+  let rebuffCount = 0;
+  let clarifyCount = 0;
 
   for (let i = 0; i < message.tool_calls.length; i++) {
     const call = message.tool_calls[i];
@@ -414,6 +421,15 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
     } else if (name === 'FilterData') {
       filterCount++;
       tabs.push({ type: 'filter', toolCallIndex: i, label: `Filter ${filterCount}` });
+    } else if (name === 'FreeTextExplain') {
+      explainCount++;
+      tabs.push({ type: 'explain', toolCallIndex: i, label: `Explanation ${explainCount}` });
+    } else if (name === 'Rebuff') {
+      rebuffCount++;
+      tabs.push({ type: 'rebuff', toolCallIndex: i, label: `Notice ${rebuffCount}` });
+    } else if (name === 'ClarifyVariable') {
+      clarifyCount++;
+      tabs.push({ type: 'clarify', toolCallIndex: i, label: 'Clarification' });
     }
   }
 
@@ -425,6 +441,18 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
   if (filterCount === 1) {
     const tab = tabs.find((t) => t.type === 'filter');
     if (tab) tab.label = 'Filter';
+  }
+  if (explainCount === 1) {
+    const tab = tabs.find((t) => t.type === 'explain');
+    if (tab) tab.label = 'Explanation';
+  }
+  if (rebuffCount === 1) {
+    const tab = tabs.find((t) => t.type === 'rebuff');
+    if (tab) tab.label = 'Notice';
+  }
+  if (clarifyCount === 1) {
+    const tab = tabs.find((t) => t.type === 'clarify');
+    if (tab) tab.label = 'Clarification';
   }
 
   return tabs;
@@ -444,6 +472,8 @@ function setActiveTab(displayIndex: number, toolCallIndex: number) {
 function toolCallSummary(tabs: ToolCallTab[]): string {
   const vizCount = tabs.filter((t) => t.type === 'visualization').length;
   const filterCount = tabs.filter((t) => t.type === 'filter').length;
+  const explainCount = tabs.filter((t) => t.type === 'explain').length;
+  const clarifyCount = tabs.filter((t) => t.type === 'clarify').length;
   const parts: string[] = [];
   if (vizCount > 0) {
     parts.push(`${vizCount} visualization${vizCount > 1 ? 's' : ''} added to dashboard`);
@@ -451,6 +481,17 @@ function toolCallSummary(tabs: ToolCallTab[]): string {
   if (filterCount > 0) {
     parts.push(`${filterCount} filter${filterCount > 1 ? 's' : ''} applied`);
   }
+  if (explainCount > 0) {
+    parts.push(`${explainCount} explanation${explainCount > 1 ? 's' : ''}`);
+  }
+  const rebuffCount = tabs.filter((t) => t.type === 'rebuff').length;
+  if (rebuffCount > 0) {
+    parts.push(`${rebuffCount} notice${rebuffCount > 1 ? 's' : ''}`);
+  }
+  if (clarifyCount > 0) {
+    parts.push(`${clarifyCount} clarification${clarifyCount > 1 ? 's' : ''}`);
+  }
+
   return parts.join(', ') + '.';
 }
 
@@ -473,6 +514,32 @@ function extractFilterByToolCallIndex(message: Message, toolCallIndex: number): 
   return args ?? null;
 }
 
+function extractExplainByToolCallIndex(
+  message: Message,
+  toolCallIndex: number,
+): FreeTextExplainArgs | null {
+  if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
+  const call = message.tool_calls[toolCallIndex];
+  const args = call.function?.arguments ?? call.arguments;
+  if (!args?.text) return null;
+  return {
+    response_type: args.response_type ?? 'general',
+    text: Array.isArray(args.text) ? args.text : [args.text],
+    has_structured_elements: args.has_structured_elements ?? false,
+  };
+}
+
+function extractRebuffByToolCallIndex(message: Message, toolCallIndex: number): RebuffArgs | null {
+  if (!message.tool_calls || toolCallIndex >= message.tool_calls.length) return null;
+  const call = message.tool_calls[toolCallIndex];
+  const args = call.function?.arguments ?? call.arguments;
+  if (!args?.message) return null;
+  return {
+    message: args.message,
+    suggestions: Array.isArray(args.suggestions) ? args.suggestions : [],
+  };
+}
+
 function shouldRenderUdiGrammar(message: Message, index: number): boolean {
   if (message.role !== 'assistant') {
     return false;
@@ -493,6 +560,28 @@ function shouldRenderFilterComponent(message: Message, index: number): boolean {
     return false;
   }
   return dataFiltersStore.containsFilterCall(message);
+}
+
+function extractClarifyByToolCallIndex(
+  msg: Message,
+  toolCallIndex: number,
+): ClarifyVariableArgs | null {
+  if (!msg.tool_calls || toolCallIndex >= msg.tool_calls.length) return null;
+  const call = msg.tool_calls[toolCallIndex];
+  if (!call) return null;
+  const args = call.function?.arguments ?? call.arguments;
+  if (!args?.ambiguous_variables) return null;
+  return {
+    message: args.message ?? '',
+    ambiguous_variables: Array.isArray(args.ambiguous_variables) ? args.ambiguous_variables : [],
+  };
+}
+
+function handleClarifySelect(value: string) {
+  if (llmResponding.value) return;
+  conversationStore.messages.push({ content: value, role: 'user' });
+  void queryLLM();
+  scrollToBottom();
 }
 
 function setHovered(index: string) {
@@ -662,6 +751,49 @@ watch(
               "
             ></VizTweakComponent>
           </div>
+          <FreeTextExplainComponent
+            v-if="getToolCallTabs(message, i)[0].type === 'explain'"
+            :text="
+              extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.text ?? []
+            "
+            :response-type="
+              extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.response_type ?? 'general'
+            "
+            :has-structured-elements="
+              extractExplainByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.has_structured_elements ?? false
+            "
+          />
+          <RebuffComponent
+            v-if="getToolCallTabs(message, i)[0].type === 'rebuff'"
+            :message="
+              extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.message ?? ''
+            "
+            :capabilities="
+              extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.capabilities ?? []
+            "
+            :suggestions="
+              extractRebuffByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.suggestions ?? []
+            "
+            @select-suggestion="handleClarifySelect"
+          />
+          <ClarifyVariableComponent
+            v-if="getToolCallTabs(message, i)[0].type === 'clarify'"
+            :message="
+              extractClarifyByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.message ?? ''
+            "
+            :ambiguous_variables="
+              extractClarifyByToolCallIndex(message, getToolCallTabs(message, i)[0].toolCallIndex)
+                ?.ambiguous_variables ?? []
+            "
+            @select="handleClarifySelect"
+          />
         </template>
 
         <!-- Multiple tool calls: render with selector -->
@@ -748,6 +880,35 @@ watch(
                   "
                 ></VizTweakComponent>
               </div>
+              <FreeTextExplainComponent
+                v-if="tab.type === 'explain'"
+                :text="extractExplainByToolCallIndex(message, tab.toolCallIndex)?.text ?? []"
+                :response-type="
+                  extractExplainByToolCallIndex(message, tab.toolCallIndex)?.response_type ??
+                  'general'
+                "
+                :has-structured-elements="
+                  extractExplainByToolCallIndex(message, tab.toolCallIndex)
+                    ?.has_structured_elements ?? false
+                "
+              />
+              <RebuffComponent
+                v-if="tab.type === 'rebuff'"
+                :message="extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.message ?? ''"
+                :suggestions="
+                  extractRebuffByToolCallIndex(message, tab.toolCallIndex)?.suggestions ?? []
+                "
+                @select-suggestion="handleClarifySelect"
+              />
+              <ClarifyVariableComponent
+                v-if="tab.type === 'clarify'"
+                :message="extractClarifyByToolCallIndex(message, tab.toolCallIndex)?.message ?? ''"
+                :ambiguous_variables="
+                  extractClarifyByToolCallIndex(message, tab.toolCallIndex)?.ambiguous_variables ??
+                  []
+                "
+                @select="handleClarifySelect"
+              />
             </q-tab-panel>
           </q-tab-panels>
         </template>
