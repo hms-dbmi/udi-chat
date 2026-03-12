@@ -415,12 +415,14 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
   for (let i = 0; i < message.tool_calls.length; i++) {
     const call = message.tool_calls[i];
     const name = call.function?.name ?? call.name;
+    const args = call.function?.arguments ?? call.arguments;
+    const title = args?.title;
     if (name === 'RenderVisualization') {
       vizCount++;
-      tabs.push({ type: 'visualization', toolCallIndex: i, label: `Visualization ${vizCount}` });
+      tabs.push({ type: 'visualization', toolCallIndex: i, label: title || `Visualization ${vizCount}` });
     } else if (name === 'FilterData') {
       filterCount++;
-      tabs.push({ type: 'filter', toolCallIndex: i, label: `Filter ${filterCount}` });
+      tabs.push({ type: 'filter', toolCallIndex: i, label: title || `Filter ${filterCount}` });
     } else if (name === 'FreeTextExplain') {
       explainCount++;
       tabs.push({ type: 'explain', toolCallIndex: i, label: `Explanation ${explainCount}` });
@@ -433,14 +435,14 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
     }
   }
 
-  // Simplify labels when there's only one of each type
+  // Simplify labels when there's only one of each type and no title
   if (vizCount === 1) {
     const tab = tabs.find((t) => t.type === 'visualization');
-    if (tab) tab.label = 'Visualization';
+    if (tab && tab.label.startsWith('Visualization ')) tab.label = 'Visualization';
   }
   if (filterCount === 1) {
     const tab = tabs.find((t) => t.type === 'filter');
-    if (tab) tab.label = 'Filter';
+    if (tab && tab.label.startsWith('Filter ')) tab.label = 'Filter';
   }
   if (explainCount === 1) {
     const tab = tabs.find((t) => t.type === 'explain');
@@ -470,21 +472,25 @@ function setActiveTab(displayIndex: number, toolCallIndex: number) {
 }
 
 function toolCallSummary(tabs: ToolCallTab[]): string {
-  const vizCount = tabs.filter((t) => t.type === 'visualization').length;
-  const filterCount = tabs.filter((t) => t.type === 'filter').length;
+  const vizTabs = tabs.filter((t) => t.type === 'visualization');
+  const filterTabs = tabs.filter((t) => t.type === 'filter');
   const explainCount = tabs.filter((t) => t.type === 'explain').length;
+  const rebuffCount = tabs.filter((t) => t.type === 'rebuff').length;
   const clarifyCount = tabs.filter((t) => t.type === 'clarify').length;
   const parts: string[] = [];
-  if (vizCount > 0) {
-    parts.push(`${vizCount} visualization${vizCount > 1 ? 's' : ''} added to dashboard`);
+  if (vizTabs.length === 1 && vizTabs[0].label && vizTabs[0].label !== 'Visualization') {
+    parts.push(`added "${vizTabs[0].label}" visualization to dashboard`);
+  } else if (vizTabs.length > 0) {
+    parts.push(`${vizTabs.length} visualization${vizTabs.length > 1 ? 's' : ''} added to dashboard`);
   }
-  if (filterCount > 0) {
-    parts.push(`${filterCount} filter${filterCount > 1 ? 's' : ''} applied`);
+  if (filterTabs.length === 1 && filterTabs[0].label && filterTabs[0].label !== 'Filter') {
+    parts.push(`applied "${filterTabs[0].label}" filter`);
+  } else if (filterTabs.length > 0) {
+    parts.push(`${filterTabs.length} filter${filterTabs.length > 1 ? 's' : ''} applied`);
   }
   if (explainCount > 0) {
     parts.push(`${explainCount} explanation${explainCount > 1 ? 's' : ''}`);
   }
-  const rebuffCount = tabs.filter((t) => t.type === 'rebuff').length;
   if (rebuffCount > 0) {
     parts.push(`${rebuffCount} notice${rebuffCount > 1 ? 's' : ''}`);
   }

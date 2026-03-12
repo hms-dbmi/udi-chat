@@ -61,6 +61,7 @@ export interface FreeTextExplainArgs {
 // FilterData
 // ---------------------------------------------------------------------------
 export interface FilterDataArgs {
+  title: string;
   entity: string;
   field: string;
   filter: {
