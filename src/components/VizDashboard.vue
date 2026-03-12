@@ -27,9 +27,7 @@ const splashMessages = [
   'Curious about your data? Just ask!',
 ];
 
-const splashMessage = ref(
-  splashMessages[Math.floor(Math.random() * splashMessages.length)],
-);
+const splashMessage = ref(splashMessages[Math.floor(Math.random() * splashMessages.length)]);
 
 function getVizWidth(spec: any) {
   // todo derive value from w-500 and margin/padding
@@ -55,7 +53,7 @@ function getVizWidth(spec: any) {
         <svg class="splash-arrow" width="120" height="80" viewBox="0 0 120 80" fill="none">
           <path
             d="M110 45 C90 42, 60 38, 35 40 C25 41, 18 43, 12 46"
-            stroke="#2a9d8f"
+            stroke="#57B4E9"
             stroke-width="2.5"
             stroke-linecap="round"
             fill="none"
@@ -63,7 +61,7 @@ function getVizWidth(spec: any) {
           />
           <path
             d="M22 36 L10 46 L20 54"
-            stroke="#2a9d8f"
+            stroke="#57B4E9"
             stroke-width="2.5"
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -72,11 +70,7 @@ function getVizWidth(spec: any) {
         </svg>
 
         <!-- Mascot image -->
-        <img
-          src="/images/yac-mascot-placeholder.svg"
-          alt="YAC mascot"
-          class="splash-mascot"
-        />
+        <img src="/images/yac-mascot.svg" alt="YAC mascot" class="splash-mascot" />
 
         <!-- Speech bubble -->
         <div class="speech-bubble">
@@ -189,8 +183,8 @@ function getVizWidth(spec: any) {
 
 .speech-bubble {
   position: relative;
-  background: #e0f2f1;
-  border: 1.5px solid #2a9d8f;
+  background: #e8f4fc;
+  border: 1.5px solid #57B4E9;
   border-radius: 16px;
   padding: 12px 20px;
   font-size: 15px;
@@ -208,7 +202,7 @@ function getVizWidth(spec: any) {
     height: 0;
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
-    border-bottom: 10px solid #2a9d8f;
+    border-bottom: 10px solid #57B4E9;
   }
 
   &::after {
@@ -221,7 +215,7 @@ function getVizWidth(spec: any) {
     height: 0;
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
-    border-bottom: 8px solid #e0f2f1;
+    border-bottom: 8px solid #e8f4fc;
   }
 }
 </style>
