@@ -913,7 +913,7 @@ watch(
       class="q-mb-lg q-mx-sm"
     >
       <p class="text-body2 q-mb-sm q-ml-xs">
-        Enter your API key to start chatting. Your key is stored locally in your browser and sent
+        Enter your OpenAI API key to start chatting. Your key is stored locally in your browser and sent
         only to the configured backend.
       </p>
       <q-input
