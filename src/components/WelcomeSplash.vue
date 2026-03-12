@@ -29,7 +29,6 @@ const splashMessage = ref(splashMessages[Math.floor(Math.random() * splashMessag
           stroke-width="3.5"
           stroke-linecap="round"
           fill="none"
-
         />
         <path
           d="M14 26 L6 38 L16 46"
@@ -87,9 +86,8 @@ const splashMessage = ref(splashMessages[Math.floor(Math.random() * splashMessag
   border: 1.5px solid #57b4e9;
   border-radius: 16px;
   padding: 12px 20px;
-  font-size: 15px;
+  font-size: 14pt;
   color: #1a1a1a;
-  max-width: 280px;
   text-align: center;
 
   .speech-tail {
