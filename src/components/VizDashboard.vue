@@ -50,7 +50,7 @@ function getVizWidth(spec: any, key: string) {
 <template>
   <q-scroll-area ref="dashboardArea" class="flexflex-grow-1" style="height: 100%; width: 100%">
     <div class="flex row q-gutter-lg q-pa-md" style="flex-wrap: wrap">
-      <template v-for="(viz, index) in reversedPinned" :key="viz.uuid">
+      <template v-for="viz in reversedPinned" :key="viz.uuid">
         <div
           :class="`q-pa-md viz-container ${dashboardStore.isExpanded(vizKey(viz)) ? 'viz-expanded' : 'w-500'} ${dashboardStore.isHovered(vizKey(viz)) ? 'hovered-viz' : ''}`"
           :style="getVizWidth(viz.interactiveSpec, vizKey(viz))"
@@ -105,12 +105,10 @@ function getVizWidth(spec: any, key: string) {
           <div class="flex-container">
             <div class="inner-container">
               <UDIVis
-                v-if="index === 0"
                 :spec="viz.interactiveSpec"
                 :selections="dataSelections"
                 @selection-change="selectionChanged"
               />
-              <UDIVis v-else :selections="dataSelections" :spec="viz.interactiveSpec" />
             </div>
           </div>
         </div>

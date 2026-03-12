@@ -31,6 +31,7 @@ const inputText = ref('');
 
 const showResetModal = ref(false);
 const showMemoryBank = ref(false);
+const memoryBankReady = ref(false);
 
 function resetConversation() {
   showResetModal.value = false;
@@ -945,7 +946,7 @@ watch(
     </q-card>
   </q-dialog>
 
-  <q-dialog v-model="showMemoryBank">
+  <q-dialog v-model="showMemoryBank" @show="memoryBankReady = true" @hide="memoryBankReady = false">
     <q-card style="width: 90vw; max-width: 1200px; max-height: 90vh">
       <q-card-section class="row items-center">
         <div class="text-h6">Memory Bank</div>
@@ -985,7 +986,7 @@ watch(
                 <q-tooltip>Restore to Dashboard</q-tooltip>
               </q-btn>
             </q-toolbar>
-            <UDIVis :spec="viz.interactiveSpec" />
+            <UDIVis v-if="memoryBankReady" :spec="viz.interactiveSpec" />
           </div>
         </div>
       </q-card-section>

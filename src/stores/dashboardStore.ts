@@ -78,6 +78,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
         for (const { spec, toolCallIndex, title } of specs) {
           const key = pinKey(i, toolCallIndex);
           if (pinnedVisualizations.value.has(key)) continue;
+          if (memoryBankStore.closedVisualizations.has(key)) continue;
           let userPromptIndex = i - 1;
           while (userPromptIndex >= 0 && messages.value?.[userPromptIndex]?.role !== 'user') {
             userPromptIndex--;
