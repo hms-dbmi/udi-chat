@@ -11,6 +11,8 @@ const splashMessages = [
 ];
 
 const splashMessage = ref(splashMessages[Math.floor(Math.random() * splashMessages.length)]);
+
+const baseUrl = import.meta.env.BASE_URL;
 </script>
 
 <template>
@@ -49,7 +51,7 @@ const splashMessage = ref(splashMessages[Math.floor(Math.random() * splashMessag
       </div>
 
       <!-- Mascot image -->
-      <img src="/images/yac-mascot.svg" alt="YAC mascot" class="splash-mascot" />
+      <img :src="`${baseUrl}images/yac-mascot.svg`" alt="YAC mascot" class="splash-mascot" />
     </div>
   </div>
 </template>
