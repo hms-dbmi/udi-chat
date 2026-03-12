@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia';
-import { watch, computed, onUpdated } from 'vue';
+import { computed } from 'vue';
 import { useDashboardStore } from 'src/stores/dashboardStore';
-const dashboardStore = useDashboardStore();
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
+import WelcomeSplash from 'src/components/WelcomeSplash.vue';
+
+const dashboardStore = useDashboardStore();
 const dataFilterStore = useDataFilterStore();
-const { validDataSelections, dataSelections } = storeToRefs(dataFilterStore);
+const { dataSelections } = storeToRefs(dataFilterStore);
 
 function selectionChanged(newSelection: any) {
   dataFilterStore.updateInternalDataSelections(newSelection);
@@ -15,6 +17,8 @@ function selectionChanged(newSelection: any) {
 const reversedPinned = computed(() =>
   Array.from(dashboardStore.pinnedVisualizations.values()).slice().reverse(),
 );
+
+const isEmpty = computed(() => dashboardStore.pinnedVisualizations.size === 0);
 
 function getVizWidth(spec: any) {
   // todo derive value from w-500 and margin/padding
@@ -33,7 +37,11 @@ function getVizWidth(spec: any) {
 
 <template>
   <q-scroll-area ref="dashboardArea" class="flexflex-grow-1" style="height: 100%; width: 100%">
-    <div class="flex row q-gutter-lg q-pa-md" style="flex-wrap: wrap">
+    <!-- Welcome splash when no visualizations are pinned -->
+    <WelcomeSplash v-if="isEmpty" />
+
+    <!-- Visualization grid -->
+    <div v-else class="flex row q-gutter-lg q-pa-md" style="flex-wrap: wrap">
       <template v-for="(viz, index) in reversedPinned" :key="viz.id ?? viz.index">
         <div
           :class="`w-500 q-pa-md viz-container ${dashboardStore.isHovered(dashboardStore.pinKey(viz.index, viz.toolCallIndex)) ? 'hovered-viz' : ''}`"
