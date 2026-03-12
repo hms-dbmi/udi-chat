@@ -394,8 +394,25 @@ function realMessageIndex(displayIndex: number): number {
   return conversationStore.messages.indexOf(displayed);
 }
 
+type ToolCallType = 'visualization' | 'filter' | 'explain' | 'rebuff' | 'clarify';
+
+interface ToolCallTypeConfig {
+  icon: string;
+  badge: string;
+  color: string;
+  accentClass: string;
+}
+
+const toolCallTypeConfig: Record<ToolCallType, ToolCallTypeConfig> = {
+  visualization: { icon: 'insert_chart', badge: 'Visualization', color: 'primary', accentClass: 'tool-call-accent-action' },
+  filter: { icon: 'filter_alt', badge: 'Filter', color: 'primary', accentClass: 'tool-call-accent-action' },
+  explain: { icon: 'chat', badge: 'Explanation', color: 'grey-7', accentClass: '' },
+  rebuff: { icon: 'warning_amber', badge: 'Notice', color: 'amber-8', accentClass: 'tool-call-accent-warning' },
+  clarify: { icon: 'help_outline', badge: 'Clarification', color: 'grey-7', accentClass: '' },
+};
+
 interface ToolCallTab {
-  type: 'visualization' | 'filter' | 'explain' | 'rebuff' | 'clarify';
+  type: ToolCallType;
   toolCallIndex: number;
   label: string;
 }
@@ -499,6 +516,14 @@ function toolCallSummary(tabs: ToolCallTab[]): string {
   }
 
   return parts.join(', ') + '.';
+}
+
+function headerAccentClass(tabs: ToolCallTab[]): string {
+  if (tabs.length === 1) return toolCallTypeConfig[tabs[0].type].accentClass;
+  // If mixed types, use the most prominent accent (warning > action > none)
+  if (tabs.some((t) => t.type === 'rebuff')) return 'tool-call-accent-warning';
+  if (tabs.some((t) => t.type === 'visualization' || t.type === 'filter')) return 'tool-call-accent-action';
+  return '';
 }
 
 function extractSpecByToolCallIndex(message: Message, toolCallIndex: number): object | null {
@@ -708,9 +733,27 @@ watch(
         ></q-markdown>
         <q-markdown class="q-mb-none" v-if="message.content" :src="message.content"></q-markdown>
 
-        <!-- Tool call summary above adjustment widgets -->
-        <div v-if="getToolCallTabs(message, i).length > 0" class="q-ma-sm text-italic">
-          {{ toolCallSummary(getToolCallTabs(message, i)) }}
+        <!-- Tool call header bar -->
+        <div
+          v-if="getToolCallTabs(message, i).length > 0"
+          class="tool-call-header q-ma-sm"
+          :class="headerAccentClass(getToolCallTabs(message, i))"
+        >
+          <div class="flex items-center q-gutter-sm">
+            <q-icon
+              v-if="getToolCallTabs(message, i).length === 1"
+              :name="toolCallTypeConfig[getToolCallTabs(message, i)[0].type].icon"
+              :color="toolCallTypeConfig[getToolCallTabs(message, i)[0].type].color"
+              size="xs"
+            />
+            <q-badge
+              v-if="getToolCallTabs(message, i).length === 1"
+              outline
+              :color="toolCallTypeConfig[getToolCallTabs(message, i)[0].type].color"
+              :label="toolCallTypeConfig[getToolCallTabs(message, i)[0].type].badge"
+            />
+            <span class="text-caption text-grey-8">{{ toolCallSummary(getToolCallTabs(message, i)) }}</span>
+          </div>
           <q-separator class="q-mt-xs q-mb-sm" />
         </div>
 
@@ -820,6 +863,7 @@ watch(
               v-for="tab in getToolCallTabs(message, i)"
               :key="tab.toolCallIndex"
               :name="tab.toolCallIndex"
+              :icon="toolCallTypeConfig[tab.type].icon"
               :label="tab.label"
               no-caps
             />
@@ -832,6 +876,7 @@ watch(
               getToolCallTabs(message, i).map((t) => ({
                 label: t.label,
                 value: t.toolCallIndex,
+                icon: toolCallTypeConfig[t.type].icon,
               }))
             "
             option-value="value"
@@ -1202,6 +1247,19 @@ watch(
 
 .tool-call-tabs {
   background: transparent;
+}
+
+.tool-call-header {
+  padding-left: 8px;
+}
+
+.tool-call-accent-action {
+  border-left: 3px solid $primary;
+}
+
+.tool-call-accent-warning {
+  border-left: 3px solid #f9a825;
+  background-color: rgba(249, 168, 37, 0.04);
 }
 
 .example-prompt-btn {

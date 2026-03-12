@@ -8,12 +8,6 @@ const props = defineProps<{
   hasStructuredElements: boolean;
 }>();
 
-const typeIcon: Record<string, string> = {
-  capabilities: 'info',
-  data_summary: 'table_chart',
-  general: 'chat',
-};
-
 /** Build a single markdown string, embedding structured values as inline HTML. */
 const markdownText = computed(() =>
   props.text
@@ -30,12 +24,7 @@ const markdownText = computed(() =>
 
 <template>
   <div class="free-text-explain q-pa-sm">
-    <div class="flex items-start q-gutter-sm">
-      <q-icon :name="typeIcon[responseType] ?? 'chat'" size="sm" color="grey-7" class="q-mt-xs" />
-      <div class="flex-grow-1">
-        <q-markdown class="q-mb-none" :src="markdownText"></q-markdown>
-      </div>
-    </div>
+    <q-markdown class="q-mb-none" :src="markdownText"></q-markdown>
   </div>
 </template>
 
