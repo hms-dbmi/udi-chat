@@ -1000,33 +1000,6 @@ watch(
               />
             </q-tab-panel>
           </q-tab-panels>
-        </template>
-
-        <!-- No tool calls: legacy fallback -->
-        <template v-else>
-          <FilterComponent
-            v-if="shouldRenderFilterComponent(message, i)"
-            :message="message"
-            :index="realMessageIndex(i)"
-            :tweakable="message.role === 'assistant'"
-            :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
-          ></FilterComponent>
-          <div
-            v-if="shouldRenderUdiGrammar(message, i)"
-            :class="{
-              'hovered-message': dashboardStore.isHovered(
-                dashboardStore.pinKey(realMessageIndex(i), 0),
-              ),
-            }"
-          >
-            <VizTweakComponent
-              :message="message"
-              :index="realMessageIndex(i)"
-              :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
-              :extractUdiSpecFromMessage="dashboardStore.extractUdiSpecFromMessage"
-              :updateMessageWithNewSpec="dashboardStore.updateMessageWithNewSpec"
-            ></VizTweakComponent>
-          </div>
         </template></div
     ></q-chat-message>
     <q-chat-message
