@@ -90,7 +90,7 @@ function formatSelectionValue(sel: DataSelection): string {
 <template>
   <div class="row items-center wrap">
     <span v-if="chips.length === 0" class="filter-helper-text">
-      No filters available. Query the chat to add data filters.
+      Query the chat or interact with visualizations to add data filters.
     </span>
     <div
       v-for="(chip, index) in chips"
