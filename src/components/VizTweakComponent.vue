@@ -30,22 +30,38 @@ const sourceName = computed(() => {
   return spec.value?.source?.name ?? null;
 });
 
+/** Extract mappings from all representation layers, handling both single and array formats. */
+function extractAllMappings(representation: Representation | Representation[]): any[] {
+  const layers = isArray(representation) ? representation : [representation];
+  const results: any[] = [];
+  for (const layer of layers) {
+    if (layer.mark === 'row') continue;
+    const mappings = Array.isArray(layer.mapping) ? layer.mapping : [layer.mapping];
+    results.push(...mappings);
+  }
+  return results;
+}
+
 const tweakableParams = computed<TweakableParam[]>(() => {
   if (!spec.value || !spec.value.representation) {
     return [];
   }
-  const rep = spec.value.representation as Representation;
-  if (rep.mark === 'row') {
+  const rep = spec.value.representation;
+  if (!isArray(rep) && rep.mark === 'row') {
     return [];
   }
-  if (isArray(rep)) {
-    throw new Error('Array representation not supported yet');
-  }
-  const mapping = Array.isArray(rep.mapping) ? rep.mapping : [rep.mapping];
 
-  return mapping
+  const allMappings = extractAllMappings(rep);
+  const seen = new Set<string>();
+
+  return allMappings
     .filter((m) => m.field && m.encoding && m.type)
-    .filter((m) => dataPackageStore.sourceFields[sourceName.value].includes(m.field))
+    .filter((m) => dataPackageStore.sourceFields[sourceName.value]?.includes(m.field))
+    .filter((m) => {
+      if (seen.has(m.encoding)) return false;
+      seen.add(m.encoding);
+      return true;
+    })
     .map((m) => {
       const options =
         m.type === 'quantitative'
@@ -58,7 +74,7 @@ const tweakableParams = computed<TweakableParam[]>(() => {
           if (!spec.value) return;
           const specJson = JSON.stringify(spec.value);
           const updatedSpecJson = specJson.replace(new RegExp(`"${m.field}"`, 'g'), `"${next}"`);
-          // this probably will break in some cases. E.g. if you change x/y in scatterplot
+          // this breakß in some cases. E.g. if you change x/y in scatterplot
           // to the same field, they will be linked forever together <3
           const updatedSpec = JSON.parse(updatedSpecJson);
           props.updateMessageWithNewSpec(props.index, updatedSpec);
