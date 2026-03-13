@@ -89,11 +89,10 @@ function formatSelectionValue(sel: DataSelection): string {
 
 <template>
   <div class="row items-center wrap">
-    <div
-      v-for="(chip, index) in chips"
-      :key="chip.id"
-      class="chip-wrapper"
-    >
+    <span v-if="chips.length === 0" class="filter-helper-text q-mx-xs primary--text">
+      Ask in the chat or interact with visualizations to add data filters.
+    </span>
+    <div v-for="(chip, index) in chips" :key="chip.id" class="chip-wrapper">
       <q-btn
         class="chip-close-btn"
         flat
@@ -120,7 +119,7 @@ function formatSelectionValue(sel: DataSelection): string {
   </div>
 </template>
 
-<style>
+<style lang="scss">
 .force-border-grey {
   border-color: #cad5da !important;
 }
@@ -160,5 +159,10 @@ function formatSelectionValue(sel: DataSelection): string {
 .chip-close-btn:focus {
   opacity: 1;
   pointer-events: auto;
+}
+
+.filter-helper-text {
+  font-size: 0.85em;
+  color: $primary;
 }
 </style>
