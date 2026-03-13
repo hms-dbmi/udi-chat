@@ -915,6 +915,7 @@ watch(
                 label: t.label,
                 value: t.toolCallIndex,
                 icon: toolCallTypeConfig[t.type].icon,
+                color: toolCallTypeConfig[t.type].color,
               }))
             "
             option-value="value"
@@ -924,7 +925,20 @@ watch(
             dense
             outlined
             class="q-mb-xs"
-          />
+          >
+            <template #selected-item="scope">
+              <q-icon :name="scope.opt.icon" :color="scope.opt.color" size="xs" class="q-mr-xs" />
+              {{ scope.opt.label }}
+            </template>
+            <template #option="scope">
+              <q-item v-bind="scope.itemProps">
+                <q-item-section avatar>
+                  <q-icon :name="scope.opt.icon" :color="scope.opt.color" size="xs" />
+                </q-item-section>
+                <q-item-section>{{ scope.opt.label }}</q-item-section>
+              </q-item>
+            </template>
+          </q-select>
           <q-tab-panels
             :model-value="getActiveTab(i, getToolCallTabs(message, i))"
             @update:model-value="(val: number) => setActiveTab(i, val)"
