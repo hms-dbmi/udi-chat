@@ -5,7 +5,10 @@ import { useDashboardStore } from 'src/stores/dashboardStore';
 const dashboardStore = useDashboardStore();
 import { useDataPackageStore } from 'src/stores/dataPackageStore';
 const dataPackageStore = useDataPackageStore();
+import { useDataFilterStore } from 'src/stores/dataFiltersStore';
+const dataFilterStore = useDataFilterStore();
 const { filterIds } = storeToRefs(dashboardStore);
+const { dataSelections } = storeToRefs(dataFilterStore);
 import ExportBridge from 'components/ExportBridge.vue';
 
 const chips = computed(() => {
@@ -118,7 +121,7 @@ function getPathForResource(resourceId: string) {
 <template>
   <div class="row justify-center items-center">
     <template v-for="chip in chips" :key="chip.id">
-      <UDIVis :spec="specMap[chip.id].spec">
+      <UDIVis :spec="specMap[chip.id].spec" :selections="dataSelections">
         <template #default="{ data, allData, isSubset }">
           <div
             class="count-chip self-center q-pa-sm"
@@ -138,7 +141,7 @@ function getPathForResource(resourceId: string) {
           </div>
         </template>
       </UDIVis>
-      <UDIVis :spec="specMap[chip.id].filteredDataSpec">
+      <UDIVis :spec="specMap[chip.id].filteredDataSpec" :selections="dataSelections">
         <template #default="{ data, allData, isSubset }">
           <ExportBridge
             :id="chip.id"
