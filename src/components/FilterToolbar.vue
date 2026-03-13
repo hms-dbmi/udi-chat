@@ -89,6 +89,9 @@ function formatSelectionValue(sel: DataSelection): string {
 
 <template>
   <div class="row items-center wrap">
+    <span v-if="chips.length === 0" class="filter-helper-text">
+      No filters available. Query the chat to add data filters.
+    </span>
     <div
       v-for="(chip, index) in chips"
       :key="chip.id"
@@ -160,5 +163,12 @@ function formatSelectionValue(sel: DataSelection): string {
 .chip-close-btn:focus {
   opacity: 1;
   pointer-events: auto;
+}
+
+.filter-helper-text {
+  font-family: 'Helvetica Neue';
+  font-size: 0.85em;
+  color: #8a9ba5;
+  padding: 4px 0 4px 4px;
 }
 </style>
