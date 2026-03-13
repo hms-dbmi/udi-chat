@@ -23,7 +23,7 @@ const markdownText = computed(() =>
 </script>
 
 <template>
-  <div class="free-text-explain q-pa-sm">
+  <div class="free-text-explain q-px-sm q-pb-sm">
     <q-markdown class="q-mb-none" :src="markdownText"></q-markdown>
   </div>
 </template>

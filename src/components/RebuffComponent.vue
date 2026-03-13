@@ -9,7 +9,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="q-pa-sm">
+  <div class="q-px-sm q-pb-sm">
     <div class="flex items-start q-mb-sm">
       <!-- <q-icon name="info" size="sm" color="amber-8" class="q-mt-xs" /> -->
       <div class="text-body2">{{ message }}</div>
