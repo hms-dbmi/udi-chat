@@ -110,6 +110,14 @@ const tweakableParams = computed<TweakableParam[]>(() => {
               }
             }
           }
+          // Update field references in transformations (groupby, binby, rollup, kde, etc.)
+          if (updatedSpec.transformation) {
+            const oldField = m.field;
+            const transJson = JSON.stringify(updatedSpec.transformation);
+            updatedSpec.transformation = JSON.parse(
+              transJson.replace(new RegExp(`"${oldField}"`, 'g'), `"${next}"`),
+            );
+          }
           props.updateMessageWithNewSpec(props.index, updatedSpec);
           const pinKey = dashboardStore.pinKey(props.index, props.toolCallIndex ?? 0);
           dashboardStore.updatePinnedVisualizationSpec(pinKey, updatedSpec);
