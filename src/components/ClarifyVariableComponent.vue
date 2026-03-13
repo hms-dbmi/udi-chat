@@ -53,7 +53,7 @@ function submitFreeText() {
 </script>
 
 <template>
-  <div class="q-pa-sm">
+  <div class="q-px-sm q-pb-sm">
     <div class="text-body2 q-mb-sm">{{ message }}</div>
 
     <div v-for="(variable, vIdx) in ambiguous_variables" :key="vIdx" class="q-mb-sm">

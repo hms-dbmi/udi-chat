@@ -394,8 +394,40 @@ function realMessageIndex(displayIndex: number): number {
   return conversationStore.messages.indexOf(displayed);
 }
 
+type ToolCallType = 'visualization' | 'filter' | 'explain' | 'rebuff' | 'clarify';
+
+interface ToolCallTypeConfig {
+  icon: string;
+  badge: string;
+  color: string;
+  accentClass: string;
+}
+
+const toolCallTypeConfig: Record<ToolCallType, ToolCallTypeConfig> = {
+  visualization: {
+    icon: 'insert_chart',
+    badge: 'Visualization',
+    color: 'primary',
+    accentClass: 'tool-call-accent-action',
+  },
+  filter: {
+    icon: 'filter_alt',
+    badge: 'Filter',
+    color: 'primary',
+    accentClass: 'tool-call-accent-action',
+  },
+  explain: { icon: 'chat', badge: 'Explanation', color: 'grey-7', accentClass: '' },
+  rebuff: {
+    icon: 'warning_amber',
+    badge: 'Notice',
+    color: 'amber-8',
+    accentClass: 'tool-call-accent-warning',
+  },
+  clarify: { icon: 'help_outline', badge: 'Clarification', color: 'grey-7', accentClass: '' },
+};
+
 interface ToolCallTab {
-  type: 'visualization' | 'filter' | 'explain' | 'rebuff' | 'clarify';
+  type: ToolCallType;
   toolCallIndex: number;
   label: string;
 }
@@ -419,7 +451,11 @@ function getToolCallTabs(message: Message, displayIndex: number): ToolCallTab[] 
     const title = args?.title;
     if (name === 'RenderVisualization') {
       vizCount++;
-      tabs.push({ type: 'visualization', toolCallIndex: i, label: title || `Visualization ${vizCount}` });
+      tabs.push({
+        type: 'visualization',
+        toolCallIndex: i,
+        label: title || `Visualization ${vizCount}`,
+      });
     } else if (name === 'FilterData') {
       filterCount++;
       tabs.push({ type: 'filter', toolCallIndex: i, label: title || `Filter ${filterCount}` });
@@ -471,7 +507,7 @@ function setActiveTab(displayIndex: number, toolCallIndex: number) {
   activeTab.value[displayIndex] = toolCallIndex;
 }
 
-function toolCallSummary(tabs: ToolCallTab[]): string {
+function toolCallSummaryParts(tabs: ToolCallTab[]): string[] {
   const vizTabs = tabs.filter((t) => t.type === 'visualization');
   const filterTabs = tabs.filter((t) => t.type === 'filter');
   const explainCount = tabs.filter((t) => t.type === 'explain').length;
@@ -481,7 +517,9 @@ function toolCallSummary(tabs: ToolCallTab[]): string {
   if (vizTabs.length === 1 && vizTabs[0].label && vizTabs[0].label !== 'Visualization') {
     parts.push(`added "${vizTabs[0].label}" visualization to dashboard`);
   } else if (vizTabs.length > 0) {
-    parts.push(`${vizTabs.length} visualization${vizTabs.length > 1 ? 's' : ''} added to dashboard`);
+    parts.push(
+      `${vizTabs.length} visualization${vizTabs.length > 1 ? 's' : ''} added to dashboard`,
+    );
   }
   if (filterTabs.length === 1 && filterTabs[0].label && filterTabs[0].label !== 'Filter') {
     parts.push(`applied "${filterTabs[0].label}" filter`);
@@ -498,7 +536,25 @@ function toolCallSummary(tabs: ToolCallTab[]): string {
     parts.push(`${clarifyCount} clarification${clarifyCount > 1 ? 's' : ''}`);
   }
 
-  return parts.join(', ') + '.';
+  return parts;
+}
+
+/** Get unique tool call types with their counts for badge rendering. */
+function headerBadges(tabs: ToolCallTab[]): { type: ToolCallType; count: number }[] {
+  const counts = new Map<ToolCallType, number>();
+  for (const tab of tabs) {
+    counts.set(tab.type, (counts.get(tab.type) ?? 0) + 1);
+  }
+  return Array.from(counts.entries()).map(([type, count]) => ({ type, count }));
+}
+
+function headerAccentClass(tabs: ToolCallTab[]): string {
+  if (tabs.length === 1) return toolCallTypeConfig[tabs[0].type].accentClass;
+  // If mixed types, use the most prominent accent (warning > action > none)
+  if (tabs.some((t) => t.type === 'rebuff')) return 'tool-call-accent-warning';
+  if (tabs.some((t) => t.type === 'visualization' || t.type === 'filter'))
+    return 'tool-call-accent-action';
+  return '';
 }
 
 function extractSpecByToolCallIndex(message: Message, toolCallIndex: number): object | null {
@@ -635,7 +691,13 @@ watch(
         >
       </div>
       <div class="row items-center no-wrap">
-        <q-btn flat dense round @click="showMemoryBank = true" :disable="memoryBankEntries.length === 0">
+        <q-btn
+          flat
+          dense
+          round
+          @click="showMemoryBank = true"
+          :disable="memoryBankEntries.length === 0"
+        >
           <q-icon>
             <img src="/icons/memory-bank.svg" style="width: 20px; height: 20px; opacity: 0.7" />
           </q-icon>
@@ -644,14 +706,7 @@ watch(
           </q-badge>
           <q-tooltip>Memory Bank</q-tooltip>
         </q-btn>
-        <q-btn
-          flat
-          dense
-          round
-          icon="restart_alt"
-          color="primary"
-          @click="showResetModal = true"
-        >
+        <q-btn flat dense round icon="restart_alt" color="primary" @click="showResetModal = true">
           <q-tooltip>Reset conversation</q-tooltip>
         </q-btn>
         <q-btn
@@ -708,10 +763,43 @@ watch(
         ></q-markdown>
         <q-markdown class="q-mb-none" v-if="message.content" :src="message.content"></q-markdown>
 
-        <!-- Tool call summary above adjustment widgets -->
-        <div v-if="getToolCallTabs(message, i).length > 0" class="q-ma-sm text-italic">
-          {{ toolCallSummary(getToolCallTabs(message, i)) }}
-          <q-separator class="q-mt-xs q-mb-sm" />
+        <!-- Tool call header bar -->
+        <div
+          v-if="getToolCallTabs(message, i).length > 0"
+          class="q-ma-sm q-pl-sm"
+          :class="headerAccentClass(getToolCallTabs(message, i))"
+        >
+          <div class="flex items-center q-gutter-sm q-pb-sm">
+            <template v-for="b in headerBadges(getToolCallTabs(message, i))" :key="b.type">
+              <q-badge
+                outline
+                :color="toolCallTypeConfig[b.type].color"
+                class="tool-call-type-badge"
+              >
+                <q-icon :name="toolCallTypeConfig[b.type].icon" size="14px" class="q-mr-xs" />
+                {{ toolCallTypeConfig[b.type].badge }}
+                <q-badge
+                  v-if="b.count > 1"
+                  :color="toolCallTypeConfig[b.type].color"
+                  floating
+                  rounded
+                  :label="b.count"
+                  class="tool-call-count-badge"
+                />
+              </q-badge>
+            </template>
+            <div class="tool-call-summary-lines">
+              <div
+                v-for="(part, pIdx) in toolCallSummaryParts(getToolCallTabs(message, i))"
+                :key="pIdx"
+                class="text-caption text-grey-8"
+                :title="part"
+              >
+                {{ part }}
+              </div>
+            </div>
+          </div>
+          <!-- <q-separator class="q-mt-xs q-mb-sm" /> -->
         </div>
 
         <!-- Single tool call: render directly without tabs -->
@@ -820,9 +908,14 @@ watch(
               v-for="tab in getToolCallTabs(message, i)"
               :key="tab.toolCallIndex"
               :name="tab.toolCallIndex"
-              :label="tab.label"
               no-caps
-            />
+              class="tool-call-tab-item"
+            >
+              <div class="flex items-center no-wrap">
+                <q-icon :name="toolCallTypeConfig[tab.type].icon" size="xs" class="q-mr-xs" />
+                <span class="tool-call-tab-label" :title="tab.label">{{ tab.label }}</span>
+              </div>
+            </q-tab>
           </q-tabs>
           <q-select
             v-else
@@ -832,6 +925,8 @@ watch(
               getToolCallTabs(message, i).map((t) => ({
                 label: t.label,
                 value: t.toolCallIndex,
+                icon: toolCallTypeConfig[t.type].icon,
+                color: toolCallTypeConfig[t.type].color,
               }))
             "
             option-value="value"
@@ -841,7 +936,22 @@ watch(
             dense
             outlined
             class="q-mb-xs"
-          />
+          >
+            <template #selected-item="scope">
+              <div class="flex items-center no-wrap">
+                <q-icon :name="scope.opt.icon" :color="scope.opt.color" size="xs" class="q-mr-xs" />
+                <span :title="scope.opt.label">{{ scope.opt.label }}</span>
+              </div>
+            </template>
+            <template #option="scope">
+              <q-item v-bind="scope.itemProps">
+                <q-item-section avatar>
+                  <q-icon :name="scope.opt.icon" :color="scope.opt.color" size="xs" />
+                </q-item-section>
+                <q-item-section>{{ scope.opt.label }}</q-item-section>
+              </q-item>
+            </template>
+          </q-select>
           <q-tab-panels
             :model-value="getActiveTab(i, getToolCallTabs(message, i))"
             @update:model-value="(val: number) => setActiveTab(i, val)"
@@ -919,7 +1029,7 @@ watch(
           </q-tab-panels>
         </template>
 
-        <!-- No tool calls: legacy fallback -->
+        <!-- render user filters -->
         <template v-else>
           <FilterComponent
             v-if="shouldRenderFilterComponent(message, i)"
@@ -928,22 +1038,6 @@ watch(
             :tweakable="message.role === 'assistant'"
             :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
           ></FilterComponent>
-          <div
-            v-if="shouldRenderUdiGrammar(message, i)"
-            :class="{
-              'hovered-message': dashboardStore.isHovered(
-                dashboardStore.pinKey(realMessageIndex(i), 0),
-              ),
-            }"
-          >
-            <VizTweakComponent
-              :message="message"
-              :index="realMessageIndex(i)"
-              :shouldRenderUdiGrammar="shouldRenderUdiGrammar"
-              :extractUdiSpecFromMessage="dashboardStore.extractUdiSpecFromMessage"
-              :updateMessageWithNewSpec="dashboardStore.updateMessageWithNewSpec"
-            ></VizTweakComponent>
-          </div>
         </template></div
     ></q-chat-message>
     <q-chat-message
@@ -963,8 +1057,8 @@ watch(
       class="q-mb-lg q-mx-sm"
     >
       <p class="text-body2 q-mb-sm q-ml-xs">
-        Enter your OpenAI API key to start chatting. Your key is stored locally in your browser and sent
-        only to the configured backend.
+        Enter your OpenAI API key to start chatting. Your key is stored locally in your browser and
+        sent only to the configured backend.
       </p>
       <q-input
         v-model="apiKeyDraft"
@@ -1103,9 +1197,7 @@ watch(
       <q-card-section>
         <div class="text-h6">Reset Conversation</div>
       </q-card-section>
-      <q-card-section>
-        This will clear all messages, visualizations, and filters.
-      </q-card-section>
+      <q-card-section> This will clear all messages, visualizations, and filters. </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="Cancel" color="primary" v-close-popup />
         <q-btn flat label="Reset" color="negative" @click="resetConversation" />
@@ -1130,11 +1222,7 @@ watch(
           No closed visualizations yet.
         </div>
         <div v-else class="flex row q-gutter-lg" style="flex-wrap: wrap">
-          <div
-            v-for="[key, viz] in memoryBankEntries"
-            :key="key"
-            class="memory-bank-card q-pa-md"
-          >
+          <div v-for="[key, viz] in memoryBankEntries" :key="key" class="memory-bank-card q-pa-md">
             <q-toolbar dense>
               <span class="text-caption short-text-element" :title="viz.title || viz.userPrompt">{{
                 viz.title || viz.userPrompt
@@ -1202,6 +1290,44 @@ watch(
 
 .tool-call-tabs {
   background: transparent;
+}
+
+.tool-call-header {
+  padding-left: 8px;
+}
+
+.tool-call-accent-action {
+  border-left: 3px solid $primary;
+}
+
+.tool-call-accent-warning {
+  border-left: 3px solid #f9a825;
+  background-color: rgba(249, 168, 37, 0.04);
+}
+
+.tool-call-type-badge {
+  position: relative;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.tool-call-count-badge {
+  top: -8px;
+  right: -8px;
+  font-size: 10px;
+  min-height: 16px;
+  min-width: 16px;
+}
+
+.tool-call-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 110px;
+}
+
+.tool-call-tab-item {
+  max-width: 240px;
 }
 
 .example-prompt-btn {
