@@ -1014,6 +1014,17 @@ watch(
               />
             </q-tab-panel>
           </q-tab-panels>
+        </template>
+
+        <!-- render user filters -->
+        <template v-else>
+          <FilterComponent
+            v-if="shouldRenderFilterComponent(message, i)"
+            :message="message"
+            :index="realMessageIndex(i)"
+            :tweakable="message.role === 'assistant'"
+            :extractFilterSpecFromMessage="dataFiltersStore.extractFilterSpecFromMessage"
+          ></FilterComponent>
         </template></div
     ></q-chat-message>
     <q-chat-message
