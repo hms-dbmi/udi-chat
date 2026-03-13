@@ -766,7 +766,7 @@ watch(
         <!-- Tool call header bar -->
         <div
           v-if="getToolCallTabs(message, i).length > 0"
-          class="tool-call-header q-ma-sm"
+          class="q-ma-sm q-pl-sm"
           :class="headerAccentClass(getToolCallTabs(message, i))"
         >
           <div class="flex items-center q-gutter-sm q-pb-sm">
@@ -793,7 +793,10 @@ watch(
                 v-for="(part, pIdx) in toolCallSummaryParts(getToolCallTabs(message, i))"
                 :key="pIdx"
                 class="text-caption text-grey-8"
-              >{{ part }}</div>
+                :title="part"
+              >
+                {{ part }}
+              </div>
             </div>
           </div>
           <!-- <q-separator class="q-mt-xs q-mb-sm" /> -->
@@ -905,10 +908,14 @@ watch(
               v-for="tab in getToolCallTabs(message, i)"
               :key="tab.toolCallIndex"
               :name="tab.toolCallIndex"
-              :icon="toolCallTypeConfig[tab.type].icon"
-              :label="tab.label"
               no-caps
-            />
+              class="tool-call-tab-item"
+            >
+              <div class="flex items-center no-wrap">
+                <q-icon :name="toolCallTypeConfig[tab.type].icon" size="xs" class="q-mr-xs" />
+                <span class="tool-call-tab-label" :title="tab.label">{{ tab.label }}</span>
+              </div>
+            </q-tab>
           </q-tabs>
           <q-select
             v-else
@@ -931,8 +938,10 @@ watch(
             class="q-mb-xs"
           >
             <template #selected-item="scope">
-              <q-icon :name="scope.opt.icon" :color="scope.opt.color" size="xs" class="q-mr-xs" />
-              {{ scope.opt.label }}
+              <div class="flex items-center no-wrap">
+                <q-icon :name="scope.opt.icon" :color="scope.opt.color" size="xs" class="q-mr-xs" />
+                <span :title="scope.opt.label">{{ scope.opt.label }}</span>
+              </div>
             </template>
             <template #option="scope">
               <q-item v-bind="scope.itemProps">
@@ -1308,6 +1317,17 @@ watch(
   font-size: 10px;
   min-height: 16px;
   min-width: 16px;
+}
+
+.tool-call-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 110px;
+}
+
+.tool-call-tab-item {
+  max-width: 240px;
 }
 
 .example-prompt-btn {
