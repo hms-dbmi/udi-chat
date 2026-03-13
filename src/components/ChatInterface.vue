@@ -1306,7 +1306,6 @@ watch(
   font-size: 10px;
   min-height: 16px;
   min-width: 16px;
-  padding: 0 4px;
 }
 
 .example-prompt-btn {
