@@ -74,6 +74,8 @@ const tweakableParams = computed<TweakableParam[]>(() => {
           if (!spec.value) return;
           const specJson = JSON.stringify(spec.value);
           const updatedSpecJson = specJson.replace(new RegExp(`"${m.field}"`, 'g'), `"${next}"`);
+          // this breakß in some cases. E.g. if you change x/y in scatterplot
+          // to the same field, they will be linked forever together <3
           const updatedSpec = JSON.parse(updatedSpecJson);
           props.updateMessageWithNewSpec(props.index, updatedSpec);
           const pinKey = dashboardStore.pinKey(props.index, props.toolCallIndex ?? 0);
