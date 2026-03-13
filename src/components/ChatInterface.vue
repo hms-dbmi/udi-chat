@@ -507,7 +507,7 @@ function setActiveTab(displayIndex: number, toolCallIndex: number) {
   activeTab.value[displayIndex] = toolCallIndex;
 }
 
-function toolCallSummary(tabs: ToolCallTab[]): string {
+function toolCallSummaryParts(tabs: ToolCallTab[]): string[] {
   const vizTabs = tabs.filter((t) => t.type === 'visualization');
   const filterTabs = tabs.filter((t) => t.type === 'filter');
   const explainCount = tabs.filter((t) => t.type === 'explain').length;
@@ -536,7 +536,7 @@ function toolCallSummary(tabs: ToolCallTab[]): string {
     parts.push(`${clarifyCount} clarification${clarifyCount > 1 ? 's' : ''}`);
   }
 
-  return parts.join(', ') + '.';
+  return parts;
 }
 
 /** Get unique tool call types with their counts for badge rendering. */
@@ -788,9 +788,13 @@ watch(
                 />
               </q-badge>
             </template>
-            <span class="text-caption text-grey-8">{{
-              toolCallSummary(getToolCallTabs(message, i))
-            }}</span>
+            <div class="tool-call-summary-lines">
+              <div
+                v-for="(part, pIdx) in toolCallSummaryParts(getToolCallTabs(message, i))"
+                :key="pIdx"
+                class="text-caption text-grey-8"
+              >{{ part }}</div>
+            </div>
           </div>
           <!-- <q-separator class="q-mt-xs q-mb-sm" /> -->
         </div>
