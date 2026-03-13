@@ -30,14 +30,26 @@ const sourceName = computed(() => {
   return spec.value?.source?.name ?? null;
 });
 
+/** Location of a mapping entry within the spec for targeted updates. */
+interface MappingLocation {
+  repIndex: number | null;
+  mappingIndex: number;
+}
+
 /** Extract mappings from all representation layers, handling both single and array formats. */
-function extractAllMappings(representation: Representation | Representation[]): any[] {
+function extractAllMappings(representation: Representation | Representation[]): { mapping: any; location: MappingLocation }[] {
   const layers = isArray(representation) ? representation : [representation];
-  const results: any[] = [];
-  for (const layer of layers) {
+  const results: { mapping: any; location: MappingLocation }[] = [];
+  for (let li = 0; li < layers.length; li++) {
+    const layer = layers[li];
     if (layer.mark === 'row') continue;
     const mappings = Array.isArray(layer.mapping) ? layer.mapping : [layer.mapping];
-    results.push(...mappings);
+    for (let mi = 0; mi < mappings.length; mi++) {
+      results.push({
+        mapping: mappings[mi],
+        location: { repIndex: isArray(representation) ? li : null, mappingIndex: mi },
+      });
+    }
   }
   return results;
 }
@@ -55,14 +67,14 @@ const tweakableParams = computed<TweakableParam[]>(() => {
   const seen = new Set<string>();
 
   return allMappings
-    .filter((m) => m.field && m.encoding && m.type)
-    .filter((m) => dataPackageStore.sourceFields[sourceName.value]?.includes(m.field))
-    .filter((m) => {
+    .filter(({ mapping: m }) => m.field && m.encoding && m.type)
+    .filter(({ mapping: m }) => dataPackageStore.sourceFields[sourceName.value]?.includes(m.field))
+    .filter(({ mapping: m }) => {
       if (seen.has(m.encoding)) return false;
       seen.add(m.encoding);
       return true;
     })
-    .map((m) => {
+    .map(({ mapping: m, location }) => {
       const options =
         m.type === 'quantitative'
           ? (dataPackageStore.quantitativeSourceFields?.[sourceName.value] ?? [])
@@ -72,12 +84,35 @@ const tweakableParams = computed<TweakableParam[]>(() => {
         get: () => m.field,
         set: (next: string) => {
           if (!spec.value) return;
-          const specJson = JSON.stringify(spec.value);
-          const updatedSpecJson = specJson.replace(new RegExp(`"${m.field}"`, 'g'), `"${next}"`);
-          const updatedSpec = JSON.parse(updatedSpecJson);
+          const updatedSpec = JSON.parse(JSON.stringify(spec.value));
+          // Update the specific mapping entry by location
+          const targetRep = location.repIndex !== null
+            ? updatedSpec.representation[location.repIndex]
+            : updatedSpec.representation;
+          const targetMappings = Array.isArray(targetRep.mapping) ? targetRep.mapping : [targetRep.mapping];
+          targetMappings[location.mappingIndex].field = next;
+          if (!Array.isArray(targetRep.mapping)) {
+            targetRep.mapping = targetMappings[0];
+          }
+          // For array representations, also update other layers sharing the same encoding
+          if (location.repIndex !== null && isArray(updatedSpec.representation)) {
+            for (let li = 0; li < updatedSpec.representation.length; li++) {
+              if (li === location.repIndex) continue;
+              const otherLayer = updatedSpec.representation[li];
+              const otherMappings = Array.isArray(otherLayer.mapping) ? otherLayer.mapping : [otherLayer.mapping];
+              for (const om of otherMappings) {
+                if (om.encoding === m.encoding && om.field === m.field) {
+                  om.field = next;
+                }
+              }
+              if (!Array.isArray(otherLayer.mapping)) {
+                otherLayer.mapping = otherMappings[0];
+              }
+            }
+          }
           props.updateMessageWithNewSpec(props.index, updatedSpec);
           const pinKey = dashboardStore.pinKey(props.index, props.toolCallIndex ?? 0);
-          dashboardStore.updatePinnedVisualizationSpec(pinKey, spec.value!);
+          dashboardStore.updatePinnedVisualizationSpec(pinKey, updatedSpec);
         },
       });
 
