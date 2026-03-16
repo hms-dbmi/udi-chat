@@ -59,7 +59,8 @@ const llmResponding = ref(false);
 
 // const client = { value: null };
 const llmBaseUrl = import.meta.env.VITE_LLM_API_BASE_URL ?? 'http://localhost';
-const port = import.meta.env.VITE_LLM_API_PORT ?? 55001;
+const port = import.meta.env.VITE_LLM_API_PORT;
+const apiOrigin = port ? `${llmBaseUrl}:${port}` : llmBaseUrl;
 const token = import.meta.env.VITE_AUTH_TOKEN;
 
 // Example prompts
@@ -71,7 +72,7 @@ const hasMessages = computed(() => conversationStore.messages.some((m) => m.role
 
 async function fetchExamplePrompts() {
   try {
-    const response = await fetch(`${llmBaseUrl}:${port}/v1/yac/examples`);
+    const response = await fetch(`${apiOrigin}/v1/yac/examples`);
     if (!response.ok) return;
     const data = await response.json();
     if (Array.isArray(data)) {
@@ -147,7 +148,7 @@ function cancelApiKeyInput() {
 
 // onMounted(() => {
 //   client.value = new OpenAI({
-//     baseURL: `${llmBaseUrl}:${port}/v1`, // vLLM API server
+//     baseURL: `${apiOrigin}/v1`, // vLLM API server
 //     apiKey: 'EMPTY', // Replace with your OpenAI API key if needed
 //     dangerouslyAllowBrowser: true,
 //   });
@@ -198,7 +199,7 @@ const model = ref('agenticx/UDI-VIS-Beta-v2-Llama-3.1-8B');
 async function queryLLM() {
   llmResponding.value = true;
 
-  const server = `${llmBaseUrl}:${port}/v1`;
+  const server = `${apiOrigin}/v1`;
   // const model = 'agenticx/UDI-VIS-Beta-v0-Llama-3.1-8B';
   try {
     const response = await fetch(`${server}/yac/completions`, {
