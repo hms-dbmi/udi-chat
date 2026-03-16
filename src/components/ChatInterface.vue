@@ -70,6 +70,8 @@ const showExamplesModal = ref(false);
 
 const hasMessages = computed(() => conversationStore.messages.some((m) => m.role === 'user'));
 
+const baseUrl = import.meta.env.BASE_URL;
+
 async function fetchExamplePrompts() {
   try {
     const response = await fetch(`${apiOrigin}/v1/yac/examples`);
@@ -700,7 +702,7 @@ watch(
           :disable="memoryBankEntries.length === 0"
         >
           <q-icon>
-            <img src="/icons/memory-bank.svg" style="width: 20px; height: 20px; opacity: 0.7" />
+            <img :src="`${baseUrl}icons/memory-bank.svg`" style="width: 20px; height: 20px; opacity: 0.7" />
           </q-icon>
           <q-badge v-if="memoryBankEntries.length > 0" color="accent" floating>
             {{ memoryBankEntries.length }}
