@@ -160,13 +160,14 @@ onMounted(() => {
   fetchExamplePrompts();
 });
 
+const isInputEmpty = computed(() => inputText.value.trim().length === 0);
+
 function sendMessage(event: Event) {
   if (event instanceof KeyboardEvent && event.shiftKey) {
     return;
   }
   event.preventDefault();
-  if (llmResponding.value) {
-    // don't allow double sending
+  if (llmResponding.value || isInputEmpty.value) {
     return;
   }
 
@@ -1175,7 +1176,7 @@ watch(
           class="q-mr-sm"
           @click="sendMessage"
           outline
-          :disable="llmResponding"
+          :disable="llmResponding || isInputEmpty"
           icon-right="send"
           label="Send"
           no-caps
