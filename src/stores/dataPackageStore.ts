@@ -196,7 +196,7 @@ export const useDataPackageStore = defineStore('dataPackageStore', () => {
     return data;
   }
 
-  function removeLongDomains(data: DataFieldDomain[], threshold = 30): object {
+  function removeLongDomains(data: DataFieldDomain[], threshold = 80): object {
     if (!data || typeof data !== 'object') return data;
     return data.filter((dataFieldDomain: DataFieldDomain) => {
       return (
