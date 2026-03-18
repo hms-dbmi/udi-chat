@@ -51,13 +51,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     return `${messageIndex}-${toolCallIndex}`;
   }
 
-  function pinVisualization(
-    index: number,
-    toolCallIndex: number,
-    spec: UDIGrammar,
-    userPrompt: string,
-    title?: string,
-  ) {
+  function pinVisualization(index: number, toolCallIndex: number, spec: UDIGrammar, userPrompt: string, title?: string) {
     const uuid = 'udi_' + uuidv4();
     const interactiveSpec = injectInteractivity(spec, uuid);
     const key = pinKey(index, toolCallIndex);
@@ -101,10 +95,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     { deep: true },
   );
 
-  function parseSpecFromToolCall(toolCall: {
-    name: string;
-    arguments: Record<string, any>;
-  }): object | null {
+  function parseSpecFromToolCall(toolCall: { name: string; arguments: Record<string, any> }): object | null {
     const functionArgs = toolCall.arguments;
     if (!functionArgs) return null;
     const specString = functionArgs.spec;
@@ -140,11 +131,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       const spec = parseSpecFromToolCall(call);
       if (spec) {
         const title = call.arguments?.title;
-        results.push({
-          spec,
-          toolCallIndex: call.originalIndex,
-          title: typeof title === 'string' ? title : undefined,
-        });
+        results.push({ spec, toolCallIndex: call.originalIndex, title: typeof title === 'string' ? title : undefined });
       }
     }
     return results;
@@ -155,18 +142,12 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     return specs.length > 0 ? specs[0].spec : null;
   }
 
-  function updateMessageWithNewSpec(
-    index: number,
-    newSpec: UDIGrammar,
-    toolCallIndex?: number,
-  ): void {
+  function updateMessageWithNewSpec(index: number, newSpec: UDIGrammar, toolCallIndex?: number): void {
     const message = messages.value[index];
     if (!message || message.role !== 'assistant' || !message.tool_calls) return;
-    const targetIndex =
-      toolCallIndex ??
-      message.tool_calls.findIndex(
-        (call) => call.function && call.function.name === 'RenderVisualization',
-      );
+    const targetIndex = toolCallIndex ?? message.tool_calls.findIndex(
+      (call) => call.function && call.function.name === 'RenderVisualization',
+    );
     if (targetIndex === -1 || targetIndex >= message.tool_calls.length) return;
     const newToolCalls = cloneDeep(message.tool_calls);
     newToolCalls[targetIndex] = {
@@ -290,21 +271,18 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
   // toolkit skips filters whose selection doesn't exist). This avoids
   // expensive deep-clone + re-render of all remaining visualizations.
   let suppressFilterWatch = false;
-  watch(
-    () => filterIds.value.join('|'),
-    (newVal, oldVal) => {
-      if (suppressFilterWatch) return;
-      if (!oldVal) {
-        updateSpecFilters();
-        return;
-      }
-      const oldSet = new Set(oldVal.split('|'));
-      const hasAdditions = newVal.split('|').some((id) => id && !oldSet.has(id));
-      if (hasAdditions) {
-        updateSpecFilters();
-      }
-    },
-  );
+  watch(() => filterIds.value.join('|'), (newVal, oldVal) => {
+    if (suppressFilterWatch) return;
+    if (!oldVal) {
+      updateSpecFilters();
+      return;
+    }
+    const oldSet = new Set(oldVal.split('|'));
+    const hasAdditions = newVal.split('|').some((id) => id && !oldSet.has(id));
+    if (hasAdditions) {
+      updateSpecFilters();
+    }
+  });
 
   function unpinVisualization(key: string) {
     const viz = pinnedVisualizations.value.get(key);
@@ -324,9 +302,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
     suppressFilterWatch = true;
     pinnedVisualizations.value.set(key, viz);
     memoryBankStore.removeFromMemoryBank(key);
-    nextTick(() => {
-      suppressFilterWatch = false;
-    });
+    nextTick(() => { suppressFilterWatch = false; });
   }
 
   function clearAllVisualizations() {
@@ -407,7 +383,6 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
           type: 'interval',
           on: intervalSeletionOn,
         },
-        fields: intervalDimensions.map((mapping) => resolveField(mapping)!),
       };
     } else {
       const categoricalDimensions = mappingList.filter((mapping) => {
