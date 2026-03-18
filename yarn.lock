@@ -4821,10 +4821,10 @@ uc.micro@^1.0.1, uc.micro@^1.0.5:
   resolved "https://registry.npmjs.org/uc.micro/-/uc.micro-1.0.6.tgz"
   integrity sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==
 
-udi-toolkit@^0.0.46:
-  version "0.0.46"
-  resolved "https://registry.yarnpkg.com/udi-toolkit/-/udi-toolkit-0.0.46.tgz#bafd23360a1b898b9839d9ce2faed1c8a7e9787d"
-  integrity sha512-36IWUnGwXvcPW4L360Mhjqj+UeLjsJ57W04bEyH9yq/iq1JTYsq5XA1TK+XQme63DRDHJ+TxnErdbyhg13EGew==
+udi-toolkit@^0.0.48:
+  version "0.0.48"
+  resolved "https://registry.yarnpkg.com/udi-toolkit/-/udi-toolkit-0.0.48.tgz#b226777f11ee2fab0aa05e690994b183dc4607a4"
+  integrity sha512-6/T+FU5rOGHUz7ms3mz0q6043+KcS7o7vA4hNrUwQGh6b3DRlqXwDsjDvx/Et7HxkiQ15yG+fGPdr/s1twsRqg==
   dependencies:
     "@types/d3-scale" "^4.0.9"
     "@types/d3-scale-chromatic" "^3.1.0"
