@@ -226,31 +226,32 @@ export const useDataFilterStore = defineStore('dataFilterStore', () => {
     if (!selection.selection || Object.keys(selection.selection ?? {}).length === 0) {
       return null;
     }
-    const field = Object.keys(selection.selection)[0];
-    const range = selection.selection[field];
+    const fields = Object.keys(selection.selection);
+    const tool_calls = fields.map((field) => {
+      const range = selection.selection[field];
+      return {
+        function: {
+          name: 'FilterData',
+          arguments: {
+            entity: selection.dataSourceKey,
+            field: field,
+            filter: {
+              filterType: selection.type,
+              intervalRange: {
+                min: range[0],
+                max: range[1],
+              },
+              pointValues: range,
+            },
+          },
+        },
+      };
+    });
     return {
       role: 'user',
       content: '',
       linkedVisFilterId: key,
-      tool_calls: [
-        {
-          function: {
-            name: 'FilterData',
-            arguments: {
-              entity: selection.dataSourceKey,
-              field: field,
-              filter: {
-                filterType: selection.type,
-                intervalRange: {
-                  min: range[0],
-                  max: range[1],
-                },
-                pointValues: range,
-              },
-            },
-          },
-        },
-      ],
+      tool_calls,
     };
   }
 

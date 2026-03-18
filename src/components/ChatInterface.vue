@@ -183,10 +183,52 @@ function sendMessage(event: Event) {
   scrollToBottom();
 }
 
-function constructQueryBody(removeLastMessage = false) {
+function toYaml(obj: unknown, indent = 0): string {
+  const pad = '  '.repeat(indent);
+  if (obj === null || obj === undefined) return `${pad}null`;
+  if (typeof obj === 'string') return `${pad}${obj}`;
+  if (typeof obj === 'number' || typeof obj === 'boolean') return `${pad}${obj}`;
+  if (Array.isArray(obj)) {
+    return obj.map((item) => `${pad}- ${toYaml(item, indent + 1).trimStart()}`).join('\n');
+  }
+  if (typeof obj === 'object') {
+    return Object.entries(obj)
+      .map(([key, val]) => {
+        const child = toYaml(val, indent + 1);
+        if (typeof val === 'object' && val !== null) {
+          return `${pad}${key}:\n${child}`;
+        }
+        return `${pad}${key}: ${child.trimStart()}`;
+      })
+      .join('\n');
+  }
+  return `${pad}${String(obj)}`;
+}
+
+function constructQueryBody(removeLastMessage = false, moveUserToolCallsToMessages = true) {
   const messages = cloneDeep(conversationStore.messages);
   if (removeLastMessage) {
     messages.pop();
+  }
+  if (moveUserToolCallsToMessages) {
+    for (const msg of messages) {
+      if (msg.role === 'user' && msg.tool_calls && msg.tool_calls.length > 0) {
+        const yamlParts = msg.tool_calls.map(
+          (call: {
+            function?: { name?: string; arguments?: unknown };
+            name?: string;
+            arguments?: unknown;
+          }) => {
+            const name = call.function?.name ?? call.name ?? 'unknown';
+            const args = call.function?.arguments ?? call.arguments ?? {};
+            return `tool_call: ${name}\n${toYaml(args)}`;
+          },
+        );
+        const yamlContent = yamlParts.join('\n---\n');
+        msg.content = msg.content ? `${msg.content}\n\n${yamlContent}` : yamlContent;
+        delete msg.tool_calls;
+      }
+    }
   }
   return {
     model: model.value,
@@ -667,6 +709,11 @@ watch(
       if (existingIndex !== -1) {
         if (value.selection == null || isEmpty(value.selection)) {
           conversationStore.messages.splice(existingIndex, 1);
+        } else {
+          const updatedMessage = dataFiltersStore.generateFilterMessage(key, value);
+          if (updatedMessage) {
+            conversationStore.messages.splice(existingIndex, 1, updatedMessage);
+          }
         }
         continue;
       }
@@ -702,7 +749,10 @@ watch(
           :disable="memoryBankEntries.length === 0"
         >
           <q-icon>
-            <img :src="`${baseUrl}icons/memory-bank.svg`" style="width: 20px; height: 20px; opacity: 0.7" />
+            <img
+              :src="`${baseUrl}icons/memory-bank.svg`"
+              style="width: 20px; height: 20px; opacity: 0.7"
+            />
           </q-icon>
           <q-badge v-if="memoryBankEntries.length > 0" color="accent" floating>
             {{ memoryBankEntries.length }}
