@@ -351,12 +351,20 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
       mappingList = firstRepresentation.mapping;
     }
 
+    // Resolve a mapping's field name against source fields, falling back to
+    // mapping.title for computed fields (e.g., histogram bin fields).
+    const resolveField = (mapping: { field: string; title?: string }) => {
+      const fields = dataPackageStore.sourceFields[sourceName];
+      if (fields.includes(mapping.field)) return mapping.field;
+      if (mapping.title && fields.includes(mapping.title)) return mapping.title;
+      return null;
+    };
+
     const intervalDimensions = mappingList.filter((mapping) => {
       return (
         mapping.type === 'quantitative' &&
         (mapping.encoding === 'x' || mapping.encoding === 'y') &&
-        dataPackageStore.sourceFields[sourceName].includes(mapping.field)
-        // TODO and mapping.field is in the source data
+        resolveField(mapping) !== null
       );
     });
 
@@ -381,7 +389,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
         return (
           mapping.type !== 'quantitative' &&
           (mapping.encoding === 'x' || mapping.encoding === 'y' || mapping.encoding === 'color') &&
-          dataPackageStore.sourceFields[sourceName].includes(mapping.field)
+          resolveField(mapping) !== null
         );
       });
       firstRepresentation['select'] = {
@@ -390,7 +398,7 @@ export const useDashboardStore = defineStore('dashboardStore', () => {
         how: {
           type: 'point',
         },
-        fields: categoricalDimensions.map((mapping) => mapping.field),
+        fields: categoricalDimensions.map((mapping) => resolveField(mapping)!),
       };
     }
 
