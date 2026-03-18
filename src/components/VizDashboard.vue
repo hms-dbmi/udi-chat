@@ -35,7 +35,7 @@ function toggleExpand(key: string) {
 
 function getVizWidth(spec: any, key: string) {
   if (dashboardStore.isExpanded(key)) {
-    return {};  // width handled by flex-basis: 100% on viz-expanded class
+    return {}; // width handled by flex-basis: 100% on viz-expanded class
   }
   // todo derive value from w-500 and margin/padding
   if (!spec.representation) {
@@ -85,7 +85,7 @@ function getVizWidth(spec: any, key: string) {
             flat
             dense
             round
-            :icon="dashboardStore.isExpanded(vizKey(viz)) ? 'expand_less' : 'expand_more'"
+            :icon="dashboardStore.isExpanded(vizKey(viz)) ? 'unfold_less' : 'unfold_more'"
             style="transform: rotate(-90deg)"
             size="sm"
             @click="toggleExpand(vizKey(viz))"
