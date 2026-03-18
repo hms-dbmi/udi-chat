@@ -404,6 +404,16 @@ function saveDataSchema() {
   a.click();
 }
 
+function exportConversation() {
+  const data = JSON.stringify(conversationStore.messages, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'conversation.json';
+  a.click();
+}
+
 function bgColor(role: 'user' | 'system' | 'assistant'): string {
   switch (role) {
     case 'user':
@@ -758,6 +768,9 @@ watch(
             {{ memoryBankEntries.length }}
           </q-badge>
           <q-tooltip>Memory Bank</q-tooltip>
+        </q-btn>
+        <q-btn flat dense round icon="download" color="primary" @click="exportConversation">
+          <q-tooltip>Export conversation</q-tooltip>
         </q-btn>
         <q-btn flat dense round icon="restart_alt" color="primary" @click="showResetModal = true">
           <q-tooltip>Reset conversation</q-tooltip>

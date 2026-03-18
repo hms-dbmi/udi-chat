@@ -35,6 +35,7 @@ const conversationFiles = [
   'chi/teaser.json',
   'chi/teaser2.json',
   'chi/video_start.json',
+  'VIS26/test.json',
   // '1 stacked bar.json',
   // '2 distributions.json',
   // '3 pie chart.json',
