@@ -35,12 +35,13 @@
 </template>
 
 <script setup lang="ts">
-const isProduction = import.meta.env.VITE_PRODUCTION === 'true';
 import DownloadButton from 'components/DownloadButton.vue';
 import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import ConversationList from 'components/ConversationList.vue';
 import { useGlobalStore } from '../stores/globalStore';
 const globalStore = useGlobalStore();
+const { isProduction } = storeToRefs(globalStore);
 import { useDashboardStore } from '../stores/dashboardStore';
 const dashboardStore = useDashboardStore();
 

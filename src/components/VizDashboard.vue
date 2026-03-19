@@ -4,9 +4,11 @@ import { computed, nextTick, ref } from 'vue';
 import { compressToEncodedURIComponent } from 'lz-string';
 import { useDashboardStore } from 'src/stores/dashboardStore';
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
+import { useGlobalStore } from 'src/stores/globalStore';
 import WelcomeSplash from 'src/components/WelcomeSplash.vue';
 
-const isProduction = import.meta.env.VITE_PRODUCTION === 'true';
+const globalStore = useGlobalStore();
+const { isProduction } = storeToRefs(globalStore);
 
 const dashboardStore = useDashboardStore();
 const dataFilterStore = useDataFilterStore();

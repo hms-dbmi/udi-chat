@@ -10,6 +10,7 @@ const apiKeyStorage = CUSTOM_API_KEY_ENABLED ? useStorage(LOCAL_STORAGE_KEY, '')
 
 export const useGlobalStore = defineStore('globalStore', () => {
   const debugMode = ref<boolean>(false);
+  const isProduction = ref(import.meta.env.VITE_PRODUCTION === 'true');
 
   const customApiKeyEnabled = CUSTOM_API_KEY_ENABLED;
   const hasApiKey = ref(apiKeyStorage.value.length > 0);
@@ -23,5 +24,5 @@ export const useGlobalStore = defineStore('globalStore', () => {
     return apiKeyStorage.value;
   }
 
-  return { debugMode, customApiKeyEnabled, hasApiKey, setApiKey, getApiKey };
+  return { debugMode, isProduction, customApiKeyEnabled, hasApiKey, setApiKey, getApiKey };
 });

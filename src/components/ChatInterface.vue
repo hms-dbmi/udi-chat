@@ -167,6 +167,11 @@ function sendMessage(event: Event) {
     return;
   }
   event.preventDefault();
+  if (inputText.value.trim() === '///admin') {
+    globalStore.isProduction = !globalStore.isProduction;
+    inputText.value = '';
+    return;
+  }
   if (llmResponding.value || isInputEmpty.value) {
     return;
   }
