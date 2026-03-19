@@ -1,13 +1,31 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia';
-import { computed, nextTick } from 'vue';
+import { computed, nextTick, ref } from 'vue';
+import { compressToEncodedURIComponent } from 'lz-string';
 import { useDashboardStore } from 'src/stores/dashboardStore';
 import { useDataFilterStore } from 'src/stores/dataFiltersStore';
 import WelcomeSplash from 'src/components/WelcomeSplash.vue';
 
+const isProduction = import.meta.env.VITE_PRODUCTION === 'true';
+
 const dashboardStore = useDashboardStore();
 const dataFilterStore = useDataFilterStore();
 const { dataSelections } = storeToRefs(dataFilterStore);
+
+const showSpecInspector = ref(false);
+const specInspectorData = ref('');
+const specEditorUrl = ref('');
+
+function openSpecInspector(spec: any) {
+  specInspectorData.value = JSON.stringify(spec, null, 2);
+  const compressed = compressToEncodedURIComponent(specInspectorData.value);
+  specEditorUrl.value = `https://hms-dbmi.github.io/udi-grammar/#/Editor?spec=${compressed}`;
+  showSpecInspector.value = true;
+}
+
+function copySpecToClipboard() {
+  navigator.clipboard.writeText(specInspectorData.value);
+}
 
 function selectionChanged(newSelection: any) {
   dataFilterStore.updateInternalDataSelections(newSelection);
@@ -109,6 +127,17 @@ function getVizWidth(spec: any, key: string) {
               <q-tooltip>{{ viz.userPrompt }}</q-tooltip>
             </q-icon>
             <q-space />
+            <q-btn
+              v-if="!isProduction"
+              flat
+              dense
+              round
+              size="sm"
+              icon="data_object"
+              @click="openSpecInspector(viz.interactiveSpec)"
+            >
+              <q-tooltip>Inspect spec</q-tooltip>
+            </q-btn>
           </q-toolbar>
           <div class="flex-container">
             <div class="inner-container">
@@ -123,6 +152,33 @@ function getVizWidth(spec: any, key: string) {
       </template>
     </div>
   </q-scroll-area>
+
+  <q-dialog v-model="showSpecInspector">
+    <q-card style="min-width: 600px; max-width: 80vw">
+      <q-card-section class="row items-center q-pb-none">
+        <div class="text-h6">Spec Inspector</div>
+        <q-space />
+        <q-btn
+          flat
+          dense
+          round
+          icon="open_in_new"
+          tag="a"
+          :href="specEditorUrl"
+          target="_blank"
+        >
+          <q-tooltip>Open in UDI Grammar Editor</q-tooltip>
+        </q-btn>
+        <q-btn flat dense round icon="content_copy" @click="copySpecToClipboard">
+          <q-tooltip>Copy to clipboard</q-tooltip>
+        </q-btn>
+        <q-btn flat dense round icon="close" v-close-popup />
+      </q-card-section>
+      <q-card-section class="spec-inspector-body">
+        <q-markdown :src="`\`\`\`json\n${specInspectorData}\n\`\`\``" />
+      </q-card-section>
+    </q-card>
+  </q-dialog>
 </template>
 
 <style scoped lang="scss">
@@ -194,5 +250,10 @@ function getVizWidth(spec: any, key: string) {
 .hovered-viz {
   border-color: $accent;
   box-shadow: 0 4px 16px 3px #2a9d8f70;
+}
+
+.spec-inspector-body {
+  overflow: auto;
+  max-height: 70vh;
 }
 </style>
