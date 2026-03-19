@@ -27,6 +27,30 @@ function copySpecToClipboard() {
   navigator.clipboard.writeText(specInspectorData.value);
 }
 
+const tableViewKeys = ref(new Set<string>());
+
+function hasRepresentation(spec: any): boolean {
+  return !!spec?.representation;
+}
+
+function isTableView(key: string): boolean {
+  return tableViewKeys.value.has(key);
+}
+
+function toggleTableView(key: string) {
+  if (tableViewKeys.value.has(key)) {
+    tableViewKeys.value.delete(key);
+  } else {
+    tableViewKeys.value.add(key);
+  }
+}
+
+function getDisplaySpec(spec: any, key: string): any {
+  if (!tableViewKeys.value.has(key)) return spec;
+  const { representation, ...rest } = spec;
+  return rest;
+}
+
 function selectionChanged(newSelection: any) {
   dataFilterStore.updateInternalDataSelections(newSelection);
 }
@@ -128,6 +152,17 @@ function getVizWidth(spec: any, key: string) {
             </q-icon>
             <q-space />
             <q-btn
+              v-if="!isProduction && hasRepresentation(viz.interactiveSpec)"
+              flat
+              dense
+              round
+              size="sm"
+              :icon="isTableView(vizKey(viz)) ? 'bar_chart' : 'table_chart'"
+              @click="toggleTableView(vizKey(viz))"
+            >
+              <q-tooltip>{{ isTableView(vizKey(viz)) ? 'Show visualization' : 'Show table' }}</q-tooltip>
+            </q-btn>
+            <q-btn
               v-if="!isProduction"
               flat
               dense
@@ -142,7 +177,7 @@ function getVizWidth(spec: any, key: string) {
           <div class="flex-container">
             <div class="inner-container">
               <UDIVis
-                :spec="viz.interactiveSpec"
+                :spec="getDisplaySpec(viz.interactiveSpec, vizKey(viz))"
                 :selections="dataSelections"
                 @selection-change="selectionChanged"
               />
