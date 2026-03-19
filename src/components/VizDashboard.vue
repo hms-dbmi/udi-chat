@@ -38,11 +38,13 @@ function isTableView(key: string): boolean {
 }
 
 function toggleTableView(key: string) {
-  if (tableViewKeys.value.has(key)) {
-    tableViewKeys.value.delete(key);
+  const next = new Set(tableViewKeys.value);
+  if (next.has(key)) {
+    next.delete(key);
   } else {
-    tableViewKeys.value.add(key);
+    next.add(key);
   }
+  tableViewKeys.value = next;
 }
 
 function getDisplaySpec(spec: any, key: string): any {
@@ -177,6 +179,7 @@ function getVizWidth(spec: any, key: string) {
           <div class="flex-container">
             <div class="inner-container">
               <UDIVis
+                :key="`${vizKey(viz)}-${isTableView(vizKey(viz))}`"
                 :spec="getDisplaySpec(viz.interactiveSpec, vizKey(viz))"
                 :selections="dataSelections"
                 @selection-change="selectionChanged"
