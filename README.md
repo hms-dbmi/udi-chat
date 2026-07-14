@@ -1,3 +1,10 @@
+> [!IMPORTANT]
+> ## 🚚 This repository has been ported to react and moved!
+> Development now happens in the **[new-monorepo](https://github.com/hms-dbmi/udi-yac)** — specifically under [`packages/chat`](https://github.com/hms-dbmi/udi-yac/tree/main/packages/chat).
+>
+> This repo is archived and no longer maintained. Please open issues and PRs in the new location.
+
+
 ### Universal Discovery Interface Chatbot Prototype
 
 This repository contains the prototype for the Universal Discovery Interface (UDI) chatbot.
