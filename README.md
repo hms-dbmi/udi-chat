@@ -1,4 +1,4 @@
-> [!IMPORTANT]
+> [!warning]
 > ## 🚚 This repository has been ported to react and moved!
 > Development now happens in the **[new-monorepo](https://github.com/hms-dbmi/udi-yac)** — specifically under [`packages/chat`](https://github.com/hms-dbmi/udi-yac/tree/main/packages/chat).
 >
