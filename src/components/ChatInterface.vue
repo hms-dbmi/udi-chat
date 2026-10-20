@@ -237,20 +237,16 @@ function constructQueryBody(removeLastMessage = false, moveUserToolCallsToMessag
     }
   }
   return {
-    model: model.value,
     messages,
     dataSchema: dataPackageStore.dataPackageString,
     dataDomains: dataPackageStore.dataDomainsString,
   };
 }
 
-const model = ref('agenticx/UDI-VIS-Beta-v2-Llama-3.1-8B');
-
 async function queryLLM() {
   llmResponding.value = true;
 
   const server = `${apiOrigin}/v1`;
-  // const model = 'agenticx/UDI-VIS-Beta-v0-Llama-3.1-8B';
   try {
     const response = await fetch(`${server}/yac/completions`, {
       method: 'POST',
